@@ -127,3 +127,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+/commands/logs
+/commands/config
+/.vscode/settings.json
