@@ -92,3 +92,9 @@ CONF_FILENAME_ELEMENT_SEPERATOR_DEFAULT = '.'                                   
 
 CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY = 'occurrenceIdSeparator'                         # character that separates the occurrence name and the instance id
 CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_DEFAULT = '_'                                         # valid values for the default: '.', '-', '_'
+
+# internal structure of export objects
+REC_OCCURRENCE_PATH = 'occurrencePath'                                                      # full path name of the occurrence
+REC_BODIES = 'bodies'                                                                       # BREP Body
+REC_OCCURRENCE = 'occurrence'                                                               # Occurrence
+REC_IS_UNIQUE = 'isUnique'                                                                  # Marker if this record should be used, if all components (not occurrences) should be exported
