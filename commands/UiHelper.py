@@ -2,8 +2,6 @@ import adsk.core, adsk.fusion, adsk.cam, traceback
 
 from .BaseLogger import logger
 
-_groups = {}
-
 def addGroup(inputs :adsk.core.CommandInputs, groupId, groupName, isExpanded):
     # create group
     groupCmdInput = inputs.addGroupCommandInput(groupId, groupName)
@@ -12,9 +10,6 @@ def addGroup(inputs :adsk.core.CommandInputs, groupId, groupName, isExpanded):
     groupCmdInput.isExpanded = isExpanded
     groupCmdInput.isEnabledCheckBoxDisplayed = False
     groupInputs = groupCmdInput.children
-
-    # add groups to internal list for easy lookup
-    _groups[groupId] = groupInputs
 
     logger.debug("group %s added", groupName)
 

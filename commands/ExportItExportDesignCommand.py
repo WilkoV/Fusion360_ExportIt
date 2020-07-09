@@ -19,10 +19,85 @@ def createDefaultConfiguration():
     # export directory options
     defaultConfiguration[CONF_EXPORT_DIRECTORY_KEY] = CONF_EXPORT_DIRECTORY_DEFAULT
 
+    defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY] = CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_DEFAULT
+    defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY] = CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_DEFAULT
+
+    # stl options
+    defaultConfiguration[CONF_STL_STRUCTURE_KEY] = CONF_STL_STRUCTURE_DEFAULT
+    defaultConfiguration[CONF_STL_REFINEMENT_KEY] = CONF_STL_REFINEMENT_DEFAULT
+
+    # filename options
+    defaultConfiguration[CONF_FILENAME_ADD_PROJECT_NAME_KEY] = CONF_FILENAME_ADD_PROJECT_NAME_DEFAULT
+    defaultConfiguration[CONF_FILENAME_ADD_DESIGN_NAME_KEY] = CONF_FILENAME_ADD_DESIGN_NAME_DEFAULT
+
+    defaultConfiguration[CONF_FILENAME_REMOVE_VERSION_TAGS_KEY] = CONF_FILENAME_REMOVE_VERSION_TAGS_DEFAULT
+    defaultConfiguration[CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY] = CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_DEFAULT
+    defaultConfiguration[CONF_FILENAME_ELEMENT_SEPERATOR_KEY] = CONF_FILENAME_ELEMENT_SEPERATOR_DEFAULT
+
     return defaultConfiguration
 
 def initializeUi(inputs :adsk.core.CommandInputs):
-    pass
+    # stl export
+    addGroup(inputs, UI_STL_OPTIONS_GROUP_ID, UI_STL_OPTIONS_GROUP_NAME, True)
+    addCheckBoxDropDown(inputs, UI_STL_OPTIONS_GROUP_ID, CONF_STL_STRUCTURE_KEY, UI_STL_STRUCTURE_NAME, UI_STL_STRUCTURE_VALUES, getConfiguration(CONF_STL_STRUCTURE_KEY))
+    addCheckBoxDropDown(inputs, UI_STL_OPTIONS_GROUP_ID, CONF_STL_REFINEMENT_KEY, UI_STL_REFINEMENT_NAME, UI_STL_REFINEMENT_VALUES, getConfiguration(CONF_STL_REFINEMENT_KEY))
+
+    # export directory
+    addGroup(inputs, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME, True)
+
+    addStringInputToGroup(inputs, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_KEY, UI_EXPORT_DIRECTORY_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_KEY))
+
+    addBoolInputToGroup(inputs, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY, UI_EXPORT_DIRECTORY_ADD_PROJECT_NAME_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY))
+    addBoolInputToGroup(inputs, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY, UI_EXPORT_DIRECTORY_ADD_DESIGN_NAME_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY))
+
+    # filename options
+    addGroup(inputs, UI_FILENAME_OPTIONS_GROUP_ID, UI_FILENAME_OPTIONS_GROUP_NAME, True)
+
+    addBoolInputToGroup(inputs, UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_ADD_PROJECT_NAME_KEY, UI_FILENAME_ADD_PROJECT_NAME_NAME, getConfiguration(CONF_FILENAME_ADD_PROJECT_NAME_KEY))
+    addBoolInputToGroup(inputs, UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_ADD_DESIGN_NAME_KEY, UI_FILENAME_ADD_DESIGN_NAME_NAME, getConfiguration(CONF_FILENAME_ADD_DESIGN_NAME_KEY))
+
+    addBoolInputToGroup(inputs, UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_REMOVE_VERSION_TAGS_KEY, UI_FILENAME_REMOVE_VERSION_TAGS_NAME, getConfiguration(CONF_FILENAME_REMOVE_VERSION_TAGS_KEY))
+
+    addTextListDropDown(inputs, UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_ELEMENT_SEPERATOR_KEY, UI_FILENAME_ELEMENT_SEPERATOR_NAME, UI_FILENAME_ELEMENT_SEPERATOR_VALUES, getConfiguration(CONF_FILENAME_ELEMENT_SEPERATOR_KEY))
+    addTextListDropDown(inputs, UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY, UI_FILENAME_OCCURRENCE_ID_SEPERATOR_NAME, UI_FILENAME_OCCURRENCE_ID_SEPERATOR_VALUES, getConfiguration(CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY))
+
+def getExportDirectory():
+    # check if export direcotry is set
+    logger.info('No export path defined. Asking for input')
+
+    # create dialog
+    app = adsk.core.Application.get()
+    ui = app.userInterface
+    folderDialog = ui.createFolderDialog()
+    folderDialog.title = 'Export Directory'
+
+    # open dialog
+    dialogResult = folderDialog.showDialog()
+    exportDirecotry = ""
+
+    # check if user finished the dialog by pressing okay
+    if dialogResult == adsk.core.DialogResults.DialogOK:
+        # initialize project configuration
+        exportDirecotry = str.format(folderDialog.folder).replace('\\', '/')
+        logger.info("Selected export directory: %s", exportDirecotry)
+
+        return exportDirecotry, True
+    else:
+        # user canceled the dialog
+        logger.error('User canceld the request. No export path defined')
+
+        return exportDirecotry, False
+
+def checkDataIntegrity(inputs):
+    # check if export directory is defined
+    while not getConfiguration(CONF_EXPORT_DIRECTORY_KEY):
+        logger.warning('Exportdirecotry is not set. Opening requestor')
+
+        exportPath, isValid = getExportDirectory()
+        setConfiguration(CONF_EXPORT_DIRECTORY_KEY, exportPath)
+
+        stringInput = inputs.itemById(CONF_EXPORT_DIRECTORY_KEY)
+        stringInput.value = exportPath
 
 class ExportItExportDesignCommand(apper.Fusion360CommandBase):
     def on_preview(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, args, input_values):
@@ -100,6 +175,9 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
 
             # create UI elements and populate configuration to the fields
             initializeUi(inputs)
+
+            # check if the integrity between configured parameters are still valid
+            checkDataIntegrity(inputs)
 
         except AttributeError as err:
             logger.error("--------------------------------------------------------------------------------")
