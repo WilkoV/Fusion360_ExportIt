@@ -31,7 +31,7 @@ def writeDefaultConfiguration():
         # write pretty printed json file
         json.dump(defaultConfiguration, jsonOutFile, indent=4)
 
-    logger.debug('configuration written to %s', CONF_DEFAULT_CONFIG_NAME)
+    logger.info('Configuration written to %s', CONF_DEFAULT_CONFIG_NAME)
 
 def writeConfiguration(document, group, key):
     global editDefaultsMode
@@ -40,7 +40,7 @@ def writeConfiguration(document, group, key):
 
     if not editDefaultsMode:
         if configurationChanged:
-            logger.info("Writing configuration to document attribute")
+            logger.info("Adding configuration to document attribute. User has to save the desgin")
 
             # render json string
             jsonData = json.dumps(projectConfiguration, indent=4)
