@@ -12,6 +12,7 @@ try:
 
     # Basic Fusion 360 Command Base samples
     from .commands.ExportItExportDesignCommand import ExportItExportDesignCommand
+    from .commands.ExportItEditDefaultsCommand import ExportItEditDefaultsCommand
 
 # Create our addin definition object
     my_addin = apper.FusionApp(config.app_name, config.company_name, False)
@@ -25,6 +26,20 @@ try:
             'workspace': 'FusionSolidEnvironment',
             'toolbar_panel_id': 'Commands',
             'cmd_resources': 'exportIt_export_designs_icons',
+            'command_visible': True,
+            'command_promoted': True,
+        }
+    )
+
+    my_addin.add_command(
+        'Default Configuration',
+        ExportItEditDefaultsCommand,
+        {
+            'cmd_description': 'Edit Default Configuration',
+            'cmd_id': 'exportIt_edit_defaults_cmd_id',
+            'workspace': 'FusionSolidEnvironment',
+            'toolbar_panel_id': 'Commands',
+            'cmd_resources': 'exportIt_edit_defaults_icons',
             'command_visible': True,
             'command_promoted': True,
         }
