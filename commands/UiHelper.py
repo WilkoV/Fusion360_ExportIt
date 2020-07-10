@@ -2,6 +2,9 @@ import adsk.core, adsk.fusion, adsk.cam, traceback
 
 from .BaseLogger import logger
 
+# dict with inputCommands
+groups = {}
+
 def addGroup(inputs :adsk.core.CommandInputs, groupId, groupName, isExpanded):
     # create group
     groupCmdInput = inputs.addGroupCommandInput(groupId, groupName)
@@ -11,32 +14,34 @@ def addGroup(inputs :adsk.core.CommandInputs, groupId, groupName, isExpanded):
     groupCmdInput.isEnabledCheckBoxDisplayed = False
     groupInputs = groupCmdInput.children
 
-    logger.debug("group %s added", groupName)
+    groups[groupId] = groupInputs
 
-def addStringInputToGroup(inputs :adsk.core.CommandInputs, groupId, stingInputId, label, defaultValue):
+    logger.debug("group %s added", groupId)
+
+def addStringInputToGroup(groupId, stingInputId, label, defaultValue):
     # get list of UI elements
-    groupInputs = inputs.itemById(groupId)
+    groupInputs = groups.get(groupId)
 
     # add UI element to list
-    groupInputs.commandInputs.addStringValueInput(stingInputId, label, defaultValue)
+    groupInputs.addStringValueInput(stingInputId, label, defaultValue)
 
     logger.debug("StringInput %s added to group %s", stingInputId, groupId)
 
-def addBoolInputToGroup(inputs :adsk.core.CommandInputs, groupId, boolInputId, label, defaultValue):
+def addBoolInputToGroup(groupId, boolInputId, label, defaultValue):
     # get list of UI elements
-    groupInputs = inputs.itemById(groupId)
+    groupInputs = groups.get(groupId)
 
     # add UI element to list
-    groupInputs.commandInputs.addBoolValueInput(boolInputId, label, True, '', defaultValue)
+    groupInputs.addBoolValueInput(boolInputId, label, True, '', defaultValue)
 
     logger.debug("StringInput %s added to group %s", boolInputId, groupId)
 
-def addTextListDropDown(inputs :adsk.core.CommandInputs, groupId, dropDownId, label, itemNames :list, selectedItemName):
+def addTextListDropDown(groupId, dropDownId, label, itemNames :list, selectedItemName):
     # get list of UI elements
-    groupInputs = inputs.itemById(groupId)
+    groupInputs = groups.get(groupId)
 
     # add UI element to list
-    dropDownInput = groupInputs.commandInputs.addDropDownCommandInput(dropDownId, label, adsk.core.DropDownStyles.TextListDropDownStyle)
+    dropDownInput = groupInputs.addDropDownCommandInput(dropDownId, label, adsk.core.DropDownStyles.TextListDropDownStyle)
     dropDownItems = dropDownInput.listItems
 
     # check if drop down list has a selected entry
@@ -47,7 +52,7 @@ def addTextListDropDown(inputs :adsk.core.CommandInputs, groupId, dropDownId, la
         dropDownItems.add(itemName, False)
 
     # select item
-    selectDropDownItemByName(inputs, dropDownId, selectedItemName)
+    selectDropDownItemByName(groupInputs, dropDownId, selectedItemName)
 
     logger.debug("TextListDropDown %s added to group %s", dropDownId, groupId)
 
@@ -90,12 +95,12 @@ def getSelectedDropDownItem(inputs :adsk.core.CommandInputs, dropDownId):
 
     return itemName
 
-def addCheckBoxDropDown(inputs :adsk.core.CommandInputs, groupId, dropDownId, label, itemNames :list, selectedItemNames :list):
+def addCheckBoxDropDown(groupId, dropDownId, label, itemNames :list, selectedItemNames :list):
     # get list of UI elements
-    groupInputs = inputs.itemById(groupId)
+    groupInputs = groups.get(groupId)
 
     # create drop down element
-    dropDownInput = groupInputs.commandInputs.addDropDownCommandInput(dropDownId, label, adsk.core.DropDownStyles.CheckBoxDropDownStyle)
+    dropDownInput = groupInputs.addDropDownCommandInput(dropDownId, label, adsk.core.DropDownStyles.CheckBoxDropDownStyle)
 
     # create list elements
     dropDownItems = dropDownInput.listItems
@@ -107,7 +112,7 @@ def addCheckBoxDropDown(inputs :adsk.core.CommandInputs, groupId, dropDownId, la
     for itemName in itemNames:
         dropDownItems.add(itemName, False)
 
-    selectDropDownItemByNames(inputs, dropDownId, selectedItemNames, False)
+    selectDropDownItemByNames(groupInputs, dropDownId, selectedItemNames, False)
 
 def selectDropDownItemByNames(inputs :adsk.core.CommandInputs, dropDownId, selectedItemNames:list, clearOldSelection):
     itemSelected = False
