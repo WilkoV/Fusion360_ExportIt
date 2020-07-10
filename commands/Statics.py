@@ -71,7 +71,7 @@ CONF_EXPORT_DIRECTORY_KEY = 'exportDirectory'                                   
 CONF_EXPORT_DIRECTORY_DEFAULT = ''                                                          # value that's used to initialize the export directory
 
 CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY = 'addProjectNameToDirectory'                    # True if the name of the project should be added to the export directory otherwise False
-CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_DEFAULT = True                                       # valid values for the default: True, False
+CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_DEFAULT = False                                      # valid values for the default: True, False
 
 CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY = 'addDesignNameToDirectory'                      # True if the name of the design should be added to the export directory otherwise False
 CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_DEFAULT = True                                        # valid values for the default: True, False
