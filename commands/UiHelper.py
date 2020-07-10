@@ -154,3 +154,14 @@ def getSelectedDropDownItems(inputs :adsk.core.CommandInputs, dropDownId):
 
     # return result list
     return selectedItems
+
+def addSelectionCommandToInputs(inputs :adsk.core.CommandInputs, selectionId, label, selectionFilters :list):
+    # add command to list of inputs
+    selectionCommand = inputs.addSelectionInput(selectionId, label, '')
+
+    # set limit to limitless
+    selectionCommand.setSelectionLimits(0)
+
+    # add list of selection filters
+    for selectionFilter in selectionFilters:
+        selectionCommand.addSelectionFilter(selectionFilter)

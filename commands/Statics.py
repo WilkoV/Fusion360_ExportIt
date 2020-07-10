@@ -4,6 +4,12 @@ import logging
 LOG_FORMAT = '%(levelname)-7s; %(funcName)-26s; %(lineno)3d; %(message)s'                   # format of the log messages
 LOG_LEVEL = logging.DEBUG                                                                   # logging level
 
+# user interface - selection command
+UI_EXPORT_BODIES_SELECTION_ID = 'selectedBodiesAndOccurrencesId'                            # Id of the Occurrences selection command
+UI_EXPORT_BODIES_SELECTION_NAME = 'Export selection'                                        # Label for the occurrences selection command
+UI_SELECTION_FILTER_BODY_VALUE = 'SolidBodies'                                              # Filter name Solid Body
+UI_SELECTION_BODIES_FILTER_VALUES = [UI_SELECTION_FILTER_BODY_VALUE]                        # List of applied filters
+
 # user interface - export directory
 UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID = 'ExportDirectoryOptions'                             # group id that contains the export directory UI elements
 UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME = 'Export Directory Options'                         # name of the group that contains the export directory UI elements

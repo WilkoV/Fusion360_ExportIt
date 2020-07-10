@@ -70,7 +70,7 @@ class ExportItEditDefaultsCommand(apper.Fusion360CommandBase):
             initializeConfiguration(None, CONF_PROJECT_ATTRIBUTE_GROUP, CONF_PROJECT_ATTRIBUTE_KEY, createDefaultConfiguration())
 
             # create UI elements and populate configuration to the fields
-            initializeUi(inputs)
+            initializeUi(inputs, True)
 
             # check if ui values are valid
             checkDataIntegrity(inputs)

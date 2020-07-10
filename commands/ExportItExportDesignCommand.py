@@ -4,7 +4,7 @@ import os, re
 
 from apper import AppObjects
 from .BaseLogger import logger
-from .UiHelper import addGroup, addStringInputToGroup, addBoolInputToGroup, addCheckBoxDropDown, selectDropDownItemByNames, getSelectedDropDownItems, addTextListDropDown, getSelectedDropDownItem
+from .UiHelper import addGroup, addStringInputToGroup, addBoolInputToGroup, addCheckBoxDropDown, selectDropDownItemByNames, getSelectedDropDownItems, addTextListDropDown, getSelectedDropDownItem, addSelectionCommandToInputs
 from .ConfigurationHelper import initializeConfiguration, getConfiguration, setConfiguration, writeConfiguration, showSaveConfigWarning, resetConfiguration, logConfiguration
 from .Statics import *
 
@@ -37,7 +37,12 @@ def createDefaultConfiguration():
 
     return defaultConfiguration
 
-def initializeUi(inputs :adsk.core.CommandInputs):
+def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly):
+    # do not show in the configuration editor
+    if not configurationOnly:
+        # add selection command
+        addSelectionCommandToInputs(inputs, UI_EXPORT_BODIES_SELECTION_ID, UI_EXPORT_BODIES_SELECTION_NAME, UI_SELECTION_BODIES_FILTER_VALUES)
+
     # stl export
     addGroup(inputs, UI_STL_OPTIONS_GROUP_ID, UI_STL_OPTIONS_GROUP_NAME, True)
     addCheckBoxDropDown(UI_STL_OPTIONS_GROUP_ID, CONF_STL_STRUCTURE_KEY, UI_STL_STRUCTURE_NAME, UI_STL_STRUCTURE_VALUES, getConfiguration(CONF_STL_STRUCTURE_KEY))
@@ -100,7 +105,7 @@ def checkDataIntegrity(inputs):
         stringInput = inputs.itemById(CONF_EXPORT_DIRECTORY_KEY)
         stringInput.value = exportPath
 
-def getExportObjects(rootComponent :adsk.fusion.Component):
+def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
     exportObjects = []
     rootBodies = []
     uniqueComponents = []
@@ -113,6 +118,10 @@ def getExportObjects(rootComponent :adsk.fusion.Component):
         for body in rootComponent.bRepBodies:
             if not body.isLightBulbOn:
                 logger.info("body %s in %s is not visible", body.name, "root")
+                continue
+
+            if len(selectedBodies) > 0 and body not in selectedBodies:
+                logger.info("body %s in %s is not selected", body.name, "root")
                 continue
 
             # add visible body to the list of root bodies
@@ -153,7 +162,11 @@ def getExportObjects(rootComponent :adsk.fusion.Component):
         for body in occurrence.bRepBodies:
             # check if body is visible. if not jump to next body
             if not body.isLightBulbOn:
-                logger.info("body %s is not visible", body.name)
+                logger.info("body %s in %s is not visible", body.name, occurrence.fullPathName)
+                continue
+
+            if len(selectedBodies) > 0 and body not in selectedBodies:
+                logger.info("body %s in %s is not selected", body.name, occurrence.fullPathName)
                 continue
 
             # add visible body to the list of occurrence bodies
@@ -367,7 +380,7 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
     tmpDocument, tmpRootComponent = copyDesignToExportDocument(exportObjects)
 
     # regenerate list of export objects based
-    tmpExportObjects = getExportObjects(tmpRootComponent)
+    tmpExportObjects = getExportObjects(tmpRootComponent, [])
 
     # generate exports for each selected refinement
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
@@ -413,7 +426,9 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
 
     def on_input_changed(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, changed_input, input_values):
         # process changed element
-        if type(input_values[changed_input.id]) == adsk.core.ListItems:
+        if changed_input.objectType == 'adsk::core::SelectionCommandInput':
+            pass
+        elif type(input_values[changed_input.id]) == adsk.core.ListItems:
             # element supports a list of selections. Process all selected elements
             setConfiguration(changed_input.id, getSelectedDropDownItems(inputs, changed_input.id))
         else:
@@ -444,8 +459,11 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             exportObjects = []
 
             if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY) or UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
-                exportObjects = getExportObjects(rootComponent)
-                logger.debug("len(exportObjects): %s", len(exportObjects))
+                logger.debug("getting list of export objects")
+
+                exportObjects = getExportObjects(rootComponent, input_values[UI_EXPORT_BODIES_SELECTION_ID])
+
+                logger.debug("%s occurrences found", len(exportObjects))
 
             # export design as one stl file
             if UI_STRUCTURE_ONE_FILE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
@@ -482,7 +500,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             initializeConfiguration(ao.document, CONF_PROJECT_ATTRIBUTE_GROUP, CONF_PROJECT_ATTRIBUTE_KEY, createDefaultConfiguration())
 
             # create UI elements and populate configuration to the fields
-            initializeUi(inputs)
+            initializeUi(inputs, False)
 
             # check if the integrity between configured parameters are still valid
             checkDataIntegrity(inputs)
