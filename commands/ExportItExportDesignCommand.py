@@ -1,12 +1,14 @@
 import adsk.core, adsk.fusion, adsk.cam, traceback
 import apper
 import os, re
+import urllib, urllib.request, json
 
 from apper import AppObjects
 from .BaseLogger import logger
 from .UiHelper import addGroup, addStringInputToGroup, addBoolInputToGroup, addCheckBoxDropDown, selectDropDownItemByNames, getSelectedDropDownItems, addTextListDropDown, getSelectedDropDownItem, addSelectionCommandToInputs
 from .ConfigurationHelper import initializeConfiguration, getConfiguration, setConfiguration, writeConfiguration, showSaveConfigWarning, resetConfiguration, logConfiguration
 from .Statics import *
+from commands import __version__ as addinVersion
 
 def createDefaultConfiguration():
     logger.debug("creating default configuration")
@@ -66,6 +68,15 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly):
 
     addTextListDropDown(UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_ELEMENT_SEPERATOR_KEY, UI_FILENAME_ELEMENT_SEPERATOR_NAME, UI_FILENAME_ELEMENT_SEPERATOR_VALUES, getConfiguration(CONF_FILENAME_ELEMENT_SEPERATOR_KEY))
     addTextListDropDown(UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY, UI_FILENAME_OCCURRENCE_ID_SEPERATOR_NAME, UI_FILENAME_OCCURRENCE_ID_SEPERATOR_VALUES, getConfiguration(CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY))
+
+    # show version information
+
+def showVersionInformation(inputs :adsk.core.CommandInputs, urlString):
+    # add group for version information
+    addGroup(inputs, UI_VERSION_GROUP_ID, UI_VERSION_GROUP_NAME, True)
+
+    # add field that can show the download url for easy copy/past
+    addStringInputToGroup(UI_VERSION_GROUP_ID, UI_NEW_VERSION_ID, UI_NEW_VERSION_NAME, urlString)
 
 def getExportDirectory():
     # check if export direcotry is set
@@ -331,6 +342,7 @@ def getStlExportOptions(ao, geometry, fullFileName, refinement):
         # TODO Remove hardcoded values
         stlExportOptions.surfaceDeviation = 0.000508
         stlExportOptions.normalDeviation = 5.0000
+
     return stlExportOptions
 
 def exportStlAsOneFile(projectName, designName, rootComponent, ao):
@@ -402,6 +414,57 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
 
                 # export body as single stl file
                 exportResult = ao.export_manager.execute(stlExportOptions)
+
+def checkForUpdates():
+    # check if the url is reachable
+    try:
+        # create request
+        request = urllib.request.Request(URL_LATEST_RELEASE)
+
+        # get response
+        response = urllib.request.urlopen(request)
+
+        # read response
+        rawData = response.read()
+        encoding = response.info().get_content_charset('utf8')
+
+        # pars json string
+        data = json.loads(rawData.decode(encoding))
+
+        # extract relevant data
+        githubVersion = data.get('tag_name')
+        githubTitle = data.get('name')
+        githubDescription = data.get('body')
+        githubUrl = data.get('html_url')
+
+        logger.debug('version: %s', githubVersion)
+        logger.debug('title: %s', githubTitle)
+        logger.debug('description: %s', githubDescription)
+        logger.debug('add-in version: %s', addinVersion)
+
+        # compare local and remote versions
+        if githubVersion and addinVersion == githubVersion:
+            # no new version found
+            logger.info('Add-in is up to date.')
+
+            return "", "", "", ""
+
+        else:
+            # new version found
+            logger.info('Add-in version %s can be downloaded from %s', githubVersion, githubUrl)
+
+            return githubVersion, githubTitle, githubDescription, githubUrl
+
+    except urllib.error.HTTPError as error:
+        logger.error('The server couldn\'t fulfill the request.{}'.format(error))
+
+    except urllib.error.URLError as error:
+        logger.error('Fail to reach a server.{}'.format(e.reason))
+
+    except:
+        logger.error(traceback.format_exc())
+
+    return "", "", "", ""
 
 class ExportItExportDesignCommand(apper.Fusion360CommandBase):
     def on_preview(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, args, input_values):
@@ -481,7 +544,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             showSaveConfigWarning()
 
         except:
-            logger.critical(traceback.format_exc())
+            logger.error(traceback.format_exc())
 
     def on_create(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs):
         ao = AppObjects()
@@ -502,6 +565,16 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             # create UI elements and populate configuration to the fields
             initializeUi(inputs, False)
 
+            # check for new version
+            githubVersion, githubTitle, githubDescription, githubUrl = checkForUpdates()
+
+            if githubUrl:
+                # add url string to UI for eay copy / past
+                showVersionInformation(inputs, githubUrl)
+
+                # inform user about new message
+                ao.ui.messageBox("New version found:\n\nCurrent Version: " + addinVersion + "\n\nNew Version: " + githubVersion + " - " + githubTitle + "\n\n" + githubDescription)
+
             # check if the integrity between configured parameters are still valid
             checkDataIntegrity(inputs)
 
@@ -517,4 +590,4 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             logger.error("Error:")
             logger.error("--------------------------------------------------------------------------------")
 
-            logger.critical(traceback.format_exc())
+            logger.error(traceback.format_exc())
