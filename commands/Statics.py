@@ -58,8 +58,9 @@ UI_FILENAME_OCCURRENCE_ID_SEPERATOR_VALUES = ['.', '-', '_']                    
 UI_VERSION_GROUP_ID = 'NewVersion'                                                          # group id that contains version information
 UI_VERSION_GROUP_NAME = 'Version Info'                                                      # name of the group that contains version information
 
-UI_NEW_VERSION_ID = 'NeVersionUrl'                                                          # id of the field the contains the new version
-UI_NEW_VERSION_NAME = 'New Version URL'                                                     # name of the field that contains the new version
+UI_VERSION_CHECK_INTERVAL_NAME = 'Version Check Interval'                                   # name of the field that contains the check interval
+UI_VERSION_DOWNLOAD_URL_ID = 'downloadUrl'                                                  # id of the field the contains the new version
+UI_VERSION_DOWNLOAD_URL_NAME = 'Download URL'                                               # name of the field that contains the new version
 
 # configuration - common
 CONF_DEFAULT_CONFIG_NAME = 'Defaults.json'                                                  # name of the configuration file that stores the default configuration
@@ -94,11 +95,18 @@ CONF_FILENAME_ELEMENT_SEPERATOR_DEFAULT = '.'                                   
 CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY = 'occurrenceIdSeparator'                         # character that separates the occurrence name and the instance id
 CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_DEFAULT = '_'                                         # valid values for the default: '.', '-', '_'
 
+# configuration - check for updates
+CONF_VERSION_CHECK_INTERVAL_IN_DAYS_KEY = 'checkVersionFrequencyInDays'                     # key that contains the frequency
+CONF_VERSION_CHECK_INTERVAL_IN_DAYS_DEFAULT = 1                                             # default value for the polling interval
+CONF_VERSION_CHECK_INTERVAL_IN_DAYS_MIN = 1                                                 # min value for the polling interval
+CONF_VERSION_CHECK_INTERVAL_IN_DAYS_MAX = 30                                                # max value for the polling interval
+
 # internal structure of export objects
 REC_OCCURRENCE_PATH = 'occurrencePath'                                                      # full path name of the occurrence
 REC_BODIES = 'bodies'                                                                       # BREP Body
 REC_OCCURRENCE = 'occurrence'                                                               # Occurrence
 REC_IS_UNIQUE = 'isUnique'                                                                  # Marker if this record should be used, if all components (not occurrences) should be exported
 
-# version checking
-URL_LATEST_RELEASE="https://api.github.com/repos/WilkoV/Fusion360_ExportIt/releases/latest" # api ULR to get the latest release information
+# internal attributes version check
+VERSION_LAST_CHECKED_FILENAME = "VersionCheck.json"                                         # name of the file that contains the date of the last check.
+VERSION_API_URL = 'https://api.github.com/repos/WilkoV/Fusion360_ExportIt/releases/latest'  # api ULR to get the latest release information

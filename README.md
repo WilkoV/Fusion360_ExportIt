@@ -13,6 +13,7 @@
       - [Refinement](#refinement)
     - [Export Directory Options](#export-directory-options)
     - [Filename Options](#filename-options)
+    - [Version Info](#version-info)
     - [Elements Of The Export Name](#elements-of-the-export-name)
   - [Installation](#installation)
   - [Compatibility](#compatibility)
@@ -111,6 +112,17 @@ Element Separator Tags | \_ | This options uses a "_" (underscore) as the separa
 Occurrence ID Separator | . | This options uses a "." (dot) as the separator.
 Occurrence ID Separator | - | This options uses a "-" (dash) as the separator.
 Occurrence ID Separator | \_ | This options uses a "_" (underscore) as the separator.
+
+### Version Info
+
+This section allows the configuration of the check interval and shows the download URL if an update is available.
+
+![Version Info](doc/versionInfo.png)
+
+Label | Description
+---------|---------
+Version Check Interval | Defines the polling interval in days. Minimal value = 1, maximal value = 30.
+Download URL | This field is only available if a new release can be downloaded.
 
 ### Elements Of The Export Name
 

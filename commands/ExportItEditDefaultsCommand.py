@@ -4,8 +4,9 @@ import apper
 from apper import AppObjects
 from .BaseLogger import logger
 from .ExportItExportDesignCommand import initializeConfiguration, initializeUi, createDefaultConfiguration, checkDataIntegrity
-from .ConfigurationHelper import writeDefaultConfiguration, logConfiguration, resetConfiguration, setDefaultConfiguration
 from .UiHelper import getSelectedDropDownItems
+from .ConfigurationHelper import writeDefaultConfiguration, logConfiguration, resetConfiguration, setDefaultConfiguration
+from .GithubReleaseHelper import checkForUpdates, getGithubReleaseInformation, showReleaseNotes
 from .Statics import *
 
 class ExportItEditDefaultsCommand(apper.Fusion360CommandBase):
@@ -69,8 +70,13 @@ class ExportItEditDefaultsCommand(apper.Fusion360CommandBase):
             # load or create configuration
             initializeConfiguration(None, CONF_PROJECT_ATTRIBUTE_GROUP, CONF_PROJECT_ATTRIBUTE_KEY, createDefaultConfiguration())
 
+            # check for new version
+            isCheckOverdue = checkForUpdates()
+            logger.debug("isCheckOverdue %s", isCheckOverdue)
+            showReleaseNotes(isCheckOverdue, ao)
+
             # create UI elements and populate configuration to the fields
-            initializeUi(inputs, True)
+            initializeUi(inputs, True, isCheckOverdue)
 
             # check if ui values are valid
             checkDataIntegrity(inputs)

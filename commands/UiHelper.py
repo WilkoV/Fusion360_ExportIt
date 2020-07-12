@@ -27,6 +27,13 @@ def addStringInputToGroup(groupId, stingInputId, label, defaultValue):
 
     logger.debug("StringInput %s added to group %s", stingInputId, groupId)
 
+def addIntergerInputSpinnerToGroup(groupId, integerInputId, label, min, max, spinStep, defaultValue):
+    # get list of UI elements
+    groupInputs = groups.get(groupId)
+
+    # add UI element to list
+    groupInputs.addIntegerSpinnerCommandInput(integerInputId, label, min, max, spinStep, defaultValue)
+
 def addBoolInputToGroup(groupId, boolInputId, label, defaultValue):
     # get list of UI elements
     groupInputs = groups.get(groupId)
