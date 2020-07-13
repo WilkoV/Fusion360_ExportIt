@@ -173,9 +173,9 @@ Version | Date | Description
 
 ## Wishlist
 
-- [ ] Defaults editor
+- [x] Defaults editor
 - [ ] Export of selected occurrences
-- [ ] Export of selected bodies
+- [x] Export of selected bodies
 - [ ] STEP Exports
 - [ ] F3D Exports
 - [ ] Special refinement for selected bodies that is stored in the project configuration
