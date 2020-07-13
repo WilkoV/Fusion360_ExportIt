@@ -184,3 +184,4 @@ Version | Date | Description
 - [ ] Custom refinement
 - [ ] Filename filter to replace spaces with configurable character
 - [ ] Configuration validation
+- [ ] Export filter that excludes linked components
