@@ -18,15 +18,21 @@ def createDefaultConfiguration():
     # common attributes
     defaultConfiguration[CONF_VERSION_KEY] = CONF_VERSION_DEFAULT
 
+    # export options
+    defaultConfiguration[CONF_EXPORT_OPTIONS_TYPE_KEY] = CONF_EXPORT_OPTIONS_TYPE_DEFAULT
+
+    # stl options
+    defaultConfiguration[CONF_STL_STRUCTURE_KEY] = CONF_STL_STRUCTURE_DEFAULT
+    defaultConfiguration[CONF_STL_REFINEMENT_KEY] = CONF_STL_REFINEMENT_DEFAULT
+
+    # step options
+    defaultConfiguration[CONF_STEP_STRUCTURE_KEY] = CONF_STEP_STRUCTURE_DEFAULT
+
     # export directory options
     defaultConfiguration[CONF_EXPORT_DIRECTORY_KEY] = CONF_EXPORT_DIRECTORY_DEFAULT
 
     defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY] = CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_DEFAULT
     defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY] = CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_DEFAULT
-
-    # stl options
-    defaultConfiguration[CONF_STL_STRUCTURE_KEY] = CONF_STL_STRUCTURE_DEFAULT
-    defaultConfiguration[CONF_STL_REFINEMENT_KEY] = CONF_STL_REFINEMENT_DEFAULT
 
     # filename options
     defaultConfiguration[CONF_FILENAME_ADD_PROJECT_NAME_KEY] = CONF_FILENAME_ADD_PROJECT_NAME_DEFAULT
@@ -46,12 +52,17 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
     if not configurationOnly:
         # add selection command
         addGroup(inputs, UI_EXPORT_OPTIONS_GROUP_ID, UI_EXPORT_OPTIONS_GROUP_NAME, True)
-        addSelectionCommandToInputs(UI_EXPORT_OPTIONS_GROUP_ID, UI_EXPORT_BODIES_SELECTION_ID, UI_EXPORT_BODIES_SELECTION_NAME, UI_EXPORT_BODIES_SELECTION_VALUES)
+        addSelectionCommandToInputs(UI_EXPORT_OPTIONS_GROUP_ID, UI_EXPORT_OPTIONS_BODIES_SELECTION_ID, UI_EXPORT_OPTIONS_BODIES_SELECTION_NAME, UI_EXPORT_OPTIONS_BODIES_SELECTION_VALUES)
+        addCheckBoxDropDown(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_TYPE_KEY, UI_EXPORT_OPTIONS_TYPE_NAME, UI_EXPORT_OPTIONS_TYPE_VALUES, getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY))
 
     # stl export
     addGroup(inputs, UI_STL_OPTIONS_GROUP_ID, UI_STL_OPTIONS_GROUP_NAME, True)
     addCheckBoxDropDown(UI_STL_OPTIONS_GROUP_ID, CONF_STL_STRUCTURE_KEY, UI_STL_STRUCTURE_NAME, UI_STL_STRUCTURE_VALUES, getConfiguration(CONF_STL_STRUCTURE_KEY))
     addCheckBoxDropDown(UI_STL_OPTIONS_GROUP_ID, CONF_STL_REFINEMENT_KEY, UI_STL_REFINEMENT_NAME, UI_STL_REFINEMENT_VALUES, getConfiguration(CONF_STL_REFINEMENT_KEY))
+
+    # step export
+    addGroup(inputs, UI_STEP_OPTIONS_GROUP_ID, UI_STEP_OPTIONS_GROUP_NAME, True)
+    addCheckBoxDropDown(UI_STEP_OPTIONS_GROUP_ID, CONF_STEP_STRUCTURE_KEY, UI_STEP_STRUCTURE_NAME, UI_STEP_STRUCTURE_VALUES, getConfiguration(CONF_STEP_STRUCTURE_KEY))
 
     # export directory
     addGroup(inputs, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME, True)
@@ -479,7 +490,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY) or UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
                 logger.debug("getting list of export objects")
 
-                exportObjects = getExportObjects(rootComponent, input_values[UI_EXPORT_BODIES_SELECTION_ID])
+                exportObjects = getExportObjects(rootComponent, input_values[UI_EXPORT_OPTIONS_BODIES_SELECTION_ID])
 
                 logger.debug("%s occurrences found", len(exportObjects))
 

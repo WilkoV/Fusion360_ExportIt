@@ -6,8 +6,9 @@ LOG_LEVEL = logging.DEBUG                                                       
 
 # user interface - common
 UI_STRUCTURE_ONE_FILE_VALUE = 'One File'                                                    # Export as one file
-UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE = 'One File Per Body In Component'        # Export as one file per body in unique component
-UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE = 'One File Per Body In Occurrence'      # Export as one file per body in unique occurrence
+UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE = 'One File Per Body In Component'        # Export one file per body in unique component
+UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE = 'One File Per Body In Occurrence'      # Export one file per body in unique occurrence
+UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE = 'One File Component'                            # Export one file per unique component
 UI_STL_REFINEMENT_NAME = 'Refinement'                                                       # refinement (resolution / density) for stl exports
 UI_STL_REFINEMENT_ULTRA_VALUE = 'Ultra'                                                     # refinement ultra
 UI_STL_REFINEMENT_HIGH_VALUE = 'High'                                                       # refinement high
@@ -15,22 +16,18 @@ UI_STL_REFINEMENT_MEDIUM_VALUE = 'Medium'                                       
 UI_STL_REFINEMENT_LOW_VALUE = 'Low'                                                         # refinement low
 UI_SELECTION_FILTER_BODY_VALUE = 'SolidBodies'                                              # Filter name Solid Body
 UI_EXPORT_TYPES_STL_VALUE = 'stl'                                                           # STL format
-
-# user interface - export directory
-UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID = 'ExportDirectoryOptions'                             # group id that contains the export directory UI elements
-UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME = 'Export Directory Options'                         # name of the group that contains the export directory UI elements
-
-UI_EXPORT_DIRECTORY_NAME = 'Export Directory'                                               # base path for the export process
-UI_EXPORT_DIRECTORY_ADD_PROJECT_NAME_NAME = 'Add Project Name'                              # True if the name of the project should be added to the export directory otherwise False
-UI_EXPORT_DIRECTORY_ADD_DESIGN_NAME_NAME = 'Add Design Name'                                # True if the name of the design should be added to the export directory otherwise False
+UI_EXPORT_TYPES_STP_VALUE = 'step'                                                          # STEP format
 
 # user interface - export options
 UI_EXPORT_OPTIONS_GROUP_ID = 'ExportOptions'                                                # group id that contains the export options UI elements
 UI_EXPORT_OPTIONS_GROUP_NAME = 'Export Options'                                             # name of the group that contains the export options UI elements
 
-UI_EXPORT_BODIES_SELECTION_ID = 'selectedBodiesAndOccurrencesId'                            # Id of the Occurrences selection command
-UI_EXPORT_BODIES_SELECTION_NAME = 'Export Bodies'                                           # Label for the occurrences selection command
-UI_EXPORT_BODIES_SELECTION_VALUES = [UI_SELECTION_FILTER_BODY_VALUE]                        # List of applied filters
+UI_EXPORT_OPTIONS_BODIES_SELECTION_ID = 'selectedBodiesAndOccurrencesId'                    # Id of the Occurrences selection command
+UI_EXPORT_OPTIONS_BODIES_SELECTION_NAME = 'Export Bodies'                                   # Label for the occurrences selection command
+UI_EXPORT_OPTIONS_BODIES_SELECTION_VALUES = [UI_SELECTION_FILTER_BODY_VALUE]                # List of applied filters
+UI_EXPORT_OPTIONS_TYPE_NAME = 'Export Types'                                                # Name of the field that contains the export types
+UI_EXPORT_OPTIONS_TYPE_VALUES = [UI_EXPORT_TYPES_STL_VALUE,
+                                    UI_EXPORT_TYPES_STP_VALUE]                              # Elements of the dropdown list
 
 # user interface - stl options
 UI_STL_OPTIONS_GROUP_ID = 'StlOptions'                                                      # group id that contains the stl options UI elements
@@ -44,6 +41,22 @@ UI_STL_REFINEMENT_VALUES = [UI_STL_REFINEMENT_ULTRA_VALUE,
                             UI_STL_REFINEMENT_HIGH_VALUE,
                             UI_STL_REFINEMENT_MEDIUM_VALUE,
                             UI_STL_REFINEMENT_LOW_VALUE]                                    # Elements of the dropdown list
+
+# user interface - step options
+UI_STEP_OPTIONS_GROUP_ID = 'StepOptions'                                                    # group id that contains the step options UI elements
+UI_STEP_OPTIONS_GROUP_NAME = 'STEP Options'                                                 # name of the group that contains the step options UI elements
+
+UI_STEP_STRUCTURE_NAME = 'Structure'                                                        # Export bodies as one file, file per body etc.
+UI_STEP_STRUCTURE_VALUES = [UI_STRUCTURE_ONE_FILE_VALUE,
+                            UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE]                      # Elements of the dropdown list
+
+# user interface - export directory
+UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID = 'ExportDirectoryOptions'                             # group id that contains the export directory UI elements
+UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME = 'Export Directory Options'                         # name of the group that contains the export directory UI elements
+
+UI_EXPORT_DIRECTORY_NAME = 'Export Directory'                                               # base path for the export process
+UI_EXPORT_DIRECTORY_ADD_PROJECT_NAME_NAME = 'Add Project Name'                              # True if the name of the project should be added to the export directory otherwise False
+UI_EXPORT_DIRECTORY_ADD_DESIGN_NAME_NAME = 'Add Design Name'                                # True if the name of the design should be added to the export directory otherwise False
 
 # user interface - filename options
 UI_FILENAME_OPTIONS_GROUP_ID = 'FilenameOptions'                                            # group id that contains the filename options UI elements
@@ -70,7 +83,7 @@ CONF_DEFAULT_CONFIG_NAME = 'Defaults.json'                                      
 CONF_PROJECT_ATTRIBUTE_GROUP = 'ExportIt'                                                   # name of the attribute group that stores the project specific data
 CONF_PROJECT_ATTRIBUTE_KEY = 'projectConfiguration'                                         # key of the key that contains the project specific configuration (delta to default configuration)
 CONF_VERSION_KEY = 'version'                                                                # key of the element that contains the version of the default configuration
-CONF_VERSION_DEFAULT = '0.1.0'                                                              # default version of the default configuration
+CONF_VERSION_DEFAULT = '0.2.0'                                                              # default version of the default configuration
 
 # configuration - export directory
 CONF_EXPORT_DIRECTORY_KEY = 'exportDirectory'                                               # key of the element that contains the export directory
@@ -80,11 +93,20 @@ CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_DEFAULT = False                          
 CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY = 'addDesignNameToDirectory'                      # True if the name of the design should be added to the export directory otherwise False
 CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_DEFAULT = True                                        # valid values for the default: True, False
 
+# configuration - export options
+
+CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # name of the element that contains the stl refinement
+CONF_EXPORT_OPTIONS_TYPE_DEFAULT = [UI_EXPORT_TYPES_STL_VALUE, UI_EXPORT_TYPES_STP_VALUE]   # valid values STEP, STL
+
 # configuration - stl options
 CONF_STL_STRUCTURE_KEY = 'StlStructure'                                                     # name of the element that contains the stl refinement
 CONF_STL_STRUCTURE_DEFAULT = [UI_STRUCTURE_ONE_FILE_VALUE]                                  # valid values 'One File', 'One File Per Body In Component, 'One File Per Body In Occurrence'
 CONF_STL_REFINEMENT_KEY = 'StlRefinement'                                                   # name of the element that contains the stl refinement
 CONF_STL_REFINEMENT_DEFAULT = [UI_STL_REFINEMENT_LOW_VALUE]                                 # valid values 'Low', 'Medium', 'Hight', 'Ultra'
+
+# configuration - step options
+CONF_STEP_STRUCTURE_KEY = 'StlStructure'                                                    # name of the element that contains the stl refinement
+CONF_STEP_STRUCTURE_DEFAULT = [UI_STRUCTURE_ONE_FILE_VALUE]                                 # valid values 'One File', 'One File Per Component
 
 # configuration - filename options
 CONF_FILENAME_ADD_PROJECT_NAME_KEY = 'addProjectNameToFilename'                             # True if the name of the project should be added to the export name otherwise False
