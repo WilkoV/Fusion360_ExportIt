@@ -45,7 +45,8 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
     # do not show in the configuration editor
     if not configurationOnly:
         # add selection command
-        addSelectionCommandToInputs(inputs, UI_EXPORT_BODIES_SELECTION_ID, UI_EXPORT_BODIES_SELECTION_NAME, UI_SELECTION_BODIES_FILTER_VALUES)
+        addGroup(inputs, UI_EXPORT_OPTIONS_GROUP_ID, UI_EXPORT_OPTIONS_GROUP_NAME, True)
+        addSelectionCommandToInputs(UI_EXPORT_OPTIONS_GROUP_ID, UI_EXPORT_BODIES_SELECTION_ID, UI_EXPORT_BODIES_SELECTION_NAME, UI_EXPORT_BODIES_SELECTION_VALUES)
 
     # stl export
     addGroup(inputs, UI_STL_OPTIONS_GROUP_ID, UI_STL_OPTIONS_GROUP_NAME, True)

@@ -8,18 +8,13 @@ LOG_LEVEL = logging.DEBUG                                                       
 UI_STRUCTURE_ONE_FILE_VALUE = 'One File'                                                    # Export as one file
 UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE = 'One File Per Body In Component'        # Export as one file per body in unique component
 UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE = 'One File Per Body In Occurrence'      # Export as one file per body in unique occurrence
-
 UI_STL_REFINEMENT_NAME = 'Refinement'                                                       # refinement (resolution / density) for stl exports
 UI_STL_REFINEMENT_ULTRA_VALUE = 'Ultra'                                                     # refinement ultra
 UI_STL_REFINEMENT_HIGH_VALUE = 'High'                                                       # refinement high
 UI_STL_REFINEMENT_MEDIUM_VALUE = 'Medium'                                                   # refinement medium
 UI_STL_REFINEMENT_LOW_VALUE = 'Low'                                                         # refinement low
-
-# user interface - selection command
-UI_EXPORT_BODIES_SELECTION_ID = 'selectedBodiesAndOccurrencesId'                            # Id of the Occurrences selection command
-UI_EXPORT_BODIES_SELECTION_NAME = 'Export selection'                                        # Label for the occurrences selection command
 UI_SELECTION_FILTER_BODY_VALUE = 'SolidBodies'                                              # Filter name Solid Body
-UI_SELECTION_BODIES_FILTER_VALUES = [UI_SELECTION_FILTER_BODY_VALUE]                        # List of applied filters
+
 
 # user interface - export directory
 UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID = 'ExportDirectoryOptions'                             # group id that contains the export directory UI elements
@@ -28,6 +23,14 @@ UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME = 'Export Directory Options'             
 UI_EXPORT_DIRECTORY_NAME = 'Export Directory'                                               # base path for the export process
 UI_EXPORT_DIRECTORY_ADD_PROJECT_NAME_NAME = 'Add Project Name'                              # True if the name of the project should be added to the export directory otherwise False
 UI_EXPORT_DIRECTORY_ADD_DESIGN_NAME_NAME = 'Add Design Name'                                # True if the name of the design should be added to the export directory otherwise False
+
+# user interface - export options
+UI_EXPORT_OPTIONS_GROUP_ID = 'ExportOptions'                                                # group id that contains the export options UI elements
+UI_EXPORT_OPTIONS_GROUP_NAME = 'Export Options'                                             # name of the group that contains the export options UI elements
+
+UI_EXPORT_BODIES_SELECTION_ID = 'selectedBodiesAndOccurrencesId'                            # Id of the Occurrences selection command
+UI_EXPORT_BODIES_SELECTION_NAME = 'Export Bodies'                                           # Label for the occurrences selection command
+UI_EXPORT_BODIES_SELECTION_VALUES = [UI_SELECTION_FILTER_BODY_VALUE]                        # List of applied filters
 
 # user interface - stl options
 UI_STL_OPTIONS_GROUP_ID = 'StlOptions'                                                      # group id that contains the stl options UI elements
