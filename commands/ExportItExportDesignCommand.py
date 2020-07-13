@@ -247,7 +247,7 @@ def getExportName(projectName, designName, occurrenceFullPathName, bodyName, for
         nameElements.append(bodyName)
 
     # add refinement name
-    if refinementName and suffix == "stl":
+    if refinementName and suffix == UI_EXPORT_TYPES_STL_VALUE:
         nameElements.append(refinementName.lower())
 
     # assemble suffix name
@@ -360,7 +360,7 @@ def exportStlAsOneFile(projectName, designName, rootComponent, ao):
             refinementName = refinement
 
         # create filename
-        fullFileName = getExportName(projectName, designName, "", "", True, True, refinementName, "stl")
+        fullFileName = getExportName(projectName, designName, "", "", True, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
 
         # get stl export options
         stlExportOptions = getStlExportOptions(ao, rootComponent, fullFileName, refinement)
@@ -385,7 +385,7 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
             # iterate over list of bodies
             for body in exportObject.get(REC_BODIES):
                 # create filename
-                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, "stl")
+                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
 
                 # get stl export options
                 stlExportOptions = getStlExportOptions(ao, body, fullFileName, refinement)
@@ -413,7 +413,7 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
             # iterate over list of bodies
             for body in tmpExportObject.get(REC_BODIES):
                 # create filename but remove occurrence id unless they're part of the occurrence name in the temporary document
-                fullFileName = getExportName(projectName, designName, tmpExportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, "stl")
+                fullFileName = getExportName(projectName, designName, tmpExportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
 
                 # get stl export options
                 stlExportOptions = getStlExportOptions(ao, body, fullFileName, refinement)

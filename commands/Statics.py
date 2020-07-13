@@ -14,7 +14,7 @@ UI_STL_REFINEMENT_HIGH_VALUE = 'High'                                           
 UI_STL_REFINEMENT_MEDIUM_VALUE = 'Medium'                                                   # refinement medium
 UI_STL_REFINEMENT_LOW_VALUE = 'Low'                                                         # refinement low
 UI_SELECTION_FILTER_BODY_VALUE = 'SolidBodies'                                              # Filter name Solid Body
-
+UI_EXPORT_TYPES_STL_VALUE = 'stl'                                                           # STL format
 
 # user interface - export directory
 UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID = 'ExportDirectoryOptions'                             # group id that contains the export directory UI elements
