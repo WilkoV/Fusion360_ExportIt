@@ -362,6 +362,16 @@ def getStlExportOptions(ao, geometry, fullFileName, refinement):
 
     return stlExportOptions
 
+def exportStepAsOneFile(projectName, designName, rootComponent, ao):
+    # create filename
+    fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_STEP_VALUE)
+
+    # get stl export options
+    stepExportOptions = ao.export_manager.createSTEPExportOptions(fullFileName, rootComponent)
+
+    # export design as single stl file
+    exportResult = ao.export_manager.execute(stepExportOptions)
+
 def exportStlAsOneFile(projectName, designName, rootComponent, ao):
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
         # set refinement name
@@ -494,16 +504,23 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
 
                 logger.debug("%s occurrences found", len(exportObjects))
 
-            # export design as one stl file
-            if UI_STRUCTURE_ONE_FILE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
-                exportStlAsOneFile(projectName, designName, rootComponent, ao)
+            if UI_EXPORT_TYPES_STEP_VALUE in getSelectedDropDownItems(inputs, CONF_EXPORT_OPTIONS_TYPE_KEY):
+                # export design as one step file
+                if UI_STRUCTURE_ONE_FILE_VALUE in getSelectedDropDownItems(inputs, CONF_STEP_STRUCTURE_KEY):
+                    exportStepAsOneFile(projectName, designName, rootComponent, ao)
 
-            if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
-                exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName, ao)
+            if UI_EXPORT_TYPES_STL_VALUE in getSelectedDropDownItems(inputs, CONF_EXPORT_OPTIONS_TYPE_KEY):
+                # export design as one stl file
+                if UI_STRUCTURE_ONE_FILE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
+                    exportStlAsOneFile(projectName, designName, rootComponent, ao)
 
-            # export each body in the document as individual stl files
-            if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
-                exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName, ao)
+                # export each body in component as individual stl files
+                if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
+                    exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName, ao)
+
+                # export each body in occurrence as individual stl files
+                if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
+                    exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName, ao)
 
             # write modified configuration
             writeConfiguration(ao.document, CONF_PROJECT_ATTRIBUTE_GROUP, CONF_PROJECT_ATTRIBUTE_KEY)

@@ -16,7 +16,7 @@ UI_STL_REFINEMENT_MEDIUM_VALUE = 'Medium'                                       
 UI_STL_REFINEMENT_LOW_VALUE = 'Low'                                                         # refinement low
 UI_SELECTION_FILTER_BODY_VALUE = 'SolidBodies'                                              # Filter name Solid Body
 UI_EXPORT_TYPES_STL_VALUE = 'stl'                                                           # STL format
-UI_EXPORT_TYPES_STP_VALUE = 'step'                                                          # STEP format
+UI_EXPORT_TYPES_STEP_VALUE = 'step'                                                          # STEP format
 
 # user interface - export options
 UI_EXPORT_OPTIONS_GROUP_ID = 'ExportOptions'                                                # group id that contains the export options UI elements
@@ -27,7 +27,7 @@ UI_EXPORT_OPTIONS_BODIES_SELECTION_NAME = 'Export Bodies'                       
 UI_EXPORT_OPTIONS_BODIES_SELECTION_VALUES = [UI_SELECTION_FILTER_BODY_VALUE]                # List of applied filters
 UI_EXPORT_OPTIONS_TYPE_NAME = 'Export Types'                                                # Name of the field that contains the export types
 UI_EXPORT_OPTIONS_TYPE_VALUES = [UI_EXPORT_TYPES_STL_VALUE,
-                                    UI_EXPORT_TYPES_STP_VALUE]                              # Elements of the dropdown list
+                                    UI_EXPORT_TYPES_STEP_VALUE]                              # Elements of the dropdown list
 
 # user interface - stl options
 UI_STL_OPTIONS_GROUP_ID = 'StlOptions'                                                      # group id that contains the stl options UI elements
@@ -96,7 +96,7 @@ CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_DEFAULT = True                            
 # configuration - export options
 
 CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # name of the element that contains the stl refinement
-CONF_EXPORT_OPTIONS_TYPE_DEFAULT = [UI_EXPORT_TYPES_STL_VALUE, UI_EXPORT_TYPES_STP_VALUE]   # valid values STEP, STL
+CONF_EXPORT_OPTIONS_TYPE_DEFAULT = [UI_EXPORT_TYPES_STL_VALUE, UI_EXPORT_TYPES_STEP_VALUE]   # valid values STEP, STL
 
 # configuration - stl options
 CONF_STL_STRUCTURE_KEY = 'StlStructure'                                                     # name of the element that contains the stl refinement
@@ -105,7 +105,7 @@ CONF_STL_REFINEMENT_KEY = 'StlRefinement'                                       
 CONF_STL_REFINEMENT_DEFAULT = [UI_STL_REFINEMENT_LOW_VALUE]                                 # valid values 'Low', 'Medium', 'Hight', 'Ultra'
 
 # configuration - step options
-CONF_STEP_STRUCTURE_KEY = 'StlStructure'                                                    # name of the element that contains the stl refinement
+CONF_STEP_STRUCTURE_KEY = 'stepStructure'                                                    # name of the element that contains the stl refinement
 CONF_STEP_STRUCTURE_DEFAULT = [UI_STRUCTURE_ONE_FILE_VALUE]                                 # valid values 'One File', 'One File Per Component
 
 # configuration - filename options
