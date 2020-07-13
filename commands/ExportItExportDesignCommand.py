@@ -340,6 +340,32 @@ def copyDesignToExportDocument(exportObjects):
 
     return document, rootComponent
 
+def exportStepAsOneFile(projectName, designName, rootComponent, ao):
+    # create filename
+    fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_STEP_VALUE)
+
+    # get stl export options
+    stepExportOptions = ao.export_manager.createSTEPExportOptions(fullFileName, rootComponent)
+
+    # export design as single stl file
+    exportResult = ao.export_manager.execute(stepExportOptions)
+
+def exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao):
+    # iterate over list of occurrences
+    for exportObject in exportObjects:
+        # check if component is unique
+        if not exportObject.get(REC_IS_UNIQUE):
+            continue
+
+        # create filename
+        fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, "", UI_EXPORT_TYPES_STEP_VALUE)
+
+        # get stl export options
+        stepExportOptions = ao.export_manager.createSTEPExportOptions(fullFileName, exportObject.get(REC_OCCURRENCE).component)
+
+        # export design as single stl file
+        exportResult = ao.export_manager.execute(stepExportOptions)
+
 def getStlExportOptions(ao, geometry, fullFileName, refinement):
     # get stl export options
     stlExportOptions = ao.export_manager.createSTLExportOptions(geometry, fullFileName)
@@ -361,16 +387,6 @@ def getStlExportOptions(ao, geometry, fullFileName, refinement):
         stlExportOptions.normalDeviation = 5.0000
 
     return stlExportOptions
-
-def exportStepAsOneFile(projectName, designName, rootComponent, ao):
-    # create filename
-    fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_STEP_VALUE)
-
-    # get stl export options
-    stepExportOptions = ao.export_manager.createSTEPExportOptions(fullFileName, rootComponent)
-
-    # export design as single stl file
-    exportResult = ao.export_manager.execute(stepExportOptions)
 
 def exportStlAsOneFile(projectName, designName, rootComponent, ao):
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
@@ -508,6 +524,10 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
                 # export design as one step file
                 if UI_STRUCTURE_ONE_FILE_VALUE in getSelectedDropDownItems(inputs, CONF_STEP_STRUCTURE_KEY):
                     exportStepAsOneFile(projectName, designName, rootComponent, ao)
+
+                # export each component as individual step files
+                if UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STEP_STRUCTURE_KEY):
+                    exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao)
 
             if UI_EXPORT_TYPES_STL_VALUE in getSelectedDropDownItems(inputs, CONF_EXPORT_OPTIONS_TYPE_KEY):
                 # export design as one stl file
