@@ -57,6 +57,7 @@ UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME = 'Export Directory Options'             
 UI_EXPORT_DIRECTORY_NAME = 'Export Directory'                                               # base path for the export process
 UI_EXPORT_DIRECTORY_ADD_PROJECT_NAME_NAME = 'Add Project Name'                              # True if the name of the project should be added to the export directory otherwise False
 UI_EXPORT_DIRECTORY_ADD_DESIGN_NAME_NAME = 'Add Design Name'                                # True if the name of the design should be added to the export directory otherwise False
+UI_EXPORT_DIRECTORY_EXPORT_TYPE_NAME = 'Add Export Type'                                    # True if the name of the export type should be added to the export directory otherwise False
 
 # user interface - filename options
 UI_FILENAME_OPTIONS_GROUP_ID = 'FilenameOptions'                                            # group id that contains the filename options UI elements
@@ -85,16 +86,7 @@ CONF_PROJECT_ATTRIBUTE_KEY = 'projectConfiguration'                             
 CONF_VERSION_KEY = 'version'                                                                # key of the element that contains the version of the default configuration
 CONF_VERSION_DEFAULT = '0.2.0'                                                              # default version of the default configuration
 
-# configuration - export directory
-CONF_EXPORT_DIRECTORY_KEY = 'exportDirectory'                                               # key of the element that contains the export directory
-CONF_EXPORT_DIRECTORY_DEFAULT = ''                                                          # value that's used to initialize the export directory
-CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY = 'addProjectNameToDirectory'                    # True if the name of the project should be added to the export directory otherwise False
-CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_DEFAULT = False                                      # valid values for the default: True, False
-CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY = 'addDesignNameToDirectory'                      # True if the name of the design should be added to the export directory otherwise False
-CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_DEFAULT = True                                        # valid values for the default: True, False
-
 # configuration - export options
-
 CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # name of the element that contains the stl refinement
 CONF_EXPORT_OPTIONS_TYPE_DEFAULT = [UI_EXPORT_TYPES_STL_VALUE, UI_EXPORT_TYPES_STEP_VALUE]   # valid values STEP, STL
 
@@ -107,6 +99,16 @@ CONF_STL_REFINEMENT_DEFAULT = [UI_STL_REFINEMENT_LOW_VALUE]                     
 # configuration - step options
 CONF_STEP_STRUCTURE_KEY = 'stepStructure'                                                    # name of the element that contains the stl refinement
 CONF_STEP_STRUCTURE_DEFAULT = [UI_STRUCTURE_ONE_FILE_VALUE]                                 # valid values 'One File', 'One File Per Component
+
+# configuration - export directory
+CONF_EXPORT_DIRECTORY_KEY = 'exportDirectory'                                               # key of the element that contains the export directory
+CONF_EXPORT_DIRECTORY_DEFAULT = ''                                                          # value that's used to initialize the export directory
+CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY = 'addProjectNameToDirectory'                    # True if the name of the project should be added to the export directory otherwise False
+CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_DEFAULT = False                                      # valid values for the default: True, False
+CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY = 'addDesignNameToDirectory'                      # True if the name of the design should be added to the export directory otherwise False
+CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_DEFAULT = True                                        # valid values for the default: True, False
+CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY = 'addExportTypeToDirectory'                      # True if the name of the export type should be added to the export directory otherwise False
+CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_DEFAULT = True                                        # valid values for the default: True, False
 
 # configuration - filename options
 CONF_FILENAME_ADD_PROJECT_NAME_KEY = 'addProjectNameToFilename'                             # True if the name of the project should be added to the export name otherwise False
