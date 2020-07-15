@@ -5,7 +5,7 @@ import os, re, json
 from apper import AppObjects
 from .BaseLogger import logger
 from .UiHelper import addGroup, addStringInputToGroup, addBoolInputToGroup, addCheckBoxDropDown, selectDropDownItemByNames, getSelectedDropDownItems, addTextListDropDown, getSelectedDropDownItem, addSelectionCommandToInputs, addIntergerInputSpinnerToGroup
-from .ConfigurationHelper import initializeConfiguration, getConfiguration, setConfiguration, writeConfiguration, showSaveConfigWarning, resetConfiguration, logConfiguration
+from .ConfigurationHelper import initializeConfiguration, getDefaultConfiguration, getConfiguration, setConfiguration, writeConfiguration, showSaveConfigWarning, resetConfiguration, logConfiguration
 from .GithubReleaseHelper import checkForUpdates, getGithubReleaseInformation, showReleaseNotes
 from .Statics import *
 
@@ -18,15 +18,23 @@ def createDefaultConfiguration():
     # common attributes
     defaultConfiguration[CONF_VERSION_KEY] = CONF_VERSION_DEFAULT
 
+    # export options
+    defaultConfiguration[CONF_EXPORT_OPTIONS_TYPE_KEY] = CONF_EXPORT_OPTIONS_TYPE_DEFAULT
+
+    # stl options
+    defaultConfiguration[CONF_STL_STRUCTURE_KEY] = CONF_STL_STRUCTURE_DEFAULT
+    defaultConfiguration[CONF_STL_REFINEMENT_KEY] = CONF_STL_REFINEMENT_DEFAULT
+
+    # step options
+    defaultConfiguration[CONF_STEP_STRUCTURE_KEY] = CONF_STEP_STRUCTURE_DEFAULT
+
     # export directory options
     defaultConfiguration[CONF_EXPORT_DIRECTORY_KEY] = CONF_EXPORT_DIRECTORY_DEFAULT
 
     defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY] = CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_DEFAULT
     defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY] = CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_DEFAULT
 
-    # stl options
-    defaultConfiguration[CONF_STL_STRUCTURE_KEY] = CONF_STL_STRUCTURE_DEFAULT
-    defaultConfiguration[CONF_STL_REFINEMENT_KEY] = CONF_STL_REFINEMENT_DEFAULT
+    defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY] = CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_DEFAULT
 
     # filename options
     defaultConfiguration[CONF_FILENAME_ADD_PROJECT_NAME_KEY] = CONF_FILENAME_ADD_PROJECT_NAME_DEFAULT
@@ -42,15 +50,23 @@ def createDefaultConfiguration():
     return defaultConfiguration
 
 def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpdates):
-    # do not show in the configuration editor
+    # add selection command
+    addGroup(inputs, UI_EXPORT_OPTIONS_GROUP_ID, UI_EXPORT_OPTIONS_GROUP_NAME, True)
+
     if not configurationOnly:
-        # add selection command
-        addSelectionCommandToInputs(inputs, UI_EXPORT_BODIES_SELECTION_ID, UI_EXPORT_BODIES_SELECTION_NAME, UI_SELECTION_BODIES_FILTER_VALUES)
+        # do not show in the configuration editor
+        addSelectionCommandToInputs(UI_EXPORT_OPTIONS_GROUP_ID, UI_EXPORT_OPTIONS_BODIES_SELECTION_ID, UI_EXPORT_OPTIONS_BODIES_SELECTION_NAME, UI_EXPORT_OPTIONS_BODIES_SELECTION_VALUES)
+
+    addCheckBoxDropDown(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_TYPE_KEY, UI_EXPORT_OPTIONS_TYPE_NAME, UI_EXPORT_OPTIONS_TYPE_VALUES, getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY))
 
     # stl export
     addGroup(inputs, UI_STL_OPTIONS_GROUP_ID, UI_STL_OPTIONS_GROUP_NAME, True)
     addCheckBoxDropDown(UI_STL_OPTIONS_GROUP_ID, CONF_STL_STRUCTURE_KEY, UI_STL_STRUCTURE_NAME, UI_STL_STRUCTURE_VALUES, getConfiguration(CONF_STL_STRUCTURE_KEY))
     addCheckBoxDropDown(UI_STL_OPTIONS_GROUP_ID, CONF_STL_REFINEMENT_KEY, UI_STL_REFINEMENT_NAME, UI_STL_REFINEMENT_VALUES, getConfiguration(CONF_STL_REFINEMENT_KEY))
+
+    # step export
+    addGroup(inputs, UI_STEP_OPTIONS_GROUP_ID, UI_STEP_OPTIONS_GROUP_NAME, True)
+    addCheckBoxDropDown(UI_STEP_OPTIONS_GROUP_ID, CONF_STEP_STRUCTURE_KEY, UI_STEP_STRUCTURE_NAME, UI_STEP_STRUCTURE_VALUES, getConfiguration(CONF_STEP_STRUCTURE_KEY))
 
     # export directory
     addGroup(inputs, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME, True)
@@ -59,6 +75,7 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
 
     addBoolInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY, UI_EXPORT_DIRECTORY_ADD_PROJECT_NAME_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY))
     addBoolInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY, UI_EXPORT_DIRECTORY_ADD_DESIGN_NAME_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY))
+    addBoolInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY, UI_EXPORT_DIRECTORY_EXPORT_TYPE_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY))
 
     # filename options
     addGroup(inputs, UI_FILENAME_OPTIONS_GROUP_ID, UI_FILENAME_OPTIONS_GROUP_NAME, True)
@@ -110,7 +127,31 @@ def getExportDirectory():
 
         return exportDirecotry, False
 
-def checkDataIntegrity(inputs):
+def validateCheckBoxDropDown(inputs, confKey, confDefaults):
+    if len(getConfiguration(confKey)) == 0:
+        values = getDefaultConfiguration(confKey, confDefaults)
+
+        logger.warning("No items selected for %s. Resetting to defaults %s", confKey, values)
+
+        selectDropDownItemByNames(inputs, confKey, values, True)
+        setConfiguration(confKey, values)
+
+def validateConfiguration(inputs):
+    # check if any export type is selected
+    validateCheckBoxDropDown(inputs, CONF_EXPORT_OPTIONS_TYPE_KEY, CONF_EXPORT_OPTIONS_TYPE_DEFAULT)
+
+    # check stl settings
+    if UI_EXPORT_TYPES_STL_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
+        # check if any export structure is selected
+        validateCheckBoxDropDown(inputs, CONF_STL_STRUCTURE_KEY, CONF_STL_STRUCTURE_DEFAULT)
+        # check if any refinement is selected
+        validateCheckBoxDropDown(inputs, CONF_STL_REFINEMENT_KEY, CONF_STL_REFINEMENT_DEFAULT)
+
+    # check step settings
+    if UI_EXPORT_TYPES_STEP_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
+        # check if any export structure is selected
+        validateCheckBoxDropDown(inputs, CONF_STEP_STRUCTURE_KEY, CONF_STEP_STRUCTURE_DEFAULT)
+
     # check if export directory is defined
     while not getConfiguration(CONF_EXPORT_DIRECTORY_KEY):
         logger.warning('Exportdirecotry is not set. Opening requestor')
@@ -120,6 +161,7 @@ def checkDataIntegrity(inputs):
 
         stringInput = inputs.itemById(CONF_EXPORT_DIRECTORY_KEY)
         stringInput.value = exportPath
+
 
 def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
     exportObjects = []
@@ -216,6 +258,9 @@ def getExportName(projectName, designName, occurrenceFullPathName, bodyName, for
     if getConfiguration(CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY):
         exportDirectory = exportDirectory + removeVersionTag(designName) + "/"
 
+    if getConfiguration(CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY):
+        exportDirectory = exportDirectory + suffix + "/"
+
     os.makedirs(exportDirectory, 0o777, True)
 
     elementSeparator = getConfiguration(CONF_FILENAME_ELEMENT_SEPERATOR_KEY)
@@ -246,7 +291,7 @@ def getExportName(projectName, designName, occurrenceFullPathName, bodyName, for
         nameElements.append(bodyName)
 
     # add refinement name
-    if refinementName and suffix == "stl":
+    if refinementName and suffix == UI_EXPORT_TYPES_STL_VALUE:
         nameElements.append(refinementName.lower())
 
     # assemble suffix name
@@ -328,6 +373,32 @@ def copyDesignToExportDocument(exportObjects):
 
     return document, rootComponent
 
+def exportStepAsOneFile(projectName, designName, rootComponent, ao):
+    # create filename
+    fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_STEP_VALUE)
+
+    # get stl export options
+    stepExportOptions = ao.export_manager.createSTEPExportOptions(fullFileName, rootComponent)
+
+    # export design as single stl file
+    exportResult = ao.export_manager.execute(stepExportOptions)
+
+def exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao):
+    # iterate over list of occurrences
+    for exportObject in exportObjects:
+        # check if component is unique
+        if not exportObject.get(REC_IS_UNIQUE):
+            continue
+
+        # create filename
+        fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, "", UI_EXPORT_TYPES_STEP_VALUE)
+
+        # get stl export options
+        stepExportOptions = ao.export_manager.createSTEPExportOptions(fullFileName, exportObject.get(REC_OCCURRENCE).component)
+
+        # export design as single stl file
+        exportResult = ao.export_manager.execute(stepExportOptions)
+
 def getStlExportOptions(ao, geometry, fullFileName, refinement):
     # get stl export options
     stlExportOptions = ao.export_manager.createSTLExportOptions(geometry, fullFileName)
@@ -359,7 +430,7 @@ def exportStlAsOneFile(projectName, designName, rootComponent, ao):
             refinementName = refinement
 
         # create filename
-        fullFileName = getExportName(projectName, designName, "", "", True, True, refinementName, "stl")
+        fullFileName = getExportName(projectName, designName, "", "", True, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
 
         # get stl export options
         stlExportOptions = getStlExportOptions(ao, rootComponent, fullFileName, refinement)
@@ -384,7 +455,7 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
             # iterate over list of bodies
             for body in exportObject.get(REC_BODIES):
                 # create filename
-                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, "stl")
+                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
 
                 # get stl export options
                 stlExportOptions = getStlExportOptions(ao, body, fullFileName, refinement)
@@ -412,7 +483,7 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
             # iterate over list of bodies
             for body in tmpExportObject.get(REC_BODIES):
                 # create filename but remove occurrence id unless they're part of the occurrence name in the temporary document
-                fullFileName = getExportName(projectName, designName, tmpExportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, "stl")
+                fullFileName = getExportName(projectName, designName, tmpExportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
 
                 # get stl export options
                 stlExportOptions = getStlExportOptions(ao, body, fullFileName, refinement)
@@ -453,7 +524,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             setConfiguration(changed_input.id, input_values[changed_input.id])
 
         # check if the integrity between configured parameters are still valid
-        checkDataIntegrity(inputs)
+        validateConfiguration(inputs)
 
     def on_execute(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, args, input_values):
         try:
@@ -478,20 +549,31 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY) or UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
                 logger.debug("getting list of export objects")
 
-                exportObjects = getExportObjects(rootComponent, input_values[UI_EXPORT_BODIES_SELECTION_ID])
+                exportObjects = getExportObjects(rootComponent, input_values[UI_EXPORT_OPTIONS_BODIES_SELECTION_ID])
 
                 logger.debug("%s occurrences found", len(exportObjects))
 
-            # export design as one stl file
-            if UI_STRUCTURE_ONE_FILE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
-                exportStlAsOneFile(projectName, designName, rootComponent, ao)
+            if UI_EXPORT_TYPES_STEP_VALUE in getSelectedDropDownItems(inputs, CONF_EXPORT_OPTIONS_TYPE_KEY):
+                # export design as one step file
+                if UI_STRUCTURE_ONE_FILE_VALUE in getSelectedDropDownItems(inputs, CONF_STEP_STRUCTURE_KEY):
+                    exportStepAsOneFile(projectName, designName, rootComponent, ao)
 
-            if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
-                exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName, ao)
+                # export each component as individual step files
+                if UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STEP_STRUCTURE_KEY):
+                    exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao)
 
-            # export each body in the document as individual stl files
-            if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
-                exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName, ao)
+            if UI_EXPORT_TYPES_STL_VALUE in getSelectedDropDownItems(inputs, CONF_EXPORT_OPTIONS_TYPE_KEY):
+                # export design as one stl file
+                if UI_STRUCTURE_ONE_FILE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
+                    exportStlAsOneFile(projectName, designName, rootComponent, ao)
+
+                # export each body in component as individual stl files
+                if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
+                    exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName, ao)
+
+                # export each body in occurrence as individual stl files
+                if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
+                    exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName, ao)
 
             # write modified configuration
             writeConfiguration(ao.document, CONF_PROJECT_ATTRIBUTE_GROUP, CONF_PROJECT_ATTRIBUTE_KEY)
@@ -516,6 +598,9 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             # load or create configuration
             initializeConfiguration(ao.document, CONF_PROJECT_ATTRIBUTE_GROUP, CONF_PROJECT_ATTRIBUTE_KEY, createDefaultConfiguration())
 
+            #print configuration to the log file
+            logConfiguration()
+
             # check for new version
             isCheckOverdue = checkForUpdates()
             logger.debug("isCheckOverdue %s", isCheckOverdue)
@@ -525,7 +610,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             initializeUi(inputs, False, isCheckOverdue)
 
             # check if the integrity between configured parameters are still valid
-            checkDataIntegrity(inputs)
+            validateConfiguration(inputs)
 
         except AttributeError as err:
             logger.error("--------------------------------------------------------------------------------")

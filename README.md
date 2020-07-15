@@ -9,10 +9,14 @@
     - [Basic workflow](#basic-workflow)
   - [Default Configuration Command](#default-configuration-command)
     - [STL Options](#stl-options)
-      - [Structure](#structure)
-      - [Refinement](#refinement)
+      - [STL Structure](#stl-structure)
+      - [STL Refinement](#stl-refinement)
+    - [STEP Options](#step-options)
+      - [STEP Structure](#step-structure)
     - [Export Directory Options](#export-directory-options)
     - [Filename Options](#filename-options)
+      - [Prefix](#prefix)
+      - [Filter](#filter)
     - [Version Info](#version-info)
     - [Elements Of The Export Name](#elements-of-the-export-name)
   - [Installation](#installation)
@@ -54,17 +58,17 @@ The behavior of STL export is configured in this section. Following options are 
 
 ![StlOptions](doc/stlOptions.png)
 
-#### Structure
+#### STL Structure
 
 Structures are used to define the granularity of exports.
 
 Option |Description
 ---------|---------
 One File | This structure corresponds to the built-in one and creates one file containing all visible BRep bodies.
-One File Per Body In Component | A component can have many occurrences in one design. This option will export each component only once regardless of the number of occurrences. It creates one file per body in a component. Due to this filter, it will not keep the original position in the 3d space. This structure is e.g useful if a design reuses components and wants to keep the number of exported files small.
-One File Per Body In Occurrence | This option corresponds to the integrated *One File Per Body*, but does not create double exports of the same body. It maintains the positions of the bodies at different occurrences. This structure is useful if the stl files are reassembled at a later point - e.g. in a slicer for multi color / multi material 3d prints.
+One File Per Body In Component | A component can have many occurrences in one design. This option will export each component only once regardless of the number of occurrences. It creates one file per body (or per selected body) in a component. Due to this filter, it will not keep the original position in the 3d space. This structure is e.g useful if a design reuses components and wants to keep the number of exported files small.
+One File Per Body In Occurrence | This option corresponds to the integrated *One File Per Body*, but does not create double exports of the same body and works with selected bodis, too. It maintains the positions of the bodies at different occurrences. This structure is useful if the stl files are reassembled at a later point - e.g. in a slicer for multi color / multi material 3d prints.
 
-#### Refinement
+#### STL Refinement
 
 Refinements can roughly be described as the mesh density of an export. Following refinements are pre-configured.
 
@@ -76,6 +80,17 @@ High | This option corresponds to the built-in one.
 Ultra | This one is based on the built-in *High* settings, but sets surface deviation to 0.000508mm and normal deviation to 15. This results in a much finer mesh and is great for very detailed geometry or large, roundish objects.
 
 One to many structures or refinements can be selected.
+
+### STEP Options
+
+The granularity of STEP exports is configured in this section.
+
+#### STEP Structure
+
+Option |Description
+---------|---------
+One File | This structure corresponds to exporting the root component with the built-in function and creates one file containing all visible BRep bodies.
+One File Per Component | This function corresponds to exporting a selected component but will create one file per component or selected component.
 
 ### Export Directory Options
 
@@ -93,7 +108,8 @@ Label | Description | Example
 ---------|----------|--------
 Export Directory | Target directory of the export or base directory of all exports | D:/Google Drive/3d Printing/Fusion 360
 Add Project Name | If checked the project name will be added to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest
-Add Design Name | If checked the design name will be added to the export path | D:/Google Drive/3d Printing/Fusion 360/01-Default
+Add Design Name | If checked the design name will be added to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest/01-Default
+Add Export Type | If checked the name of the export type (stl, step) to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest/01-Default/step
 
 ### Filename Options
 
@@ -101,17 +117,32 @@ The elements of a filename and how they're connected are configured in this sect
 
 ![Filename Options](doc/filenameOptions.png)
 
+#### Prefix
+
+Prefix are used for better grouping of exports.
+
 Label | Options | Description
 ---------|----------|---------
 Add Project Name |  | Adds the project name as a prefix to the filename.
 Add Design Name |  | Adds the design name as a prefix to the filename. This is useful if a project contains several designs and the design name is not part of the export directory (more [here](Export-Directory))
-Remove Version Tags |  | Removes the version tags (e.g. " v12") from the design name and linked components.
-Element Separator Tags | . | This options uses a "." (dot) as the separator.
-Element Separator Tags | - | This options uses a "-" (dash) as the separator.
-Element Separator Tags | \_ | This options uses a "_" (underscore) as the separator.
-Occurrence ID Separator | . | This options uses a "." (dot) as the separator.
-Occurrence ID Separator | - | This options uses a "-" (dash) as the separator.
-Occurrence ID Separator | \_ | This options uses a "_" (underscore) as the separator.
+
+#### Filter 
+
+Filters are used to make filenames more stable, readable or to remove characters that are not supported by the filesystem.
+
+Label | Options | Description | Example
+---------|----------|----------|---------
+Remove Version Tags |  | Removes the version tags from the design name and linked components. | 01-Default v5 -> 01-Default
+Element Separator Tags | . | This options uses a "." (dot) as the separator. | 01-Default.Component.Component.BodyName
+Element Separator Tags | - | This options uses a "-" (dash) as the separator. | 01-Default-Component-Component-BodyName
+Element Separator Tags | \_ | This options uses a "_" (underscore) as the separator. | 01-Default\_Component\_Component\_BodyName
+Occurrence ID Separator | . | This options uses a "." (dot) as the separator. | 01-Default.Component.1.Component.2.BodyName
+Occurrence ID Separator | - | This options uses a "-" (dash) as the separator. | 01-Default-Component-1.Component-2.BodyName
+Occurrence ID Separator | \_ | This options uses a "_" (underscore) as the separator. | 01-Default\_Component\_1.Component\_2.BodyName
+
+The default setting uses the dot for the element separator and the underscore for the occurrence ID separator and the resulting filenames will look like this:
+
+>01-Default.blocks_1.deep_1.deeper_1.deepest_1.block_5.Body1.stl
 
 ### Version Info
 
@@ -165,6 +196,7 @@ This add-in is developed and tested on a Microsoft® Windows® 10 system but sho
 Version | Date | Description
 ---------|----------|---------
 0.1.0 | 09.07.2020 | Initial version that includes a defaults editor and stl exports that supports different structures and refinements
+0.2.0 | 15.07.2020 | Main enhancement is the addition of STEP exports. Additionally basic configuration validation is added.
 
 ## Known Issus
 
@@ -173,14 +205,17 @@ Version | Date | Description
 
 ## Wishlist
 
-- [x] Defaults editor
-- [ ] Export of selected occurrences
-- [x] Export of selected bodies
-- [ ] STEP Exports
-- [ ] F3D Exports
-- [ ] Special refinement for selected bodies that is stored in the project configuration
-- [ ] Export of projects
-- [ ] Selection of stl format (text / binary)
-- [ ] Custom refinement
-- [ ] Filename filter to replace spaces with configurable character
-- [ ] Configuration validation
+- [x] Defaults editor.
+- [ ] Export of selected occurrences.
+- [x] Export of selected bodies.
+- [x] STEP Exports.
+- [ ] F3D Exports.
+- [ ] Special refinement for selected bodies that is stored in the project configuration.
+- [ ] Export of projects.
+- [ ] Selection of stl format (text / binary).
+- [ ] Custom refinement.
+- [ ] Filename filter to replace spaces with configurable character.
+- [x] Configuration validation.
+- [ ] Export filter that excludes linked components.
+- [ ] Show export summary message after export.
+- [ ] Store folded / unfolded state of groups

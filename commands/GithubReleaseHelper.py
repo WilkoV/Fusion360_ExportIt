@@ -26,6 +26,8 @@ def jsonDateConverter(o):
 def writeToVersionCheckFile(lastCheck, lastCheckedFilename):
     with open(lastCheckedFilename, 'w') as jsonOutFile:
         json.dump(lastCheck, jsonOutFile, default = jsonDateConverter, indent=4)
+        jsonOutFile.flush()
+        jsonOutFile.close()
 
     logger.debug("last check file created / updated")
 

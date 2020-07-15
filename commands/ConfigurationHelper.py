@@ -30,8 +30,25 @@ def writeDefaultConfiguration():
     with open(os.path.join(getConfigurationDirectory(), CONF_DEFAULT_CONFIG_NAME), 'w') as jsonOutFile:
         # write pretty printed json file
         json.dump(defaultConfiguration, jsonOutFile, indent=4)
+        jsonOutFile.flush()
+        jsonOutFile.close()
 
     logger.info('Configuration written to %s', CONF_DEFAULT_CONFIG_NAME)
+
+def getDefaultConfiguration(key, staticValue):
+    global defaultConfiguration
+
+    # get default value
+    value = defaultConfiguration.get(key)
+    logger.debug("default value: %s", value)
+
+    # check if default is available
+    if not value:
+        # use static value because default configuration is broken
+        value = staticValue
+        logger.debug("static value: %s", value)
+
+    return value
 
 def writeConfiguration(document, group, key):
     global editDefaultsMode
@@ -97,11 +114,13 @@ def resetConfiguration():
     global defaultConfiguration
     global configurationChanged
     global projectConfiguration
+    global editDefaultsMode
 
     # reset data from last run
-    defaultConfiguration = {}
-    projectConfiguration = {}
-    configurationChanged = False
+    defaultConfiguration = {}           # contains the default configuration
+    projectConfiguration = {}           # changed parameters in comperasion to the default configuration (so only the delta)
+    configurationChanged = False        # indicator if the configuration has changed
+    editDefaultsMode = False            # true if only defaults should be edited otherwise false
 
 def initializeConfiguration(document, attributeGroup, attributeKey, generatedConfiguration):
     # configuration dictionaries
