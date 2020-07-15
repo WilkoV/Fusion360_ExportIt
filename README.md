@@ -197,6 +197,8 @@ Version | Date | Description
 ---------|----------|---------
 0.1.0 | 09.07.2020 | Initial version that includes a defaults editor and stl exports that supports different structures and refinements
 0.2.0 | 15.07.2020 | Main enhancement is the addition of STEP exports. Additionally basic configuration validation is added.
+TODO 0.3.0 | XX.XX.2020 | XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 
 ## Known Issus
 
@@ -209,7 +211,7 @@ Version | Date | Description
 - [ ] Export of selected occurrences.
 - [x] Export of selected bodies.
 - [x] STEP Exports.
-- [ ] F3D Exports.
+- [x] F3D Exports.
 - [ ] Special refinement for selected bodies that is stored in the project configuration.
 - [ ] Export of projects.
 - [ ] Selection of stl format (text / binary).
