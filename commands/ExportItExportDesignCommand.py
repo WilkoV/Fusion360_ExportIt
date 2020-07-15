@@ -5,7 +5,7 @@ import os, re, json
 from apper import AppObjects
 from .BaseLogger import logger
 from .UiHelper import addGroup, addStringInputToGroup, addBoolInputToGroup, addCheckBoxDropDown, selectDropDownItemByNames, getSelectedDropDownItems, addTextListDropDown, getSelectedDropDownItem, addSelectionCommandToInputs, addIntergerInputSpinnerToGroup
-from .ConfigurationHelper import initializeConfiguration, getConfiguration, setConfiguration, writeConfiguration, showSaveConfigWarning, resetConfiguration, logConfiguration
+from .ConfigurationHelper import initializeConfiguration, getDefaultConfiguration, getConfiguration, setConfiguration, writeConfiguration, showSaveConfigWarning, resetConfiguration, logConfiguration
 from .GithubReleaseHelper import checkForUpdates, getGithubReleaseInformation, showReleaseNotes
 from .Statics import *
 
@@ -50,12 +50,14 @@ def createDefaultConfiguration():
     return defaultConfiguration
 
 def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpdates):
-    # do not show in the configuration editor
+    # add selection command
+    addGroup(inputs, UI_EXPORT_OPTIONS_GROUP_ID, UI_EXPORT_OPTIONS_GROUP_NAME, True)
+
     if not configurationOnly:
-        # add selection command
-        addGroup(inputs, UI_EXPORT_OPTIONS_GROUP_ID, UI_EXPORT_OPTIONS_GROUP_NAME, True)
+        # do not show in the configuration editor
         addSelectionCommandToInputs(UI_EXPORT_OPTIONS_GROUP_ID, UI_EXPORT_OPTIONS_BODIES_SELECTION_ID, UI_EXPORT_OPTIONS_BODIES_SELECTION_NAME, UI_EXPORT_OPTIONS_BODIES_SELECTION_VALUES)
-        addCheckBoxDropDown(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_TYPE_KEY, UI_EXPORT_OPTIONS_TYPE_NAME, UI_EXPORT_OPTIONS_TYPE_VALUES, getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY))
+
+    addCheckBoxDropDown(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_TYPE_KEY, UI_EXPORT_OPTIONS_TYPE_NAME, UI_EXPORT_OPTIONS_TYPE_VALUES, getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY))
 
     # stl export
     addGroup(inputs, UI_STL_OPTIONS_GROUP_ID, UI_STL_OPTIONS_GROUP_NAME, True)
@@ -125,7 +127,31 @@ def getExportDirectory():
 
         return exportDirecotry, False
 
-def checkDataIntegrity(inputs):
+def validateCheckBoxDropDown(inputs, confKey, confDefaults):
+    if len(getConfiguration(confKey)) == 0:
+        values = getDefaultConfiguration(confKey, confDefaults)
+
+        logger.warning("No items selected for %s. Resetting to defaults %s", confKey, values)
+
+        selectDropDownItemByNames(inputs, confKey, values, True)
+        setConfiguration(confKey, values)
+
+def validateConfiguration(inputs):
+    # check if any export type is selected
+    validateCheckBoxDropDown(inputs, CONF_EXPORT_OPTIONS_TYPE_KEY, CONF_EXPORT_OPTIONS_TYPE_DEFAULT)
+
+    # check stl settings
+    if UI_EXPORT_TYPES_STL_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
+        # check if any export structure is selected
+        validateCheckBoxDropDown(inputs, CONF_STL_STRUCTURE_KEY, CONF_STL_STRUCTURE_DEFAULT)
+        # check if any refinement is selected
+        validateCheckBoxDropDown(inputs, CONF_STL_REFINEMENT_KEY, CONF_STL_REFINEMENT_DEFAULT)
+
+    # check step settings
+    if UI_EXPORT_TYPES_STEP_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
+        # check if any export structure is selected
+        validateCheckBoxDropDown(inputs, CONF_STEP_STRUCTURE_KEY, CONF_STEP_STRUCTURE_DEFAULT)
+
     # check if export directory is defined
     while not getConfiguration(CONF_EXPORT_DIRECTORY_KEY):
         logger.warning('Exportdirecotry is not set. Opening requestor')
@@ -135,6 +161,7 @@ def checkDataIntegrity(inputs):
 
         stringInput = inputs.itemById(CONF_EXPORT_DIRECTORY_KEY)
         stringInput.value = exportPath
+
 
 def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
     exportObjects = []
@@ -497,7 +524,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             setConfiguration(changed_input.id, input_values[changed_input.id])
 
         # check if the integrity between configured parameters are still valid
-        checkDataIntegrity(inputs)
+        validateConfiguration(inputs)
 
     def on_execute(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, args, input_values):
         try:
@@ -571,6 +598,9 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             # load or create configuration
             initializeConfiguration(ao.document, CONF_PROJECT_ATTRIBUTE_GROUP, CONF_PROJECT_ATTRIBUTE_KEY, createDefaultConfiguration())
 
+            #print configuration to the log file
+            logConfiguration()
+
             # check for new version
             isCheckOverdue = checkForUpdates()
             logger.debug("isCheckOverdue %s", isCheckOverdue)
@@ -580,7 +610,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             initializeUi(inputs, False, isCheckOverdue)
 
             # check if the integrity between configured parameters are still valid
-            checkDataIntegrity(inputs)
+            validateConfiguration(inputs)
 
         except AttributeError as err:
             logger.error("--------------------------------------------------------------------------------")

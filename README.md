@@ -193,12 +193,10 @@ This add-in is developed and tested on a Microsoft® Windows® 10 system but sho
 
 ## What's New
 
-TODO Add whats new information
 Version | Date | Description
 ---------|----------|---------
 0.1.0 | 09.07.2020 | Initial version that includes a defaults editor and stl exports that supports different structures and refinements
-0.2.0 | XX.XX.2020 | TODO Add date and description
-
+0.2.0 | 15.07.2020 | Main enhancement is the addition of STEP exports. Additionally basic configuration validation is added.
 
 ## Known Issus
 
@@ -217,7 +215,7 @@ Version | Date | Description
 - [ ] Selection of stl format (text / binary).
 - [ ] Custom refinement.
 - [ ] Filename filter to replace spaces with configurable character.
-- [ ] Configuration validation.
+- [x] Configuration validation.
 - [ ] Export filter that excludes linked components.
 - [ ] Show export summary message after export.
-- [ ] Store folded / unfolded state of groups 
+- [ ] Store folded / unfolded state of groups

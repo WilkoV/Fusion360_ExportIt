@@ -3,7 +3,7 @@ import apper
 
 from apper import AppObjects
 from .BaseLogger import logger
-from .ExportItExportDesignCommand import initializeConfiguration, initializeUi, createDefaultConfiguration, checkDataIntegrity
+from .ExportItExportDesignCommand import initializeConfiguration, initializeUi, createDefaultConfiguration, validateConfiguration
 from .UiHelper import getSelectedDropDownItems
 from .ConfigurationHelper import writeDefaultConfiguration, logConfiguration, resetConfiguration, setDefaultConfiguration
 from .GithubReleaseHelper import checkForUpdates, getGithubReleaseInformation, showReleaseNotes
@@ -38,7 +38,7 @@ class ExportItEditDefaultsCommand(apper.Fusion360CommandBase):
             setDefaultConfiguration(changed_input.id, input_values[changed_input.id])
 
         # check if the integrity between configured parameters are still valid
-        checkDataIntegrity(inputs)
+        validateConfiguration(inputs)
 
     def on_execute(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, args, input_values):
         try:
@@ -79,7 +79,7 @@ class ExportItEditDefaultsCommand(apper.Fusion360CommandBase):
             initializeUi(inputs, True, isCheckOverdue)
 
             # check if ui values are valid
-            checkDataIntegrity(inputs)
+            validateConfiguration(inputs)
 
         except:
             logger.error("--------------------------------------------------------------------------------")
