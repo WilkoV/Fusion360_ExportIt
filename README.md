@@ -221,3 +221,4 @@ TODO 0.3.0 | XX.XX.2020 | XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 - [ ] Export filter that excludes linked components.
 - [ ] Show export summary message after export.
 - [ ] Store folded / unfolded state of groups
+- [x] Show progress dialog

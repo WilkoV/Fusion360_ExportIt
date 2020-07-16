@@ -9,6 +9,8 @@ from .ConfigurationHelper import initializeConfiguration, getDefaultConfiguratio
 from .GithubReleaseHelper import checkForUpdates, getGithubReleaseInformation, showReleaseNotes
 from .Statics import *
 
+progressDialog = adsk.core.ProgressDialog.cast(None)
+
 def createDefaultConfiguration():
     logger.debug("creating default configuration")
 
@@ -247,6 +249,51 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
 
     return exportObjects
 
+def totalNumberOfObjects(exportObjects):
+    components = 0
+    componentBodies = 0
+    occurrenceBodies = 0
+    total = 0
+
+    for exportObject in exportObjects:
+        if exportObject.get(REC_IS_UNIQUE):
+            components = components + 1
+            componentBodies =  componentBodies + len(exportObject.get(REC_BODIES))
+
+        occurrenceBodies =  occurrenceBodies + len(exportObject.get(REC_BODIES))
+
+    if UI_EXPORT_TYPES_F3D_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
+        if UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_F3D_STRUCTURE_KEY):
+            total = total + 1
+
+        if UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_F3D_STRUCTURE_KEY):
+            total = total + components
+
+    if UI_EXPORT_TYPES_STEP_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
+        if UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY):
+            total = total + 1
+
+        if UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY):
+            total = total + components
+
+    for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
+        if UI_EXPORT_TYPES_STL_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
+            if UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
+                total = total + 1
+
+            if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
+                total = total + componentBodies
+
+            if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
+                total = total + occurrenceBodies
+
+    logger.debug("components: %s", components)
+    logger.debug("componentBodies: %s", componentBodies)
+    logger.debug("occurrenceBodies: %s", occurrenceBodies)
+    logger.debug("total: %s", total)
+
+    return total
+
 def removeVersionTag(name):
     if not getConfiguration(CONF_FILENAME_REMOVE_VERSION_TAGS_KEY):
         return name
@@ -381,6 +428,8 @@ def copyDesignToExportDocument(exportObjects):
     return document, rootComponent
 
 def exportStepAsOneFile(projectName, designName, rootComponent, ao):
+    global progressDialog
+
     # create filename
     fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_STEP_VALUE)
 
@@ -389,8 +438,11 @@ def exportStepAsOneFile(projectName, designName, rootComponent, ao):
 
     # export design as single step file
     exportResult = ao.export_manager.execute(stepExportOptions)
+    progressDialog.progressValue = progressDialog.progressValue + 1
 
 def exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao):
+    global progressDialog
+
     # iterate over list of occurrences
     for exportObject in exportObjects:
         # check if component is unique
@@ -405,8 +457,11 @@ def exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao):
 
         # export component as single step file
         exportResult = ao.export_manager.execute(stepExportOptions)
+        progressDialog.progressValue = progressDialog.progressValue + 1
 
 def exportF3dAsOneFile(projectName, designName, rootComponent, ao):
+    global progressDialog
+
     # create filename
     fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_F3D_VALUE)
 
@@ -415,8 +470,11 @@ def exportF3dAsOneFile(projectName, designName, rootComponent, ao):
 
     # export design as single f3d file
     exportResult = ao.export_manager.execute(f3dExportOptions)
+    progressDialog.progressValue = progressDialog.progressValue + 1
 
 def exportF3dAsOneFilePerComponent(exportObjects, projectName, designName, ao):
+    global progressDialog
+
     # iterate over list of occurrences
     for exportObject in exportObjects:
         # check if component is unique
@@ -431,6 +489,7 @@ def exportF3dAsOneFilePerComponent(exportObjects, projectName, designName, ao):
 
         # export component as single f3d file
         exportResult = ao.export_manager.execute(f3dExportOptions)
+        progressDialog.progressValue = progressDialog.progressValue + 1
 
 def getStlExportOptions(ao, geometry, fullFileName, refinement):
     # get stl export options
@@ -455,8 +514,13 @@ def getStlExportOptions(ao, geometry, fullFileName, refinement):
     return stlExportOptions
 
 def exportStlAsOneFile(projectName, designName, rootComponent, ao):
+    global progressDialog
+
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
-        # set refinement name
+        # cancel loop if user canceld the dialog
+        if progressDialog.wasCancelled:
+            break
+
         refinementName = ""
         if len(getConfiguration(CONF_STL_REFINEMENT_KEY)) > 1:
             # set refinement name if more than one refinement is defined to keep the exportname unique
@@ -470,9 +534,16 @@ def exportStlAsOneFile(projectName, designName, rootComponent, ao):
 
         # export design as single stl file
         exportResult = ao.export_manager.execute(stlExportOptions)
+        progressDialog.progressValue = progressDialog.progressValue + 1
 
 def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName, ao):
+    global progressDialog
+
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
+        # cancel loop if user canceld the dialog
+        if progressDialog.wasCancelled:
+            break
+
         # set refinement name
         refinementName = ""
         if len(getConfiguration(CONF_STL_REFINEMENT_KEY)) > 1:
@@ -481,12 +552,20 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
 
         # iterate over list of occurrences
         for exportObject in exportObjects:
+            # cancel loop if user canceld the dialog
+            if progressDialog.wasCancelled:
+                break
+
             # check if component is unique
             if not exportObject.get(REC_IS_UNIQUE):
                 continue
 
             # iterate over list of bodies
             for body in exportObject.get(REC_BODIES):
+                # cancel loop if user canceld the dialog
+                if progressDialog.wasCancelled:
+                    break
+
                 # create filename
                 fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
 
@@ -495,8 +574,11 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
 
                 # export body as single stl file
                 exportResult = ao.export_manager.execute(stlExportOptions)
+                progressDialog.progressValue = progressDialog.progressValue + 1
 
 def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName, ao):
+    global progressDialog
+
     # copy exportObjects into a temporary document and convert all occurrences into unique components.
     tmpDocument, tmpRootComponent = copyDesignToExportDocument(exportObjects)
 
@@ -505,7 +587,11 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
 
     # generate exports for each selected refinement
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
+        # cancel loop if user canceld the dialog
+        if progressDialog.wasCancelled:
+            break
         # set refinement name
+
         refinementName = ""
         if len(getConfiguration(CONF_STL_REFINEMENT_KEY)) > 1:
             # set refinement name if more than one refinement is defined to keep the exportname unique
@@ -513,8 +599,16 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
 
         # iterate over list of occurrences
         for tmpExportObject in tmpExportObjects:
+            # cancel loop if user canceld the dialog
+            if progressDialog.wasCancelled:
+                break
+
             # iterate over list of bodies
             for body in tmpExportObject.get(REC_BODIES):
+                # cancel loop if user canceld the dialog
+                if progressDialog.wasCancelled:
+                    break
+
                 # create filename but remove occurrence id unless they're part of the occurrence name in the temporary document
                 fullFileName = getExportName(projectName, designName, tmpExportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
 
@@ -523,6 +617,7 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
 
                 # export body as single stl file
                 exportResult = ao.export_manager.execute(stlExportOptions)
+                progressDialog.progressValue = progressDialog.progressValue + 1
 
 class ExportItExportDesignCommand(apper.Fusion360CommandBase):
     def on_preview(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, args, input_values):
@@ -573,54 +668,65 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             logger.info("Starting processing of %s - %s", projectName, designName)
             logger.info("--------------------------------------------------------------------------------")
 
-            #print configuration to the log file
+            # print configuration to the log file
             logConfiguration()
+
+            # create progress dialog
+            global progressDialog
+
+            progressDialog = ao.ui.createProgressDialog()
+            progressDialog.cancelButtonText = 'Cancel'
+            progressDialog.isBackgroundTranslucent = False
+            progressDialog.isCancelButtonShown = True
 
             # get list of bodies for the exports
             exportObjects = []
 
-            if (UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_F3D_STRUCTURE_KEY) or
-                UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STEP_STRUCTURE_KEY) or
-                UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY) or
-                UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY)):
+            if (UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_F3D_STRUCTURE_KEY) or
+                UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY) or
+                UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY) or
+                UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY)):
 
                 # get list of occurrences and bodies
                 logger.debug("getting list of export objects")
                 exportObjects = getExportObjects(rootComponent, input_values[UI_EXPORT_OPTIONS_BODIES_SELECTION_ID])
 
-            if UI_EXPORT_TYPES_F3D_VALUE in getSelectedDropDownItems(inputs, CONF_EXPORT_OPTIONS_TYPE_KEY):
-                logger.debug(" ------------------------")
+            # Show dialog
+            progressDialog.show('ExportIt', 'Exports created: %v of %m' , 0, totalNumberOfObjects(exportObjects), 1)
+
+            if not progressDialog.wasCancelled and UI_EXPORT_TYPES_F3D_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
                 # export design as one step file
-                if UI_STRUCTURE_ONE_FILE_VALUE in getSelectedDropDownItems(inputs, CONF_F3D_STRUCTURE_KEY):
-                    logger.debug(" ##########################")
+                if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_F3D_STRUCTURE_KEY):
                     exportF3dAsOneFile(projectName, designName, rootComponent, ao)
 
                 # export each component as individual step files
-                if UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_F3D_STRUCTURE_KEY):
-                    logger.debug(" ********************************")
+                if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_F3D_STRUCTURE_KEY):
                     exportF3dAsOneFilePerComponent(exportObjects, projectName, designName, ao)
 
-            if UI_EXPORT_TYPES_STEP_VALUE in getSelectedDropDownItems(inputs, CONF_EXPORT_OPTIONS_TYPE_KEY):
+            if  not progressDialog.wasCancelled and UI_EXPORT_TYPES_STEP_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
                 # export design as one step file
-                if UI_STRUCTURE_ONE_FILE_VALUE in getSelectedDropDownItems(inputs, CONF_STEP_STRUCTURE_KEY):
+                if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY):
                     exportStepAsOneFile(projectName, designName, rootComponent, ao)
 
                 # export each component as individual step files
-                if UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STEP_STRUCTURE_KEY):
+                if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY):
                     exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao)
 
-            if UI_EXPORT_TYPES_STL_VALUE in getSelectedDropDownItems(inputs, CONF_EXPORT_OPTIONS_TYPE_KEY):
+            if  not progressDialog.wasCancelled and UI_EXPORT_TYPES_STL_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
                 # export design as one stl file
-                if UI_STRUCTURE_ONE_FILE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
+                if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
                     exportStlAsOneFile(projectName, designName, rootComponent, ao)
 
                 # export each body in component as individual stl files
-                if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
+                if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
                     exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName, ao)
 
                 # export each body in occurrence as individual stl files
-                if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
+                if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
                     exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName, ao)
+
+            # hide progress dialog
+            progressDialog.hide()
 
             # write modified configuration
             writeConfiguration(ao.document, CONF_PROJECT_ATTRIBUTE_GROUP, CONF_PROJECT_ATTRIBUTE_KEY)
