@@ -28,6 +28,9 @@ def createDefaultConfiguration():
     # step options
     defaultConfiguration[CONF_STEP_STRUCTURE_KEY] = CONF_STEP_STRUCTURE_DEFAULT
 
+    # f3d options
+    defaultConfiguration[CONF_F3D_STRUCTURE_KEY] = CONF_F3D_STRUCTURE_DEFAULT
+
     # export directory options
     defaultConfiguration[CONF_EXPORT_DIRECTORY_KEY] = CONF_EXPORT_DIRECTORY_DEFAULT
 
@@ -67,6 +70,10 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
     # step export
     addGroup(inputs, UI_STEP_OPTIONS_GROUP_ID, UI_STEP_OPTIONS_GROUP_NAME, True)
     addCheckBoxDropDown(UI_STEP_OPTIONS_GROUP_ID, CONF_STEP_STRUCTURE_KEY, UI_STEP_STRUCTURE_NAME, UI_STEP_STRUCTURE_VALUES, getConfiguration(CONF_STEP_STRUCTURE_KEY))
+
+    # f3d export
+    addGroup(inputs, UI_F3D_OPTIONS_GROUP_ID, UI_F3D_OPTIONS_GROUP_NAME, True)
+    addCheckBoxDropDown(UI_F3D_OPTIONS_GROUP_ID, CONF_F3D_STRUCTURE_KEY, UI_F3D_STRUCTURE_NAME, UI_F3D_STRUCTURE_VALUES, getConfiguration(CONF_F3D_STRUCTURE_KEY))
 
     # export directory
     addGroup(inputs, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME, True)
@@ -377,10 +384,10 @@ def exportStepAsOneFile(projectName, designName, rootComponent, ao):
     # create filename
     fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_STEP_VALUE)
 
-    # get stl export options
+    # get step export options
     stepExportOptions = ao.export_manager.createSTEPExportOptions(fullFileName, rootComponent)
 
-    # export design as single stl file
+    # export design as single step file
     exportResult = ao.export_manager.execute(stepExportOptions)
 
 def exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao):
@@ -393,11 +400,37 @@ def exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao):
         # create filename
         fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, "", UI_EXPORT_TYPES_STEP_VALUE)
 
-        # get stl export options
+        # get step export options
         stepExportOptions = ao.export_manager.createSTEPExportOptions(fullFileName, exportObject.get(REC_OCCURRENCE).component)
 
-        # export design as single stl file
+        # export component as single step file
         exportResult = ao.export_manager.execute(stepExportOptions)
+
+def exportF3dAsOneFile(projectName, designName, rootComponent, ao):
+    # create filename
+    fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_F3D_VALUE)
+
+    # get f3d export options
+    f3dExportOptions = ao.export_manager.createFusionArchiveExportOptions(fullFileName, rootComponent)
+
+    # export design as single f3d file
+    exportResult = ao.export_manager.execute(f3dExportOptions)
+
+def exportF3dAsOneFilePerComponent(exportObjects, projectName, designName, ao):
+    # iterate over list of occurrences
+    for exportObject in exportObjects:
+        # check if component is unique
+        if not exportObject.get(REC_IS_UNIQUE):
+            continue
+
+        # create filename
+        fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, "", UI_EXPORT_TYPES_F3D_VALUE)
+
+        # get f3d export options
+        f3dExportOptions = ao.export_manager.createFusionArchiveExportOptions (fullFileName, exportObject.get(REC_OCCURRENCE).component)
+
+        # export component as single f3d file
+        exportResult = ao.export_manager.execute(f3dExportOptions)
 
 def getStlExportOptions(ao, geometry, fullFileName, refinement):
     # get stl export options
@@ -546,12 +579,26 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             # get list of bodies for the exports
             exportObjects = []
 
-            if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY) or UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
-                logger.debug("getting list of export objects")
+            if (UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_F3D_STRUCTURE_KEY) or
+                UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STEP_STRUCTURE_KEY) or
+                UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY) or
+                UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY)):
 
+                # get list of occurrences and bodies
+                logger.debug("getting list of export objects")
                 exportObjects = getExportObjects(rootComponent, input_values[UI_EXPORT_OPTIONS_BODIES_SELECTION_ID])
 
-                logger.debug("%s occurrences found", len(exportObjects))
+            if UI_EXPORT_TYPES_F3D_VALUE in getSelectedDropDownItems(inputs, CONF_EXPORT_OPTIONS_TYPE_KEY):
+                logger.debug(" ------------------------")
+                # export design as one step file
+                if UI_STRUCTURE_ONE_FILE_VALUE in getSelectedDropDownItems(inputs, CONF_F3D_STRUCTURE_KEY):
+                    logger.debug(" ##########################")
+                    exportF3dAsOneFile(projectName, designName, rootComponent, ao)
+
+                # export each component as individual step files
+                if UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_F3D_STRUCTURE_KEY):
+                    logger.debug(" ********************************")
+                    exportF3dAsOneFilePerComponent(exportObjects, projectName, designName, ao)
 
             if UI_EXPORT_TYPES_STEP_VALUE in getSelectedDropDownItems(inputs, CONF_EXPORT_OPTIONS_TYPE_KEY):
                 # export design as one step file

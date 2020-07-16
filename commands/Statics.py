@@ -16,7 +16,8 @@ UI_STL_REFINEMENT_MEDIUM_VALUE = 'Medium'                                       
 UI_STL_REFINEMENT_LOW_VALUE = 'Low'                                                         # refinement low
 UI_SELECTION_FILTER_BODY_VALUE = 'SolidBodies'                                              # Filter name Solid Body
 UI_EXPORT_TYPES_STL_VALUE = 'stl'                                                           # STL format
-UI_EXPORT_TYPES_STEP_VALUE = 'step'                                                          # STEP format
+UI_EXPORT_TYPES_STEP_VALUE = 'step'                                                         # STEP format
+UI_EXPORT_TYPES_F3D_VALUE = 'f3d'                                                           # F3D / Fusion Archive format
 
 # user interface - export options
 UI_EXPORT_OPTIONS_GROUP_ID = 'ExportOptions'                                                # group id that contains the export options UI elements
@@ -27,7 +28,8 @@ UI_EXPORT_OPTIONS_BODIES_SELECTION_NAME = 'Export Bodies'                       
 UI_EXPORT_OPTIONS_BODIES_SELECTION_VALUES = [UI_SELECTION_FILTER_BODY_VALUE]                # List of applied filters
 UI_EXPORT_OPTIONS_TYPE_NAME = 'Export Types'                                                # Name of the field that contains the export types
 UI_EXPORT_OPTIONS_TYPE_VALUES = [UI_EXPORT_TYPES_STL_VALUE,
-                                    UI_EXPORT_TYPES_STEP_VALUE]                              # Elements of the dropdown list
+                                    UI_EXPORT_TYPES_STEP_VALUE,
+                                    UI_EXPORT_TYPES_F3D_VALUE]                              # Elements of the dropdown list
 
 # user interface - stl options
 UI_STL_OPTIONS_GROUP_ID = 'StlOptions'                                                      # group id that contains the stl options UI elements
@@ -48,6 +50,14 @@ UI_STEP_OPTIONS_GROUP_NAME = 'STEP Options'                                     
 
 UI_STEP_STRUCTURE_NAME = 'Structure'                                                        # Export bodies as one file, file per body etc.
 UI_STEP_STRUCTURE_VALUES = [UI_STRUCTURE_ONE_FILE_VALUE,
+                            UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE]                      # Elements of the dropdown list
+
+# user interface - f3d options
+UI_F3D_OPTIONS_GROUP_ID = 'f3dOptions'                                                      # group id that contains the f3d options UI elements
+UI_F3D_OPTIONS_GROUP_NAME = 'F3D Options'                                                   # name of the group that contains the f3d options UI elements
+
+UI_F3D_STRUCTURE_NAME = 'Structure'                                                         # Export bodies as one file, file per body etc.
+UI_F3D_STRUCTURE_VALUES = [UI_STRUCTURE_ONE_FILE_VALUE,
                             UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE]                      # Elements of the dropdown list
 
 # user interface - export directory
@@ -84,11 +94,11 @@ CONF_DEFAULT_CONFIG_NAME = 'Defaults.json'                                      
 CONF_PROJECT_ATTRIBUTE_GROUP = 'ExportIt'                                                   # name of the attribute group that stores the project specific data
 CONF_PROJECT_ATTRIBUTE_KEY = 'projectConfiguration'                                         # key of the key that contains the project specific configuration (delta to default configuration)
 CONF_VERSION_KEY = 'version'                                                                # key of the element that contains the version of the default configuration
-CONF_VERSION_DEFAULT = '0.2.0'                                                              # default version of the default configuration
+CONF_VERSION_DEFAULT = '0.3.0'                                                              # default version of the default configuration
 
 # configuration - export options
 CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # name of the element that contains the stl refinement
-CONF_EXPORT_OPTIONS_TYPE_DEFAULT = [UI_EXPORT_TYPES_STL_VALUE, UI_EXPORT_TYPES_STEP_VALUE]   # valid values STEP, STL
+CONF_EXPORT_OPTIONS_TYPE_DEFAULT = [UI_EXPORT_TYPES_STL_VALUE, UI_EXPORT_TYPES_STEP_VALUE]  # valid values STEP, STL
 
 # configuration - stl options
 CONF_STL_STRUCTURE_KEY = 'StlStructure'                                                     # name of the element that contains the stl refinement
@@ -97,8 +107,12 @@ CONF_STL_REFINEMENT_KEY = 'StlRefinement'                                       
 CONF_STL_REFINEMENT_DEFAULT = [UI_STL_REFINEMENT_LOW_VALUE]                                 # valid values 'Low', 'Medium', 'Hight', 'Ultra'
 
 # configuration - step options
-CONF_STEP_STRUCTURE_KEY = 'stepStructure'                                                    # name of the element that contains the stl refinement
+CONF_STEP_STRUCTURE_KEY = 'stepStructure'                                                   # name of the element that contains the f3d structure
 CONF_STEP_STRUCTURE_DEFAULT = [UI_STRUCTURE_ONE_FILE_VALUE]                                 # valid values 'One File', 'One File Per Component
+
+# configuration - f3d options
+CONF_F3D_STRUCTURE_KEY = 'f3dStructure'                                                     # name of the element that contains the f3d structure
+CONF_F3D_STRUCTURE_DEFAULT = [UI_STRUCTURE_ONE_FILE_VALUE]                                  # valid values 'One File', 'One File Per Component
 
 # configuration - export directory
 CONF_EXPORT_DIRECTORY_KEY = 'exportDirectory'                                               # key of the element that contains the export directory
