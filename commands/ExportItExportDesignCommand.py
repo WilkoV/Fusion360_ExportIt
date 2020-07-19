@@ -10,6 +10,7 @@ from .GithubReleaseHelper import checkForUpdates, getGithubReleaseInformation, s
 from .Statics import *
 
 progressDialog = adsk.core.ProgressDialog.cast(None)
+progressValue = 0
 
 def createDefaultConfiguration():
     logger.debug("creating default configuration")
@@ -176,6 +177,7 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
     exportObjects = []
     rootBodies = []
     uniqueComponents = []
+    isReferencedComponent = False
 
     # if bodies folder is visible add all visible bodies to the list of visible objects
     if rootComponent.isBodiesFolderLightBulbOn:
@@ -224,6 +226,11 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
             isUnique = True
             logger.debug("%s is unique", occurrenceFullPathName)
 
+        # check if occurrence is referencing a external component
+        if occurrence.isReferencedComponent:
+            logger.info("component is a external reference", occurrenceFullPathName)
+            isReferencedComponent = occurrence.isReferencedComponent
+
         # get visible occurrence bodies
         occurrenceBodies = []
         for body in occurrence.bRepBodies:
@@ -245,9 +252,28 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
             continue
 
         # if occurrence has bodies, add occurrence to the list of exportable objects
-        exportObjects.append({REC_OCCURRENCE: occurrence, REC_OCCURRENCE_PATH: occurrenceFullPathName, REC_IS_UNIQUE: isUnique, REC_BODIES: occurrenceBodies})
+        exportObjects.append({REC_OCCURRENCE: occurrence, REC_OCCURRENCE_PATH: occurrenceFullPathName, REC_IS_UNIQUE: isUnique, REC_IS_REFERENCED_COMPONENT: isReferencedComponent, REC_BODIES: occurrenceBodies})
 
     return exportObjects
+
+def updateProgressDialog():
+    global progressDialog
+    global progressValue
+
+    # update internal progress counter
+    progressValue = progressValue + 1
+
+    if not progressDialog.isShowing:
+        # nothing to do, because the dialog is not visible
+        return
+
+    if progressDialog.wasCancelled:
+        # nothing to do, because the dialog is cancelled
+        progressDialog.hide()
+        return
+
+    # update progress dialog
+    progressDialog.progressValue = progressValue
 
 def totalNumberOfObjects(exportObjects):
     components = 0
@@ -428,8 +454,6 @@ def copyDesignToExportDocument(exportObjects):
     return document, rootComponent
 
 def exportStepAsOneFile(projectName, designName, rootComponent, ao):
-    global progressDialog
-
     # create filename
     fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_STEP_VALUE)
 
@@ -438,11 +462,9 @@ def exportStepAsOneFile(projectName, designName, rootComponent, ao):
 
     # export design as single step file
     exportResult = ao.export_manager.execute(stepExportOptions)
-    progressDialog.progressValue = progressDialog.progressValue + 1
+    updateProgressDialog()
 
 def exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao):
-    global progressDialog
-
     # iterate over list of occurrences
     for exportObject in exportObjects:
         # check if component is unique
@@ -457,23 +479,31 @@ def exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao):
 
         # export component as single step file
         exportResult = ao.export_manager.execute(stepExportOptions)
-        progressDialog.progressValue = progressDialog.progressValue + 1
+        updateProgressDialog()
 
 def exportF3dAsOneFile(projectName, designName, rootComponent, ao):
-    global progressDialog
+    hasExternalLinks = False
 
     # create filename
     fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_F3D_VALUE)
 
-    # get f3d export options
-    f3dExportOptions = ao.export_manager.createFusionArchiveExportOptions(fullFileName, rootComponent)
+    # check if design contains links to external components
+    for occurrence in rootComponent.allOccurrences:
+        if occurrence.isReferencedComponent:
+            logger.warning("%s contains links to an external designs. Skipping export", designName)
+            hasExternalLinks = True
 
-    # export design as single f3d file
-    exportResult = ao.export_manager.execute(f3dExportOptions)
-    progressDialog.progressValue = progressDialog.progressValue + 1
+    if not hasExternalLinks:
+        # get f3d export options
+        f3dExportOptions = ao.export_manager.createFusionArchiveExportOptions(fullFileName, rootComponent)
+
+        # export design as single f3d file
+        exportResult = ao.export_manager.execute(f3dExportOptions)
+
+    updateProgressDialog()
 
 def exportF3dAsOneFilePerComponent(exportObjects, projectName, designName, ao):
-    global progressDialog
+    hasExternalLinks = False
 
     # iterate over list of occurrences
     for exportObject in exportObjects:
@@ -484,12 +514,18 @@ def exportF3dAsOneFilePerComponent(exportObjects, projectName, designName, ao):
         # create filename
         fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, "", UI_EXPORT_TYPES_F3D_VALUE)
 
-        # get f3d export options
-        f3dExportOptions = ao.export_manager.createFusionArchiveExportOptions (fullFileName, exportObject.get(REC_OCCURRENCE).component)
+        if exportObject.get(REC_IS_REFERENCED_COMPONENT):
+            logger.warning("%s is a links to an external designs. Skipping export", exportObject.get(REC_OCCURRENCE_PATH))
+            hasExternalLinks = True
 
-        # export component as single f3d file
-        exportResult = ao.export_manager.execute(f3dExportOptions)
-        progressDialog.progressValue = progressDialog.progressValue + 1
+        if not hasExternalLinks:
+            # get f3d export options
+            f3dExportOptions = ao.export_manager.createFusionArchiveExportOptions (fullFileName, exportObject.get(REC_OCCURRENCE).component)
+
+            # export component as single f3d file
+            exportResult = ao.export_manager.execute(f3dExportOptions)
+
+        updateProgressDialog()
 
 def getStlExportOptions(ao, geometry, fullFileName, refinement):
     # get stl export options
@@ -514,8 +550,6 @@ def getStlExportOptions(ao, geometry, fullFileName, refinement):
     return stlExportOptions
 
 def exportStlAsOneFile(projectName, designName, rootComponent, ao):
-    global progressDialog
-
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
         # cancel loop if user canceld the dialog
         if progressDialog.wasCancelled:
@@ -534,11 +568,9 @@ def exportStlAsOneFile(projectName, designName, rootComponent, ao):
 
         # export design as single stl file
         exportResult = ao.export_manager.execute(stlExportOptions)
-        progressDialog.progressValue = progressDialog.progressValue + 1
+        updateProgressDialog()
 
 def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName, ao):
-    global progressDialog
-
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
         # cancel loop if user canceld the dialog
         if progressDialog.wasCancelled:
@@ -574,11 +606,9 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
 
                 # export body as single stl file
                 exportResult = ao.export_manager.execute(stlExportOptions)
-                progressDialog.progressValue = progressDialog.progressValue + 1
+                updateProgressDialog()
 
 def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName, ao):
-    global progressDialog
-
     # copy exportObjects into a temporary document and convert all occurrences into unique components.
     tmpDocument, tmpRootComponent = copyDesignToExportDocument(exportObjects)
 
@@ -617,7 +647,7 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
 
                 # export body as single stl file
                 exportResult = ao.export_manager.execute(stlExportOptions)
-                progressDialog.progressValue = progressDialog.progressValue + 1
+                updateProgressDialog()
 
 class ExportItExportDesignCommand(apper.Fusion360CommandBase):
     def on_preview(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, args, input_values):
@@ -625,6 +655,9 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
 
     def on_destroy(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, reason, input_values):
         try:
+            global progressDialog
+            global progressValue
+
             ao = AppObjects()
             designName = ao.design.rootComponent.name
             projectName = ao.app.activeDocument.dataFile.parentProject.name
@@ -633,7 +666,13 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             logger.info("Finished processing of %s - %s", projectName, designName)
             logger.info("--------------------------------------------------------------------------------")
 
+            # reset configuration
             resetConfiguration()
+
+            # reset progress dialog
+            progressDialog.hide()
+            progressDialog = adsk.core.ProgressDialog.cast(None)
+            progressValue = 0
 
         except:
             logger.info("--------------------------------------------------------------------------------")
@@ -673,11 +712,15 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
 
             # create progress dialog
             global progressDialog
+            global progressValue
+
+            logger.debug("Initializing progressDialog")
 
             progressDialog = ao.ui.createProgressDialog()
             progressDialog.cancelButtonText = 'Cancel'
             progressDialog.isBackgroundTranslucent = False
             progressDialog.isCancelButtonShown = True
+            progressValue = 0
 
             # get list of bodies for the exports
             exportObjects = []
@@ -691,7 +734,8 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
                 logger.debug("getting list of export objects")
                 exportObjects = getExportObjects(rootComponent, input_values[UI_EXPORT_OPTIONS_BODIES_SELECTION_ID])
 
-            # Show dialog
+            # Show progress dialog
+            logger.debug("Showing progressDialog")
             progressDialog.show('ExportIt', 'Exports created: %v of %m' , 0, totalNumberOfObjects(exportObjects), 1)
 
             if not progressDialog.wasCancelled and UI_EXPORT_TYPES_F3D_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
@@ -703,7 +747,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
                 if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_F3D_STRUCTURE_KEY):
                     exportF3dAsOneFilePerComponent(exportObjects, projectName, designName, ao)
 
-            if  not progressDialog.wasCancelled and UI_EXPORT_TYPES_STEP_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
+            if not progressDialog.wasCancelled and UI_EXPORT_TYPES_STEP_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
                 # export design as one step file
                 if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY):
                     exportStepAsOneFile(projectName, designName, rootComponent, ao)
@@ -712,20 +756,22 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
                 if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY):
                     exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao)
 
-            if  not progressDialog.wasCancelled and UI_EXPORT_TYPES_STL_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
+            if not progressDialog.wasCancelled and UI_EXPORT_TYPES_STL_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
                 # export design as one stl file
                 if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
                     exportStlAsOneFile(projectName, designName, rootComponent, ao)
 
                 # export each body in component as individual stl files
-                if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
+                if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
                     exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName, ao)
 
                 # export each body in occurrence as individual stl files
-                if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
+                if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
                     exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName, ao)
 
             # hide progress dialog
+            logger.debug("Hiding progressDialog")
+            progressDialog.progressValue = progressValue
             progressDialog.hide()
 
             # write modified configuration

@@ -1,7 +1,7 @@
 import logging
 
 # log settings
-LOG_FORMAT = '%(levelname)-7s; %(funcName)-26s; %(lineno)3d; %(message)s'                   # format of the log messages
+LOG_FORMAT = '%(levelname)-7s; %(funcName)-37s; %(lineno)3d; %(message)s'                   # format of the log messages
 LOG_LEVEL = logging.DEBUG                                                                   # logging level
 
 # user interface - common
@@ -147,7 +147,7 @@ REC_OCCURRENCE_PATH = 'occurrencePath'                                          
 REC_BODIES = 'bodies'                                                                       # BREP Body
 REC_OCCURRENCE = 'occurrence'                                                               # Occurrence
 REC_IS_UNIQUE = 'isUnique'                                                                  # Marker if this record should be used, if all components (not occurrences) should be exported
-
+REC_IS_REFERENCED_COMPONENT = 'isReferencedComponent'                                       # True if this occurrence is referencing an external component otherwise false
 # internal attributes version check
 VERSION_LAST_CHECKED_FILENAME = "VersionCheck.json"                                         # name of the file that contains the date of the last check.
 VERSION_API_URL = 'https://api.github.com/repos/WilkoV/Fusion360_ExportIt/releases/latest'  # api ULR to get the latest release information

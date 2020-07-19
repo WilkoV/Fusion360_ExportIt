@@ -13,12 +13,17 @@
       - [STL Refinement](#stl-refinement)
     - [STEP Options](#step-options)
       - [STEP Structure](#step-structure)
+    - [F3D Options](#f3d-options)
+      - [F3D Structure](#f3d-structure)
     - [Export Directory Options](#export-directory-options)
     - [Filename Options](#filename-options)
       - [Prefix](#prefix)
       - [Filter](#filter)
     - [Version Info](#version-info)
-    - [Elements Of The Export Name](#elements-of-the-export-name)
+  - [Elements Of The Export Name](#elements-of-the-export-name)
+    - [STL Export Name](#stl-export-name)
+    - [STEP Export Name](#step-export-name)
+    - [F3D Export Name](#f3d-export-name)
   - [Installation](#installation)
   - [Compatibility](#compatibility)
   - [What's New](#whats-new)
@@ -56,7 +61,7 @@ The user interface is divided into the following sections:
 
 The behavior of STL export is configured in this section. Following options are available:
 
-![StlOptions](doc/stlOptions.png)
+![Stl Options](doc/stlOptions.png)
 
 #### STL Structure
 
@@ -85,7 +90,22 @@ One to many structures or refinements can be selected.
 
 The granularity of STEP exports is configured in this section.
 
+![STEP Options](doc/stepOptions.png)
+
 #### STEP Structure
+
+Option |Description
+---------|---------
+One File | This structure corresponds to exporting the root component with the built-in function and creates one file containing all visible BRep bodies.
+One File Per Component | This function corresponds to exporting a selected component but will create one file per component or selected component.
+
+### F3D Options
+
+The granularity of F3D exports is configured in this section.
+
+![F3D Options](doc/f3dOptions.png)
+
+#### F3D Structure
 
 Option |Description
 ---------|---------
@@ -155,9 +175,9 @@ Label | Description
 Version Check Interval | Defines the polling interval in days. Minimal value = 1, maximal value = 30.
 Download URL | This field is only available if a new release can be downloaded.
 
-### Elements Of The Export Name
+## Elements Of The Export Name
 
-The export name is composed out of the prefix, the name and the suffix:
+The export name is composed out of the prefix, the name and the suffix.
 
 Group | Element | Configurable | Description
 ---------|----------|----------|---------
@@ -170,13 +190,29 @@ Suffix | Export type | No | The system adds always the export type to the export
 
 What elements are used depends on the user driven configuration, the export format and the chosen structure. The export logic always tries to make the filename as unique as possible. Even if a filename might be unique in the export directory, it might not be unique anymore in unstructured uploads to e.g. [Thingiverse](https://www.thingiverse.com/), [Cults3d](https://cults3d.com/en) or [PrusaPrinters](https://www.prusaprinters.org/). The logic tries to avoid such conflicts.
 
-Following combinations are defined (elementSeparator = '.' and occurrenceSeparator = '_'):
+Following combinations are defined (elementSeparator = '.', occurrenceSeparator = '\_', projectName = False, removeVersionTag = True):
 
-Export Format | Structure | Elements | Example
----------|----------|----------|---------
- STL | One File | [projectName] + elementSeparator + designName + refinementName + "." + suffix| 01-Default.low.stl
- STL | One File Per Body In Component | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithoutOccurrenceIDs + elementSeparator + bodyName + elementSeparator + refinementName + "." + suffix | 01-Default.blocks.mixed.bodyInComponentWithSubComponents.low.stl
- STL | One File Per Body In Occurrence | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithOccurrenceIDs + elementSeparator + bodyName + elementSeparator + refinementName + "." + suffix | 01-Default.blocks_1.deep_1.deeper_1.deepest_1.block_5.Body1.low.stl
+### STL Export Name
+
+Structure | Elements | Example
+---------|----------|---------
+One File | [projectName] + elementSeparator + designName + refinementName + "." + suffix| 01-Default.low.stl
+One File Per Body In Component | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithoutOccurrenceIDs + elementSeparator + bodyName + elementSeparator + refinementName + "." + suffix | 01-Default.blocks.mixed.bodyInComponentWithSubComponents.low.stl
+One File Per Body In Occurrence | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithOccurrenceIDs + elementSeparator + bodyName + elementSeparator + refinementName + "." + suffix | 01-Default.blocks_1.deep_1.deeper_1.deepest_1.block_5.Body1.low.stl
+
+### STEP Export Name
+
+Structure | Elements | Example
+---------|----------|---------
+One File | [projectName] + elementSeparator + designName + suffix| 01-Default.step
+One File Per Component | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithoutOccurrenceIDs + suffix | 01-Default.blocks.mixed.step
+
+### F3D Export Name
+
+Structure | Elements | Example
+---------|----------|---------
+One File | [projectName] + elementSeparator + designName + suffix| 01-Default.f3d
+One File Per Component | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithoutOccurrenceIDs + suffix | 01-Default.blocks.mixed.f3d
 
 ## Installation
 
