@@ -251,6 +251,7 @@ Version | Date | Description
 0.1.0 | 09.07.2020 | Initial version that includes a defaults editor and stl exports that supports different structures and refinements.
 0.2.0 | 15.07.2020 | Main enhancement is the addition of STEP exports. Additionally basic configuration validation is added.
 0.3.0 | 21.07.2020 | Main enhancement is the addition of F3D exports. Additionally a progress dialog is shown on larger exports and a summary message is shown at the end of an export.
+TODO 0.4.0 | XX.XX.2020 | XXXX
 
 ## Known Issus
 

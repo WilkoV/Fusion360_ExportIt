@@ -106,7 +106,7 @@ CONF_DEFAULT_CONFIG_NAME = 'Defaults.json'                                      
 CONF_PROJECT_ATTRIBUTE_GROUP = 'ExportIt'                                                   # name of the attribute group that stores the project specific data
 CONF_PROJECT_ATTRIBUTE_KEY = 'projectConfiguration'                                         # key of the key that contains the project specific configuration (delta to default configuration)
 CONF_VERSION_KEY = 'version'                                                                # key of the element that contains the version of the default configuration
-CONF_VERSION_DEFAULT = '0.3.0'                                                              # default version of the default configuration
+CONF_VERSION_DEFAULT = '0.4.0'                                                              # default version of the default configuration
 
 # configuration - export options
 CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # name of the element that contains the stl refinement
