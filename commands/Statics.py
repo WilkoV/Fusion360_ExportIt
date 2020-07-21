@@ -22,6 +22,10 @@ UI_SHOW_SUMMARY_FOR_INFO_VALUE = 'Info'                                         
 UI_SHOW_SUMMARY_FOR_WARNING_VALUE = 'Warning'                                               # Show warning and error messages
 UI_SHOW_SUMMARY_FOR_ERROR_VALUE= 'Error'                                                    # Show error messages
 
+# user interface - export
+UI_EXPORT_TAB_ID = 'Export'
+UI_EXPORT_TAB_NAME = 'Export'
+
 # user interface - export options
 UI_EXPORT_OPTIONS_GROUP_ID = 'ExportOptions'                                                # group id that contains the export options UI elements
 UI_EXPORT_OPTIONS_GROUP_NAME = 'Export Options'                                             # name of the group that contains the export options UI elements
@@ -63,6 +67,10 @@ UI_F3D_STRUCTURE_NAME = 'Structure'                                             
 UI_F3D_STRUCTURE_VALUES = [UI_STRUCTURE_ONE_FILE_VALUE,
                             UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE]                      # Elements of the dropdown list
 
+# user interface - location
+UI_LOCATION_TAB_ID = 'Location'
+UI_LOCATION_TAB_NAME = 'Location'
+
 # user interface - export directory
 UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID = 'ExportDirectoryOptions'                             # group id that contains the export directory UI elements
 UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME = 'Export Directory Options'                         # name of the group that contains the export directory UI elements
@@ -83,6 +91,10 @@ UI_FILENAME_ELEMENT_SEPERATOR_NAME = 'Element Separator'                        
 UI_FILENAME_ELEMENT_SEPERATOR_VALUES = ['.', '-', '_']                                      # list of valid characters
 UI_FILENAME_OCCURRENCE_ID_SEPERATOR_NAME = 'Occurrence ID Separator'                        # character that separates the occurrence name and the instance id
 UI_FILENAME_OCCURRENCE_ID_SEPERATOR_VALUES = ['.', '-', '_']                                # list of valid characters
+
+# user interface - misc
+UI_MISC_TAB_ID = 'Misc'
+UI_MISC_TAB_NAME = 'Misc'
 
 # user interface - common
 UI_COMMON_GROUP_ID = 'Common'                                                               # group id that contains common settings

@@ -4,7 +4,7 @@ import os, re, json
 
 from apper import AppObjects
 from .BaseLogger import logger
-from .UiHelper import addGroup, addStringInputToGroup, addBoolInputToGroup, addCheckBoxDropDown, selectDropDownItemByNames, getSelectedDropDownItems, addTextListDropDown, getSelectedDropDownItem, addSelectionCommandToInputs, addIntergerInputSpinnerToGroup
+from .UiHelper import addTab, addGroupToTab, addGroup, addStringInputToGroup, addBoolInputToGroup, addCheckBoxDropDown, selectDropDownItemByNames, getSelectedDropDownItems, addTextListDropDown, getSelectedDropDownItem, addSelectionCommandToInputs, addIntergerInputSpinnerToGroup
 from .ConfigurationHelper import initializeConfiguration, getDefaultConfiguration, getConfiguration, setConfiguration, writeConfiguration, showSaveConfigWarning, resetConfiguration, logConfiguration
 from .GithubReleaseHelper import checkForUpdates, getGithubReleaseInformation, showReleaseNotes
 from .Statics import *
@@ -60,9 +60,14 @@ def createDefaultConfiguration():
     return defaultConfiguration
 
 def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpdates):
-    # add selection command
-    addGroup(inputs, UI_EXPORT_OPTIONS_GROUP_ID, UI_EXPORT_OPTIONS_GROUP_NAME, True)
+    logger.debug("not checkForUpdates %s", not checkForUpdates)
+    # export
+    addTab(inputs, UI_EXPORT_TAB_ID, UI_EXPORT_TAB_NAME, not checkForUpdates)
 
+    # export options
+    addGroupToTab(UI_EXPORT_TAB_ID, UI_EXPORT_OPTIONS_GROUP_ID, UI_EXPORT_OPTIONS_GROUP_NAME, True)
+
+    # add selection command
     if not configurationOnly:
         # do not show in the configuration editor
         addSelectionCommandToInputs(UI_EXPORT_OPTIONS_GROUP_ID, UI_EXPORT_OPTIONS_BODIES_SELECTION_ID, UI_EXPORT_OPTIONS_BODIES_SELECTION_NAME, UI_EXPORT_OPTIONS_BODIES_SELECTION_VALUES)
@@ -70,20 +75,23 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
     addCheckBoxDropDown(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_TYPE_KEY, UI_EXPORT_OPTIONS_TYPE_NAME, UI_EXPORT_OPTIONS_TYPE_VALUES, getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY))
 
     # stl export
-    addGroup(inputs, UI_STL_OPTIONS_GROUP_ID, UI_STL_OPTIONS_GROUP_NAME, True)
+    addGroupToTab(UI_EXPORT_TAB_ID, UI_STL_OPTIONS_GROUP_ID, UI_STL_OPTIONS_GROUP_NAME, True)
     addCheckBoxDropDown(UI_STL_OPTIONS_GROUP_ID, CONF_STL_STRUCTURE_KEY, UI_STL_STRUCTURE_NAME, UI_STL_STRUCTURE_VALUES, getConfiguration(CONF_STL_STRUCTURE_KEY))
     addCheckBoxDropDown(UI_STL_OPTIONS_GROUP_ID, CONF_STL_REFINEMENT_KEY, UI_STL_REFINEMENT_NAME, UI_STL_REFINEMENT_VALUES, getConfiguration(CONF_STL_REFINEMENT_KEY))
 
     # step export
-    addGroup(inputs, UI_STEP_OPTIONS_GROUP_ID, UI_STEP_OPTIONS_GROUP_NAME, True)
+    addGroupToTab(UI_EXPORT_TAB_ID, UI_STEP_OPTIONS_GROUP_ID, UI_STEP_OPTIONS_GROUP_NAME, True)
     addCheckBoxDropDown(UI_STEP_OPTIONS_GROUP_ID, CONF_STEP_STRUCTURE_KEY, UI_STEP_STRUCTURE_NAME, UI_STEP_STRUCTURE_VALUES, getConfiguration(CONF_STEP_STRUCTURE_KEY))
 
     # f3d export
-    addGroup(inputs, UI_F3D_OPTIONS_GROUP_ID, UI_F3D_OPTIONS_GROUP_NAME, True)
+    addGroupToTab(UI_EXPORT_TAB_ID, UI_F3D_OPTIONS_GROUP_ID, UI_F3D_OPTIONS_GROUP_NAME, True)
     addCheckBoxDropDown(UI_F3D_OPTIONS_GROUP_ID, CONF_F3D_STRUCTURE_KEY, UI_F3D_STRUCTURE_NAME, UI_F3D_STRUCTURE_VALUES, getConfiguration(CONF_F3D_STRUCTURE_KEY))
 
+    # location
+    addTab(inputs, UI_LOCATION_TAB_ID, UI_LOCATION_TAB_ID, False)
+
     # export directory
-    addGroup(inputs, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME, True)
+    addGroupToTab(UI_LOCATION_TAB_ID, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME, True)
 
     addStringInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_KEY, UI_EXPORT_DIRECTORY_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_KEY))
 
@@ -92,7 +100,7 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
     addBoolInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY, UI_EXPORT_DIRECTORY_EXPORT_TYPE_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY))
 
     # filename options
-    addGroup(inputs, UI_FILENAME_OPTIONS_GROUP_ID, UI_FILENAME_OPTIONS_GROUP_NAME, True)
+    addGroupToTab(UI_LOCATION_TAB_ID, UI_FILENAME_OPTIONS_GROUP_ID, UI_FILENAME_OPTIONS_GROUP_NAME, True)
 
     addBoolInputToGroup(UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_ADD_PROJECT_NAME_KEY, UI_FILENAME_ADD_PROJECT_NAME_NAME, getConfiguration(CONF_FILENAME_ADD_PROJECT_NAME_KEY))
     addBoolInputToGroup(UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_ADD_DESIGN_NAME_KEY, UI_FILENAME_ADD_DESIGN_NAME_NAME, getConfiguration(CONF_FILENAME_ADD_DESIGN_NAME_KEY))
@@ -102,13 +110,18 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
     addTextListDropDown(UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_ELEMENT_SEPERATOR_KEY, UI_FILENAME_ELEMENT_SEPERATOR_NAME, UI_FILENAME_ELEMENT_SEPERATOR_VALUES, getConfiguration(CONF_FILENAME_ELEMENT_SEPERATOR_KEY))
     addTextListDropDown(UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY, UI_FILENAME_OCCURRENCE_ID_SEPERATOR_NAME, UI_FILENAME_OCCURRENCE_ID_SEPERATOR_VALUES, getConfiguration(CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY))
 
+    # location
+    if configurationOnly or checkForUpdates:
+        # add group for version information
+        addTab(inputs, UI_MISC_TAB_ID, UI_MISC_TAB_ID, checkForUpdates)
+
     if configurationOnly:
-        addGroup(inputs, UI_COMMON_GROUP_ID, UI_COMMON_GROUP_NAME, True)
+        addGroupToTab(UI_MISC_TAB_ID, UI_COMMON_GROUP_ID, UI_COMMON_GROUP_NAME, True)
         addTextListDropDown(UI_COMMON_GROUP_ID, CONF_SHOW_SUMMARY_FOR_KEY, UI_SHOW_SUMMARY_FOR_NAME, UI_SHOW_SUMMARY_FOR_VALUES, getConfiguration(CONF_SHOW_SUMMARY_FOR_KEY))
 
     if configurationOnly or checkForUpdates:
         # add group for version information
-        addGroup(inputs, UI_VERSION_GROUP_ID, UI_VERSION_GROUP_NAME, True)
+        addGroupToTab(UI_MISC_TAB_ID, UI_VERSION_GROUP_ID, UI_VERSION_GROUP_NAME, True)
 
     if configurationOnly:
         addIntergerInputSpinnerToGroup(UI_VERSION_GROUP_ID, CONF_VERSION_CHECK_INTERVAL_IN_DAYS_KEY, UI_VERSION_CHECK_INTERVAL_NAME, CONF_VERSION_CHECK_INTERVAL_IN_DAYS_MIN, CONF_VERSION_CHECK_INTERVAL_IN_DAYS_MAX, 1, getConfiguration(CONF_VERSION_CHECK_INTERVAL_IN_DAYS_KEY))
@@ -835,8 +848,12 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             logger.info("--------------------------------------------------------------------------------")
 
     def on_input_changed(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, changed_input, input_values):
+        logger.debug("changed_input.objectType: %s", changed_input.objectType)
+
         # process changed element
-        if changed_input.objectType == 'adsk::core::SelectionCommandInput':
+        if changed_input.objectType == 'adsk::core::CommandInput':
+            pass
+        elif changed_input.objectType == 'adsk::core::SelectionCommandInput':
             pass
         elif type(input_values[changed_input.id]) == adsk.core.ListItems:
             # element supports a list of selections. Process all selected elements

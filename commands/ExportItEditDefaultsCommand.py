@@ -29,8 +29,13 @@ class ExportItEditDefaultsCommand(apper.Fusion360CommandBase):
             logger.critical(traceback.format_exc())
 
     def on_input_changed(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, changed_input, input_values):
+        logger.debug("changed_input.objectType: %s", changed_input.objectType)
+
         # process changed element
-        if type(input_values[changed_input.id]) == adsk.core.ListItems:
+        if changed_input.objectType == 'adsk::core::CommandInput':
+            pass
+        # process changed element
+        elif type(input_values[changed_input.id]) == adsk.core.ListItems:
             # element supports a list of selections. Process all selected elements
             setDefaultConfiguration(changed_input.id, getSelectedDropDownItems(inputs, changed_input.id))
         else:
