@@ -157,7 +157,7 @@ Following options are used for better grouping of exports.
 Label | Options | Description
 ---------|----------|---------
 Add Project Name |  | Adds the project name as a prefix to the filename.
-Add Design Name |  | Adds the design name as a prefix to the filename. This is useful if a project contains several designs and the design name is not part of the export directory (more [here](Export-Directory))
+Add Design Name |  | Adds the design name as a prefix to the filename. This is useful if a project contains several designs and the design name is not part of the export directory (more [here](#export-directory-options))
 
 Filters are used to make filenames more (stable e.g. for external versioning), more readable or to remove characters that are not supported by the filesystem.
 
@@ -170,12 +170,12 @@ Element Separator Tags | \_ | This options uses a "_" (underscore) as the separa
 Occurrence ID Separator | . | This options uses a "." (dot) as the separator. | 01-Default.Component.1.Component.2.BodyName
 Occurrence ID Separator | - | This options uses a "-" (dash) as the separator. | 01-Default-Component-1.Component-2.BodyName
 Occurrence ID Separator | \_ | This options uses a "_" (underscore) as the separator. | 01-Default\_Component\_1.Component\_2.BodyName
+Replace Spaces | True / False | This option enables the replacement of spaces in the filename. | 08-ReplaceSpaces.just-a-block_1.Body1.low.stl
+Replace Spaces With | . | This options uses a "." (dot) as a replacement. | 08-ReplaceSpaces.just.a.block_1.Body1.low.stl
+Replace Spaces With | - | This options uses a "-" (dash) as a replacement. |  08-ReplaceSpaces.just-a-block_1.Body1.low.stl
+Replace Spaces With | \_ | This options uses a "_" (underscore) as a replacement. |  08-ReplaceSpaces.just\_a\_block_1.Body1.low.stl
 
-The default setting uses the dot for the element separator and the underscore for the occurrence ID separator and the resulting filenames will look like this:
-
->01-Default.blocks_1.deep_1.deeper_1.deepest_1.block_5.Body1.stl
-
-More details about the components of the export name can be found [here](Elements-Of-The-Export-Name).
+More details about the components of the export name can be found [here](#elements-of-the-export-name).
 
 ### Misc
 
@@ -287,7 +287,6 @@ TODO 0.4.0 | XX.XX.2020 | XXXX
 - [ ] Export of projects.
 - [ ] Selection of stl format (text / binary).
 - [ ] Custom stl refinement.
-- [ ] Filename filter to replace spaces with configurable character.
 - [ ] Export filter that excludes linked components.
 - [x] Defaults editor.
 - [x] Export of selected bodies.
@@ -298,3 +297,4 @@ TODO 0.4.0 | XX.XX.2020 | XXXX
 - [x] Show progress dialog
 - [X] Cleaner user interface
 - [x] Add auto save option for changed configuration
+- [x] Filename filter to replace spaces with configurable character.

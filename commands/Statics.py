@@ -91,6 +91,9 @@ UI_FILENAME_ELEMENT_SEPERATOR_NAME = 'Element Separator'                        
 UI_FILENAME_ELEMENT_SEPERATOR_VALUES = ['.', '-', '_']                                      # list of valid characters
 UI_FILENAME_OCCURRENCE_ID_SEPERATOR_NAME = 'Occurrence ID Separator'                        # character that separates the occurrence name and the instance id
 UI_FILENAME_OCCURRENCE_ID_SEPERATOR_VALUES = ['.', '-', '_']                                # list of valid characters
+UI_FILENAME_REPLACE_SPACES_NAME = 'Replace Spaces'                                          # True if spaces should be replaced, otherwise False
+UI_FILENAME_REPLACE_SPACES_WITH_NAME = 'Replace Spaces With'                                # character that replaces spaces in the filename
+UI_FILENAME_REPLACE_SPACES_WITH_VALUES = ['.', '-', '_']                                    # list of valid characters
 
 # user interface - misc
 UI_MISC_TAB_ID = 'Misc'
@@ -161,6 +164,10 @@ CONF_FILENAME_ELEMENT_SEPERATOR_KEY = 'elementSeparator'                        
 CONF_FILENAME_ELEMENT_SEPERATOR_DEFAULT = '.'                                               # valid values for the default: '.', '-', '_'
 CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY = 'occurrenceIdSeparator'                         # character that separates the occurrence name and the instance id
 CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_DEFAULT = '_'                                         # valid values for the default: '.', '-', '_'
+CONF_FILENAME_REPLACE_SPACES_KEY = 'replaceSpaces'                                          # True if spaces should be replaced, otherwise False
+CONF_FILENAME_REPLACE_SPACES_DEFAULT = False                                                # valid values are True or False
+CONF_FILENAME_REPLACE_SPACES_WITH_KEY = 'replaceSpacesWith'                                 # character that replaces spaces in the filename
+CONF_FILENAME_REPLACE_SPACES_WITH_DEFAULT = '-'                                             # valid values for the default: '.', '-', '_'
 
 # configuration - common
 CONF_SHOW_SUMMARY_FOR_KEY = 'showSummaryFor'                                                # Show export summary for infos, warnings or errors
