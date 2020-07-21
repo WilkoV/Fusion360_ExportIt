@@ -1,7 +1,7 @@
 import logging
 
 # log settings
-LOG_FORMAT = '%(levelname)-7s; %(funcName)-26s; %(lineno)3d; %(message)s'                   # format of the log messages
+LOG_FORMAT = '%(levelname)-7s; %(funcName)-37s; %(lineno)3d; %(message)s'                   # format of the log messages
 LOG_LEVEL = logging.DEBUG                                                                   # logging level
 
 # user interface - common
@@ -16,7 +16,11 @@ UI_STL_REFINEMENT_MEDIUM_VALUE = 'Medium'                                       
 UI_STL_REFINEMENT_LOW_VALUE = 'Low'                                                         # refinement low
 UI_SELECTION_FILTER_BODY_VALUE = 'SolidBodies'                                              # Filter name Solid Body
 UI_EXPORT_TYPES_STL_VALUE = 'stl'                                                           # STL format
-UI_EXPORT_TYPES_STEP_VALUE = 'step'                                                          # STEP format
+UI_EXPORT_TYPES_STEP_VALUE = 'step'                                                         # STEP format
+UI_EXPORT_TYPES_F3D_VALUE = 'f3d'                                                           # F3D / Fusion Archive format
+UI_SHOW_SUMMARY_FOR_INFO_VALUE = 'Info'                                                     # Show info, warning and error messages
+UI_SHOW_SUMMARY_FOR_WARNING_VALUE = 'Warning'                                               # Show warning and error messages
+UI_SHOW_SUMMARY_FOR_ERROR_VALUE= 'Error'                                                    # Show error messages
 
 # user interface - export options
 UI_EXPORT_OPTIONS_GROUP_ID = 'ExportOptions'                                                # group id that contains the export options UI elements
@@ -27,7 +31,8 @@ UI_EXPORT_OPTIONS_BODIES_SELECTION_NAME = 'Export Bodies'                       
 UI_EXPORT_OPTIONS_BODIES_SELECTION_VALUES = [UI_SELECTION_FILTER_BODY_VALUE]                # List of applied filters
 UI_EXPORT_OPTIONS_TYPE_NAME = 'Export Types'                                                # Name of the field that contains the export types
 UI_EXPORT_OPTIONS_TYPE_VALUES = [UI_EXPORT_TYPES_STL_VALUE,
-                                    UI_EXPORT_TYPES_STEP_VALUE]                              # Elements of the dropdown list
+                                    UI_EXPORT_TYPES_STEP_VALUE,
+                                    UI_EXPORT_TYPES_F3D_VALUE]                              # Elements of the dropdown list
 
 # user interface - stl options
 UI_STL_OPTIONS_GROUP_ID = 'StlOptions'                                                      # group id that contains the stl options UI elements
@@ -48,6 +53,14 @@ UI_STEP_OPTIONS_GROUP_NAME = 'STEP Options'                                     
 
 UI_STEP_STRUCTURE_NAME = 'Structure'                                                        # Export bodies as one file, file per body etc.
 UI_STEP_STRUCTURE_VALUES = [UI_STRUCTURE_ONE_FILE_VALUE,
+                            UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE]                      # Elements of the dropdown list
+
+# user interface - f3d options
+UI_F3D_OPTIONS_GROUP_ID = 'f3dOptions'                                                      # group id that contains the f3d options UI elements
+UI_F3D_OPTIONS_GROUP_NAME = 'F3D Options'                                                   # name of the group that contains the f3d options UI elements
+
+UI_F3D_STRUCTURE_NAME = 'Structure'                                                         # Export bodies as one file, file per body etc.
+UI_F3D_STRUCTURE_VALUES = [UI_STRUCTURE_ONE_FILE_VALUE,
                             UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE]                      # Elements of the dropdown list
 
 # user interface - export directory
@@ -71,8 +84,17 @@ UI_FILENAME_ELEMENT_SEPERATOR_VALUES = ['.', '-', '_']                          
 UI_FILENAME_OCCURRENCE_ID_SEPERATOR_NAME = 'Occurrence ID Separator'                        # character that separates the occurrence name and the instance id
 UI_FILENAME_OCCURRENCE_ID_SEPERATOR_VALUES = ['.', '-', '_']                                # list of valid characters
 
+# user interface - common
+UI_COMMON_GROUP_ID = 'Common'                                                               # group id that contains common settings
+UI_COMMON_GROUP_NAME = 'Common'                                                             # name of the group that contains common settings
+
+UI_SHOW_SUMMARY_FOR_NAME = 'Show Summary For'                                               # Show export summary for infos, warnings or errors
+UI_SHOW_SUMMARY_FOR_VALUES = [UI_SHOW_SUMMARY_FOR_INFO_VALUE, 
+                                UI_SHOW_SUMMARY_FOR_WARNING_VALUE,
+                                UI_SHOW_SUMMARY_FOR_ERROR_VALUE]                            # Show warnings and errors
+
 # user interface - version information
-UI_VERSION_GROUP_ID = 'NewVersion'                                                          # group id that contains version information
+UI_VERSION_GROUP_ID = 'VersionInfo'                                                         # group id that contains version information
 UI_VERSION_GROUP_NAME = 'Version Info'                                                      # name of the group that contains version information
 
 UI_VERSION_CHECK_INTERVAL_NAME = 'Version Check Interval'                                   # name of the field that contains the check interval
@@ -84,11 +106,11 @@ CONF_DEFAULT_CONFIG_NAME = 'Defaults.json'                                      
 CONF_PROJECT_ATTRIBUTE_GROUP = 'ExportIt'                                                   # name of the attribute group that stores the project specific data
 CONF_PROJECT_ATTRIBUTE_KEY = 'projectConfiguration'                                         # key of the key that contains the project specific configuration (delta to default configuration)
 CONF_VERSION_KEY = 'version'                                                                # key of the element that contains the version of the default configuration
-CONF_VERSION_DEFAULT = '0.2.0'                                                              # default version of the default configuration
+CONF_VERSION_DEFAULT = '0.3.0'                                                              # default version of the default configuration
 
 # configuration - export options
 CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # name of the element that contains the stl refinement
-CONF_EXPORT_OPTIONS_TYPE_DEFAULT = [UI_EXPORT_TYPES_STL_VALUE, UI_EXPORT_TYPES_STEP_VALUE]   # valid values STEP, STL
+CONF_EXPORT_OPTIONS_TYPE_DEFAULT = [UI_EXPORT_TYPES_STL_VALUE, UI_EXPORT_TYPES_STEP_VALUE]  # valid values STEP, STL
 
 # configuration - stl options
 CONF_STL_STRUCTURE_KEY = 'StlStructure'                                                     # name of the element that contains the stl refinement
@@ -97,8 +119,12 @@ CONF_STL_REFINEMENT_KEY = 'StlRefinement'                                       
 CONF_STL_REFINEMENT_DEFAULT = [UI_STL_REFINEMENT_LOW_VALUE]                                 # valid values 'Low', 'Medium', 'Hight', 'Ultra'
 
 # configuration - step options
-CONF_STEP_STRUCTURE_KEY = 'stepStructure'                                                    # name of the element that contains the stl refinement
+CONF_STEP_STRUCTURE_KEY = 'stepStructure'                                                   # name of the element that contains the f3d structure
 CONF_STEP_STRUCTURE_DEFAULT = [UI_STRUCTURE_ONE_FILE_VALUE]                                 # valid values 'One File', 'One File Per Component
+
+# configuration - f3d options
+CONF_F3D_STRUCTURE_KEY = 'f3dStructure'                                                     # name of the element that contains the f3d structure
+CONF_F3D_STRUCTURE_DEFAULT = [UI_STRUCTURE_ONE_FILE_VALUE]                                  # valid values 'One File', 'One File Per Component
 
 # configuration - export directory
 CONF_EXPORT_DIRECTORY_KEY = 'exportDirectory'                                               # key of the element that contains the export directory
@@ -122,6 +148,10 @@ CONF_FILENAME_ELEMENT_SEPERATOR_DEFAULT = '.'                                   
 CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY = 'occurrenceIdSeparator'                         # character that separates the occurrence name and the instance id
 CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_DEFAULT = '_'                                         # valid values for the default: '.', '-', '_'
 
+# configuration - common
+CONF_SHOW_SUMMARY_FOR_KEY = 'showSummaryFor'                                                # Show export summary for infos, warnings or errors
+CONF_SHOW_SUMMARY_FOR_DEFAULT = UI_SHOW_SUMMARY_FOR_WARNING_VALUE                           # Show warnings and errors
+
 # configuration - check for updates
 CONF_VERSION_CHECK_INTERVAL_IN_DAYS_KEY = 'checkVersionFrequencyInDays'                     # key that contains the frequency
 CONF_VERSION_CHECK_INTERVAL_IN_DAYS_DEFAULT = 1                                             # default value for the polling interval
@@ -133,6 +163,12 @@ REC_OCCURRENCE_PATH = 'occurrencePath'                                          
 REC_BODIES = 'bodies'                                                                       # BREP Body
 REC_OCCURRENCE = 'occurrence'                                                               # Occurrence
 REC_IS_UNIQUE = 'isUnique'                                                                  # Marker if this record should be used, if all components (not occurrences) should be exported
+REC_IS_REFERENCED_COMPONENT = 'isReferencedComponent'                                       # True if this occurrence is referencing an external component otherwise false
+
+# internal structure of summary
+SUMMARY_INFOS = 'info'                                                                      # list of info messages
+SUMMARY_WARNINGS = 'warnings'                                                               # list of warnings messages
+SUMMARY_ERRORS = 'errors'                                                                   # list of error messages
 
 # internal attributes version check
 VERSION_LAST_CHECKED_FILENAME = "VersionCheck.json"                                         # name of the file that contains the date of the last check.

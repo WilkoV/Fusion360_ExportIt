@@ -13,12 +13,19 @@
       - [STL Refinement](#stl-refinement)
     - [STEP Options](#step-options)
       - [STEP Structure](#step-structure)
+    - [F3D Options](#f3d-options)
+      - [F3D Structure](#f3d-structure)
     - [Export Directory Options](#export-directory-options)
     - [Filename Options](#filename-options)
       - [Prefix](#prefix)
       - [Filter](#filter)
+    - [Common](#common)
+      - [Show Summary For](#show-summary-for)
     - [Version Info](#version-info)
-    - [Elements Of The Export Name](#elements-of-the-export-name)
+  - [Elements Of The Export Name](#elements-of-the-export-name)
+    - [STL Export Name](#stl-export-name)
+    - [STEP Export Name](#step-export-name)
+    - [F3D Export Name](#f3d-export-name)
   - [Installation](#installation)
   - [Compatibility](#compatibility)
   - [What's New](#whats-new)
@@ -56,7 +63,7 @@ The user interface is divided into the following sections:
 
 The behavior of STL export is configured in this section. Following options are available:
 
-![StlOptions](doc/stlOptions.png)
+![Stl Options](doc/stlOptions.png)
 
 #### STL Structure
 
@@ -85,7 +92,22 @@ One to many structures or refinements can be selected.
 
 The granularity of STEP exports is configured in this section.
 
+![STEP Options](doc/stepOptions.png)
+
 #### STEP Structure
+
+Option |Description
+---------|---------
+One File | This structure corresponds to exporting the root component with the built-in function and creates one file containing all visible BRep bodies.
+One File Per Component | This function corresponds to exporting a selected component but will create one file per component or selected component.
+
+### F3D Options
+
+The granularity of F3D exports is configured in this section.
+
+![F3D Options](doc/f3dOptions.png)
+
+#### F3D Structure
 
 Option |Description
 ---------|---------
@@ -126,7 +148,7 @@ Label | Options | Description
 Add Project Name |  | Adds the project name as a prefix to the filename.
 Add Design Name |  | Adds the design name as a prefix to the filename. This is useful if a project contains several designs and the design name is not part of the export directory (more [here](Export-Directory))
 
-#### Filter 
+#### Filter
 
 Filters are used to make filenames more stable, readable or to remove characters that are not supported by the filesystem.
 
@@ -144,6 +166,21 @@ The default setting uses the dot for the element separator and the underscore fo
 
 >01-Default.blocks_1.deep_1.deeper_1.deepest_1.block_5.Body1.stl
 
+### Common
+
+
+#### Show Summary For
+
+Like for logging levels, this parameter controls what level of messages are shown in the summary message at the end of an export.
+
+![Show Summary For](doc/showSummary.png)
+
+Level | Description
+---------|---------
+Info | Information are created for successfully created exports. If this level is activated warnings and errors are also shown.
+Warning | Warning are created if a f3d export contains references (links) to external designs. If this level is activated errors are shown, tool.
+Error | Errors are created if an export fails.
+
 ### Version Info
 
 This section allows the configuration of the check interval and shows the download URL if an update is available.
@@ -155,9 +192,9 @@ Label | Description
 Version Check Interval | Defines the polling interval in days. Minimal value = 1, maximal value = 30.
 Download URL | This field is only available if a new release can be downloaded.
 
-### Elements Of The Export Name
+## Elements Of The Export Name
 
-The export name is composed out of the prefix, the name and the suffix:
+The export name is composed out of the prefix, the name and the suffix.
 
 Group | Element | Configurable | Description
 ---------|----------|----------|---------
@@ -170,13 +207,29 @@ Suffix | Export type | No | The system adds always the export type to the export
 
 What elements are used depends on the user driven configuration, the export format and the chosen structure. The export logic always tries to make the filename as unique as possible. Even if a filename might be unique in the export directory, it might not be unique anymore in unstructured uploads to e.g. [Thingiverse](https://www.thingiverse.com/), [Cults3d](https://cults3d.com/en) or [PrusaPrinters](https://www.prusaprinters.org/). The logic tries to avoid such conflicts.
 
-Following combinations are defined (elementSeparator = '.' and occurrenceSeparator = '_'):
+Following combinations are defined (elementSeparator = '.', occurrenceSeparator = '\_', projectName = False, removeVersionTag = True):
 
-Export Format | Structure | Elements | Example
----------|----------|----------|---------
- STL | One File | [projectName] + elementSeparator + designName + refinementName + "." + suffix| 01-Default.low.stl
- STL | One File Per Body In Component | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithoutOccurrenceIDs + elementSeparator + bodyName + elementSeparator + refinementName + "." + suffix | 01-Default.blocks.mixed.bodyInComponentWithSubComponents.low.stl
- STL | One File Per Body In Occurrence | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithOccurrenceIDs + elementSeparator + bodyName + elementSeparator + refinementName + "." + suffix | 01-Default.blocks_1.deep_1.deeper_1.deepest_1.block_5.Body1.low.stl
+### STL Export Name
+
+Structure | Elements | Example
+---------|----------|---------
+One File | [projectName] + elementSeparator + designName + refinementName + "." + suffix| 01-Default.low.stl
+One File Per Body In Component | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithoutOccurrenceIDs + elementSeparator + bodyName + elementSeparator + refinementName + "." + suffix | 01-Default.blocks.mixed.bodyInComponentWithSubComponents.low.stl
+One File Per Body In Occurrence | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithOccurrenceIDs + elementSeparator + bodyName + elementSeparator + refinementName + "." + suffix | 01-Default.blocks_1.deep_1.deeper_1.deepest_1.block_5.Body1.low.stl
+
+### STEP Export Name
+
+Structure | Elements | Example
+---------|----------|---------
+One File | [projectName] + elementSeparator + designName + suffix| 01-Default.step
+One File Per Component | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithoutOccurrenceIDs + suffix | 01-Default.blocks.mixed.step
+
+### F3D Export Name
+
+Structure | Elements | Example
+---------|----------|---------
+One File | [projectName] + elementSeparator + designName + suffix| 01-Default.f3d
+One File Per Component | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithoutOccurrenceIDs + suffix | 01-Default.blocks.mixed.f3d
 
 ## Installation
 
@@ -195,8 +248,9 @@ This add-in is developed and tested on a Microsoft® Windows® 10 system but sho
 
 Version | Date | Description
 ---------|----------|---------
-0.1.0 | 09.07.2020 | Initial version that includes a defaults editor and stl exports that supports different structures and refinements
+0.1.0 | 09.07.2020 | Initial version that includes a defaults editor and stl exports that supports different structures and refinements.
 0.2.0 | 15.07.2020 | Main enhancement is the addition of STEP exports. Additionally basic configuration validation is added.
+0.3.0 | 21.07.2020 | Main enhancement is the addition of F3D exports. Additionally a progress dialog is shown on larger exports and a summary message is shown at the end of an export.
 
 ## Known Issus
 
@@ -205,17 +259,19 @@ Version | Date | Description
 
 ## Wishlist
 
-- [x] Defaults editor.
 - [ ] Export of selected occurrences.
-- [x] Export of selected bodies.
-- [x] STEP Exports.
-- [ ] F3D Exports.
 - [ ] Special refinement for selected bodies that is stored in the project configuration.
 - [ ] Export of projects.
 - [ ] Selection of stl format (text / binary).
 - [ ] Custom refinement.
 - [ ] Filename filter to replace spaces with configurable character.
-- [x] Configuration validation.
 - [ ] Export filter that excludes linked components.
-- [ ] Show export summary message after export.
 - [ ] Store folded / unfolded state of groups
+- [ ] Add auto save option for changed configuration
+- [x] Defaults editor.
+- [x] Export of selected bodies.
+- [x] STEP Exports.
+- [x] F3D Exports.
+- [x] Configuration validation.
+- [x] Show export summary message after export.
+- [x] Show progress dialog

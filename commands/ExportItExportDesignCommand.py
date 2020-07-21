@@ -9,6 +9,10 @@ from .ConfigurationHelper import initializeConfiguration, getDefaultConfiguratio
 from .GithubReleaseHelper import checkForUpdates, getGithubReleaseInformation, showReleaseNotes
 from .Statics import *
 
+progressDialog = adsk.core.ProgressDialog.cast(None)                        # progress dialog for larger exports
+progressValue = 0                                                           # current state of the progress value
+summary = {SUMMARY_INFOS: [], SUMMARY_WARNINGS: [], SUMMARY_ERRORS: []}     # structure containing the data for the summary message at the end of an export
+
 def createDefaultConfiguration():
     logger.debug("creating default configuration")
 
@@ -28,6 +32,9 @@ def createDefaultConfiguration():
     # step options
     defaultConfiguration[CONF_STEP_STRUCTURE_KEY] = CONF_STEP_STRUCTURE_DEFAULT
 
+    # f3d options
+    defaultConfiguration[CONF_F3D_STRUCTURE_KEY] = CONF_F3D_STRUCTURE_DEFAULT
+
     # export directory options
     defaultConfiguration[CONF_EXPORT_DIRECTORY_KEY] = CONF_EXPORT_DIRECTORY_DEFAULT
 
@@ -43,6 +50,9 @@ def createDefaultConfiguration():
     defaultConfiguration[CONF_FILENAME_REMOVE_VERSION_TAGS_KEY] = CONF_FILENAME_REMOVE_VERSION_TAGS_DEFAULT
     defaultConfiguration[CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY] = CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_DEFAULT
     defaultConfiguration[CONF_FILENAME_ELEMENT_SEPERATOR_KEY] = CONF_FILENAME_ELEMENT_SEPERATOR_DEFAULT
+
+    # common
+    defaultConfiguration[CONF_SHOW_SUMMARY_FOR_KEY] = CONF_SHOW_SUMMARY_FOR_DEFAULT
 
     # check for updates configuration
     defaultConfiguration[CONF_VERSION_CHECK_INTERVAL_IN_DAYS_KEY] = CONF_VERSION_CHECK_INTERVAL_IN_DAYS_DEFAULT
@@ -68,6 +78,10 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
     addGroup(inputs, UI_STEP_OPTIONS_GROUP_ID, UI_STEP_OPTIONS_GROUP_NAME, True)
     addCheckBoxDropDown(UI_STEP_OPTIONS_GROUP_ID, CONF_STEP_STRUCTURE_KEY, UI_STEP_STRUCTURE_NAME, UI_STEP_STRUCTURE_VALUES, getConfiguration(CONF_STEP_STRUCTURE_KEY))
 
+    # f3d export
+    addGroup(inputs, UI_F3D_OPTIONS_GROUP_ID, UI_F3D_OPTIONS_GROUP_NAME, True)
+    addCheckBoxDropDown(UI_F3D_OPTIONS_GROUP_ID, CONF_F3D_STRUCTURE_KEY, UI_F3D_STRUCTURE_NAME, UI_F3D_STRUCTURE_VALUES, getConfiguration(CONF_F3D_STRUCTURE_KEY))
+
     # export directory
     addGroup(inputs, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME, True)
 
@@ -87,6 +101,10 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
 
     addTextListDropDown(UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_ELEMENT_SEPERATOR_KEY, UI_FILENAME_ELEMENT_SEPERATOR_NAME, UI_FILENAME_ELEMENT_SEPERATOR_VALUES, getConfiguration(CONF_FILENAME_ELEMENT_SEPERATOR_KEY))
     addTextListDropDown(UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY, UI_FILENAME_OCCURRENCE_ID_SEPERATOR_NAME, UI_FILENAME_OCCURRENCE_ID_SEPERATOR_VALUES, getConfiguration(CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY))
+
+    if configurationOnly:
+        addGroup(inputs, UI_COMMON_GROUP_ID, UI_COMMON_GROUP_NAME, True)
+        addTextListDropDown(UI_COMMON_GROUP_ID, CONF_SHOW_SUMMARY_FOR_KEY, UI_SHOW_SUMMARY_FOR_NAME, UI_SHOW_SUMMARY_FOR_VALUES, getConfiguration(CONF_SHOW_SUMMARY_FOR_KEY))
 
     if configurationOnly or checkForUpdates:
         # add group for version information
@@ -167,6 +185,7 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
     exportObjects = []
     rootBodies = []
     uniqueComponents = []
+    isReferencedComponent = False
 
     # if bodies folder is visible add all visible bodies to the list of visible objects
     if rootComponent.isBodiesFolderLightBulbOn:
@@ -215,6 +234,11 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
             isUnique = True
             logger.debug("%s is unique", occurrenceFullPathName)
 
+        # check if occurrence is referencing a external component
+        if occurrence.isReferencedComponent:
+            logger.info("component is a external reference", occurrenceFullPathName)
+            isReferencedComponent = occurrence.isReferencedComponent
+
         # get visible occurrence bodies
         occurrenceBodies = []
         for body in occurrence.bRepBodies:
@@ -236,9 +260,74 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
             continue
 
         # if occurrence has bodies, add occurrence to the list of exportable objects
-        exportObjects.append({REC_OCCURRENCE: occurrence, REC_OCCURRENCE_PATH: occurrenceFullPathName, REC_IS_UNIQUE: isUnique, REC_BODIES: occurrenceBodies})
+        exportObjects.append({REC_OCCURRENCE: occurrence, REC_OCCURRENCE_PATH: occurrenceFullPathName, REC_IS_UNIQUE: isUnique, REC_IS_REFERENCED_COMPONENT: isReferencedComponent, REC_BODIES: occurrenceBodies})
 
+    logger.debug(exportObjects)
     return exportObjects
+
+def updateProgressDialog():
+    global progressDialog
+    global progressValue
+
+    # update internal progress counter
+    progressValue = progressValue + 1
+
+    if not progressDialog.isShowing:
+        # nothing to do, because the dialog is not visible
+        return
+
+    if progressDialog.wasCancelled:
+        # nothing to do, because the dialog is cancelled
+        progressDialog.hide()
+        return
+
+    # update progress dialog
+    progressDialog.progressValue = progressValue
+
+def totalNumberOfObjects(exportObjects):
+    components = 0
+    componentBodies = 0
+    occurrenceBodies = 0
+    total = 0
+
+    for exportObject in exportObjects:
+        if exportObject.get(REC_IS_UNIQUE):
+            components = components + 1
+            componentBodies =  componentBodies + len(exportObject.get(REC_BODIES))
+
+        occurrenceBodies =  occurrenceBodies + len(exportObject.get(REC_BODIES))
+
+    if UI_EXPORT_TYPES_F3D_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
+        if UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_F3D_STRUCTURE_KEY):
+            total = total + 1
+
+        if UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_F3D_STRUCTURE_KEY):
+            total = total + components
+
+    if UI_EXPORT_TYPES_STEP_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
+        if UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY):
+            total = total + 1
+
+        if UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY):
+            total = total + components
+
+    for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
+        if UI_EXPORT_TYPES_STL_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
+            if UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
+                total = total + 1
+
+            if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
+                total = total + componentBodies
+
+            if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
+                total = total + occurrenceBodies
+
+    logger.debug("components: %s", components)
+    logger.debug("componentBodies: %s", componentBodies)
+    logger.debug("occurrenceBodies: %s", occurrenceBodies)
+    logger.debug("total: %s", total)
+
+    return total
 
 def removeVersionTag(name):
     if not getConfiguration(CONF_FILENAME_REMOVE_VERSION_TAGS_KEY):
@@ -373,15 +462,109 @@ def copyDesignToExportDocument(exportObjects):
 
     return document, rootComponent
 
+def addInfoToSummary(suffix, fullFileName):
+    global summary
+    filename = fullFileName
+
+    if len(filename) > 50:
+        filename = filename[0:10] + "..." + filename[-37:]
+
+    summary[SUMMARY_INFOS].append("   " + suffix + ": " + filename)
+
+def addWarningToSummary(suffix, errorType, objectPath):
+    global summary
+    path = objectPath
+
+    if len(path) > 50:
+        path = path[0:10] + "..." + path[-37:]
+
+    summary[SUMMARY_WARNINGS].append("   " + suffix + ": " + path)
+
+def addErrorToSummary(suffix, errorType, objectPath):
+    global summary
+    path = objectPath
+
+    if len(path) > 50:
+        path = path[0:10] + "..." + path[-37:]
+    
+    summary[SUMMARY_WARNINGS].append("   " + suffix + ": " + path)
+
+def getSummaryMessageFor(category, allEntries, maxEntries):
+    numberOfEntries = len(allEntries)
+    entries = allEntries
+    message = category + ":"
+
+    if numberOfEntries > maxEntries:
+        lastEntry = entries[numberOfEntries - 1]
+        entries = []
+        entries = allEntries[0:maxEntries-3]
+        entries.append('   ...')
+        entries.append(lastEntry)
+
+    message = message + "\n".join(entries)
+    message = message + "\n"
+    message = message + "\n"
+
+    return message
+
+def showSummary():
+    global summary
+    message = ""
+    showMessage = False
+
+    logger.debug("Process summary entries")
+
+    if getConfiguration(CONF_SHOW_SUMMARY_FOR_KEY) == UI_SHOW_SUMMARY_FOR_INFO_VALUE:
+        allEntries = summary.get(SUMMARY_INFOS)
+        numberOfEntries = len(allEntries)
+        
+        if numberOfEntries > 0:
+            logger.debug("Rendering summary info message(s)")
+
+            showMessage = True
+            message = message + getSummaryMessageFor("Info", allEntries, 20)
+
+    if getConfiguration(CONF_SHOW_SUMMARY_FOR_KEY) in [UI_SHOW_SUMMARY_FOR_INFO_VALUE, UI_SHOW_SUMMARY_FOR_WARNING_VALUE]:
+        allEntries = summary.get(SUMMARY_WARNINGS)
+        numberOfEntries = len(allEntries)
+        
+        if numberOfEntries > 0:
+            logger.debug("Rendering summary info message(s)")
+
+            showMessage = True
+            message = message + getSummaryMessageFor("Warnings", allEntries, 20)
+
+    if getConfiguration(CONF_SHOW_SUMMARY_FOR_KEY) in [UI_SHOW_SUMMARY_FOR_INFO_VALUE, UI_SHOW_SUMMARY_FOR_WARNING_VALUE, UI_SHOW_SUMMARY_FOR_ERROR_VALUE]:
+        allEntries = summary.get(SUMMARY_ERRORS)
+        numberOfEntries = len(allEntries)
+        
+        if numberOfEntries > 0:
+            logger.debug("Rendering summary info message(s)")
+
+            showMessage = True
+            message = message + getSummaryMessageFor("Warnings", allEntries, 20)
+
+    if showMessage:
+        logger.debug("Showing summary")
+        ao = AppObjects()
+        ao.ui.messageBox(message)
+
 def exportStepAsOneFile(projectName, designName, rootComponent, ao):
     # create filename
     fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_STEP_VALUE)
 
-    # get stl export options
+    # get step export options
     stepExportOptions = ao.export_manager.createSTEPExportOptions(fullFileName, rootComponent)
 
-    # export design as single stl file
+    # export design as single step file
     exportResult = ao.export_manager.execute(stepExportOptions)
+    # update summary
+    if exportResult:
+        addInfoToSummary(UI_EXPORT_TYPES_STEP_VALUE, fullFileName)
+    else:
+        addErrorToSummary(UI_EXPORT_TYPES_STEP_VALUE, exportResult, fullFileName)
+
+    updateProgressDialog()
 
 def exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao):
     # iterate over list of occurrences
@@ -393,11 +576,83 @@ def exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao):
         # create filename
         fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, "", UI_EXPORT_TYPES_STEP_VALUE)
 
-        # get stl export options
+        # get step export options
         stepExportOptions = ao.export_manager.createSTEPExportOptions(fullFileName, exportObject.get(REC_OCCURRENCE).component)
 
-        # export design as single stl file
+        # export component as single step file
         exportResult = ao.export_manager.execute(stepExportOptions)
+
+        # update summary
+        if exportResult:
+            addInfoToSummary(UI_EXPORT_TYPES_STEP_VALUE, fullFileName)
+        else:
+            addErrorToSummary(UI_EXPORT_TYPES_STEP_VALUE, exportResult, fullFileName)
+
+        updateProgressDialog()
+
+def exportF3dAsOneFile(projectName, designName, rootComponent, ao):
+    hasExternalLinks = False
+
+    # create filename
+    fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_F3D_VALUE)
+
+    # check if design contains links to external components
+    for occurrence in rootComponent.allOccurrences:
+        if occurrence.isReferencedComponent:
+            logger.warning("%s contains links to an external designs. Skipping export", designName)
+            hasExternalLinks = True
+
+    if not hasExternalLinks:
+        # get f3d export options
+        f3dExportOptions = ao.export_manager.createFusionArchiveExportOptions(fullFileName, rootComponent)
+
+        # export design as single f3d file
+        exportResult = ao.export_manager.execute(f3dExportOptions)
+
+        # update summary
+        if exportResult:
+            addInfoToSummary(UI_EXPORT_TYPES_F3D_VALUE, fullFileName)
+        else:
+            addErrorToSummary(UI_EXPORT_TYPES_F3D_VALUE, exportResult, fullFileName)
+    else:
+        # update external reference warning to summary
+        addWarningToSummary(UI_EXPORT_TYPES_F3D_VALUE, "Link", designName)
+
+    updateProgressDialog()
+
+def exportF3dAsOneFilePerComponent(exportObjects, projectName, designName, ao):
+    hasExternalLinks = False
+
+    # iterate over list of occurrences
+    for exportObject in exportObjects:
+        # check if component is unique
+        if not exportObject.get(REC_IS_UNIQUE):
+            continue
+
+        # create filename
+        fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, "", UI_EXPORT_TYPES_F3D_VALUE)
+
+        if exportObject.get(REC_IS_REFERENCED_COMPONENT):
+            logger.warning("%s is a links to an external designs. Skipping export", exportObject.get(REC_OCCURRENCE_PATH))
+            hasExternalLinks = True
+
+        if not hasExternalLinks:
+            # get f3d export options
+            f3dExportOptions = ao.export_manager.createFusionArchiveExportOptions (fullFileName, exportObject.get(REC_OCCURRENCE).component)
+
+            # export component as single f3d file
+            exportResult = ao.export_manager.execute(f3dExportOptions)
+
+            # update summary
+            if exportResult:
+                addInfoToSummary(UI_EXPORT_TYPES_F3D_VALUE, fullFileName)
+            else:
+                addErrorToSummary(UI_EXPORT_TYPES_F3D_VALUE, exportResult, fullFileName)
+        else:
+            # update external reference warning to summary
+            addWarningToSummary(UI_EXPORT_TYPES_F3D_VALUE, "Link", exportObject.get(REC_OCCURRENCE_PATH))
+
+        updateProgressDialog()
 
 def getStlExportOptions(ao, geometry, fullFileName, refinement):
     # get stl export options
@@ -423,7 +678,10 @@ def getStlExportOptions(ao, geometry, fullFileName, refinement):
 
 def exportStlAsOneFile(projectName, designName, rootComponent, ao):
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
-        # set refinement name
+        # cancel loop if user canceld the dialog
+        if progressDialog.wasCancelled:
+            break
+
         refinementName = ""
         if len(getConfiguration(CONF_STL_REFINEMENT_KEY)) > 1:
             # set refinement name if more than one refinement is defined to keep the exportname unique
@@ -438,8 +696,20 @@ def exportStlAsOneFile(projectName, designName, rootComponent, ao):
         # export design as single stl file
         exportResult = ao.export_manager.execute(stlExportOptions)
 
+        # update summary
+        if exportResult:
+            addInfoToSummary(UI_EXPORT_TYPES_STL_VALUE, fullFileName)
+        else:
+            addErrorToSummary(UI_EXPORT_TYPES_STL_VALUE, exportResult, fullFileName)
+
+        updateProgressDialog()
+
 def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName, ao):
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
+        # cancel loop if user canceld the dialog
+        if progressDialog.wasCancelled:
+            break
+
         # set refinement name
         refinementName = ""
         if len(getConfiguration(CONF_STL_REFINEMENT_KEY)) > 1:
@@ -448,12 +718,20 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
 
         # iterate over list of occurrences
         for exportObject in exportObjects:
+            # cancel loop if user canceld the dialog
+            if progressDialog.wasCancelled:
+                break
+
             # check if component is unique
             if not exportObject.get(REC_IS_UNIQUE):
                 continue
 
             # iterate over list of bodies
             for body in exportObject.get(REC_BODIES):
+                # cancel loop if user canceld the dialog
+                if progressDialog.wasCancelled:
+                    break
+
                 # create filename
                 fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
 
@@ -462,6 +740,14 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
 
                 # export body as single stl file
                 exportResult = ao.export_manager.execute(stlExportOptions)
+
+                # update summary
+                if exportResult:
+                    addInfoToSummary(UI_EXPORT_TYPES_STL_VALUE, fullFileName)
+                else:
+                    addErrorToSummary(UI_EXPORT_TYPES_STL_VALUE, exportResult, fullFileName)
+
+                updateProgressDialog()
 
 def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName, ao):
     # copy exportObjects into a temporary document and convert all occurrences into unique components.
@@ -472,7 +758,11 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
 
     # generate exports for each selected refinement
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
+        # cancel loop if user canceld the dialog
+        if progressDialog.wasCancelled:
+            break
         # set refinement name
+
         refinementName = ""
         if len(getConfiguration(CONF_STL_REFINEMENT_KEY)) > 1:
             # set refinement name if more than one refinement is defined to keep the exportname unique
@@ -480,8 +770,16 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
 
         # iterate over list of occurrences
         for tmpExportObject in tmpExportObjects:
+            # cancel loop if user canceld the dialog
+            if progressDialog.wasCancelled:
+                break
+
             # iterate over list of bodies
             for body in tmpExportObject.get(REC_BODIES):
+                # cancel loop if user canceld the dialog
+                if progressDialog.wasCancelled:
+                    break
+
                 # create filename but remove occurrence id unless they're part of the occurrence name in the temporary document
                 fullFileName = getExportName(projectName, designName, tmpExportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
 
@@ -490,6 +788,29 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
 
                 # export body as single stl file
                 exportResult = ao.export_manager.execute(stlExportOptions)
+
+                # update summary
+                if exportResult:
+                    addInfoToSummary(UI_EXPORT_TYPES_STL_VALUE, fullFileName)
+                else:
+                    addErrorToSummary(UI_EXPORT_TYPES_STL_VALUE, exportResult, fullFileName)
+
+                updateProgressDialog()
+
+def resetData():
+    global progressDialog
+    global progressValue
+    global summary
+
+    # reset configuration
+    resetConfiguration()
+
+    # reset progress dialog
+    progressDialog = adsk.core.ProgressDialog.cast(None)
+    progressValue = 0
+
+    # reset summary data
+    summary = {SUMMARY_INFOS: [], SUMMARY_WARNINGS: [], SUMMARY_ERRORS: []}
 
 class ExportItExportDesignCommand(apper.Fusion360CommandBase):
     def on_preview(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, args, input_values):
@@ -505,7 +826,8 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             logger.info("Finished processing of %s - %s", projectName, designName)
             logger.info("--------------------------------------------------------------------------------")
 
-            resetConfiguration()
+            # reset configuration
+            resetData()
 
         except:
             logger.info("--------------------------------------------------------------------------------")
@@ -540,44 +862,79 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             logger.info("Starting processing of %s - %s", projectName, designName)
             logger.info("--------------------------------------------------------------------------------")
 
-            #print configuration to the log file
+            # print configuration to the log file
             logConfiguration()
+
+            # create progress dialog
+            global progressDialog
+            global progressValue
+
+            logger.debug("Initializing progressDialog")
+
+            progressDialog = ao.ui.createProgressDialog()
+            progressDialog.cancelButtonText = 'Cancel'
+            progressDialog.isBackgroundTranslucent = False
+            progressDialog.isCancelButtonShown = True
+            progressValue = 0
 
             # get list of bodies for the exports
             exportObjects = []
 
-            if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY) or UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
-                logger.debug("getting list of export objects")
+            if (UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_F3D_STRUCTURE_KEY) or
+                UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY) or
+                UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY) or
+                UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY)):
 
+                # get list of occurrences and bodies
+                logger.debug("getting list of export objects")
                 exportObjects = getExportObjects(rootComponent, input_values[UI_EXPORT_OPTIONS_BODIES_SELECTION_ID])
 
-                logger.debug("%s occurrences found", len(exportObjects))
+            # Show progress dialog
+            logger.debug("Showing progressDialog")
+            progressDialog.show('ExportIt', 'Exports created: %v of %m' , 0, totalNumberOfObjects(exportObjects), 1)
 
-            if UI_EXPORT_TYPES_STEP_VALUE in getSelectedDropDownItems(inputs, CONF_EXPORT_OPTIONS_TYPE_KEY):
+            if not progressDialog.wasCancelled and UI_EXPORT_TYPES_F3D_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
                 # export design as one step file
-                if UI_STRUCTURE_ONE_FILE_VALUE in getSelectedDropDownItems(inputs, CONF_STEP_STRUCTURE_KEY):
+                if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_F3D_STRUCTURE_KEY):
+                    exportF3dAsOneFile(projectName, designName, rootComponent, ao)
+
+                # export each component as individual step files
+                if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_F3D_STRUCTURE_KEY):
+                    exportF3dAsOneFilePerComponent(exportObjects, projectName, designName, ao)
+
+            if not progressDialog.wasCancelled and UI_EXPORT_TYPES_STEP_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
+                # export design as one step file
+                if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY):
                     exportStepAsOneFile(projectName, designName, rootComponent, ao)
 
                 # export each component as individual step files
-                if UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STEP_STRUCTURE_KEY):
+                if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY):
                     exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao)
 
-            if UI_EXPORT_TYPES_STL_VALUE in getSelectedDropDownItems(inputs, CONF_EXPORT_OPTIONS_TYPE_KEY):
+            if not progressDialog.wasCancelled and UI_EXPORT_TYPES_STL_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
                 # export design as one stl file
-                if UI_STRUCTURE_ONE_FILE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
+                if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
                     exportStlAsOneFile(projectName, designName, rootComponent, ao)
 
                 # export each body in component as individual stl files
-                if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
+                if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
                     exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName, ao)
 
                 # export each body in occurrence as individual stl files
-                if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getSelectedDropDownItems(inputs, CONF_STL_STRUCTURE_KEY):
+                if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
                     exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName, ao)
+
+            # hide progress dialog
+            logger.debug("Hiding progressDialog")
+            progressDialog.progressValue = progressValue
+            progressDialog.hide()
 
             # write modified configuration
             writeConfiguration(ao.document, CONF_PROJECT_ATTRIBUTE_GROUP, CONF_PROJECT_ATTRIBUTE_KEY)
             showSaveConfigWarning()
+
+            # show summary
+            showSummary()
 
         except:
             logger.error(traceback.format_exc())
@@ -596,6 +953,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             logger.info("--------------------------------------------------------------------------------")
 
             # load or create configuration
+            resetData()
             initializeConfiguration(ao.document, CONF_PROJECT_ATTRIBUTE_GROUP, CONF_PROJECT_ATTRIBUTE_KEY, createDefaultConfiguration())
 
             #print configuration to the log file
