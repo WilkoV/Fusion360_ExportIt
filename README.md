@@ -19,6 +19,8 @@
     - [Filename Options](#filename-options)
       - [Prefix](#prefix)
       - [Filter](#filter)
+    - [Common](#common)
+      - [Show Summary For](#show-summary-for)
     - [Version Info](#version-info)
   - [Elements Of The Export Name](#elements-of-the-export-name)
     - [STL Export Name](#stl-export-name)
@@ -146,7 +148,7 @@ Label | Options | Description
 Add Project Name |  | Adds the project name as a prefix to the filename.
 Add Design Name |  | Adds the design name as a prefix to the filename. This is useful if a project contains several designs and the design name is not part of the export directory (more [here](Export-Directory))
 
-#### Filter 
+#### Filter
 
 Filters are used to make filenames more stable, readable or to remove characters that are not supported by the filesystem.
 
@@ -163,6 +165,21 @@ Occurrence ID Separator | \_ | This options uses a "_" (underscore) as the separ
 The default setting uses the dot for the element separator and the underscore for the occurrence ID separator and the resulting filenames will look like this:
 
 >01-Default.blocks_1.deep_1.deeper_1.deepest_1.block_5.Body1.stl
+
+### Common
+
+
+#### Show Summary For
+
+Like for logging levels, this parameter controls what level of messages are shown in the summary message at the end of an export.
+
+![Show Summary For](doc/showSummary.png)
+
+Level | Description
+---------|---------
+Info | Information are created for successfully created exports. If this level is activated warnings and errors are also shown.
+Warning | Warning are created if a f3d export contains references (links) to external designs. If this level is activated errors are shown, tool.
+Error | Errors are created if an export fails.
 
 ### Version Info
 
@@ -231,10 +248,9 @@ This add-in is developed and tested on a Microsoft® Windows® 10 system but sho
 
 Version | Date | Description
 ---------|----------|---------
-0.1.0 | 09.07.2020 | Initial version that includes a defaults editor and stl exports that supports different structures and refinements
+0.1.0 | 09.07.2020 | Initial version that includes a defaults editor and stl exports that supports different structures and refinements.
 0.2.0 | 15.07.2020 | Main enhancement is the addition of STEP exports. Additionally basic configuration validation is added.
-TODO 0.3.0 | XX.XX.2020 | XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
+0.3.0 | 21.07.2020 | Main enhancement is the addition of F3D exports. Additionally a progress dialog is shown on larger exports and a summary message is shown at the end of an export.
 
 ## Known Issus
 
@@ -243,18 +259,19 @@ TODO 0.3.0 | XX.XX.2020 | XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 ## Wishlist
 
-- [x] Defaults editor.
 - [ ] Export of selected occurrences.
-- [x] Export of selected bodies.
-- [x] STEP Exports.
-- [x] F3D Exports.
 - [ ] Special refinement for selected bodies that is stored in the project configuration.
 - [ ] Export of projects.
 - [ ] Selection of stl format (text / binary).
 - [ ] Custom refinement.
 - [ ] Filename filter to replace spaces with configurable character.
-- [x] Configuration validation.
 - [ ] Export filter that excludes linked components.
-- [ ] Show export summary message after export.
 - [ ] Store folded / unfolded state of groups
+- [ ] Add auto save option for changed configuration
+- [x] Defaults editor.
+- [x] Export of selected bodies.
+- [x] STEP Exports.
+- [x] F3D Exports.
+- [x] Configuration validation.
+- [x] Show export summary message after export.
 - [x] Show progress dialog

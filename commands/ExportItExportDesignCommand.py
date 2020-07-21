@@ -9,8 +9,9 @@ from .ConfigurationHelper import initializeConfiguration, getDefaultConfiguratio
 from .GithubReleaseHelper import checkForUpdates, getGithubReleaseInformation, showReleaseNotes
 from .Statics import *
 
-progressDialog = adsk.core.ProgressDialog.cast(None)
-progressValue = 0
+progressDialog = adsk.core.ProgressDialog.cast(None)                        # progress dialog for larger exports
+progressValue = 0                                                           # current state of the progress value
+summary = {SUMMARY_INFOS: [], SUMMARY_WARNINGS: [], SUMMARY_ERRORS: []}     # structure containing the data for the summary message at the end of an export
 
 def createDefaultConfiguration():
     logger.debug("creating default configuration")
@@ -49,6 +50,9 @@ def createDefaultConfiguration():
     defaultConfiguration[CONF_FILENAME_REMOVE_VERSION_TAGS_KEY] = CONF_FILENAME_REMOVE_VERSION_TAGS_DEFAULT
     defaultConfiguration[CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY] = CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_DEFAULT
     defaultConfiguration[CONF_FILENAME_ELEMENT_SEPERATOR_KEY] = CONF_FILENAME_ELEMENT_SEPERATOR_DEFAULT
+
+    # common
+    defaultConfiguration[CONF_SHOW_SUMMARY_FOR_KEY] = CONF_SHOW_SUMMARY_FOR_DEFAULT
 
     # check for updates configuration
     defaultConfiguration[CONF_VERSION_CHECK_INTERVAL_IN_DAYS_KEY] = CONF_VERSION_CHECK_INTERVAL_IN_DAYS_DEFAULT
@@ -97,6 +101,10 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
 
     addTextListDropDown(UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_ELEMENT_SEPERATOR_KEY, UI_FILENAME_ELEMENT_SEPERATOR_NAME, UI_FILENAME_ELEMENT_SEPERATOR_VALUES, getConfiguration(CONF_FILENAME_ELEMENT_SEPERATOR_KEY))
     addTextListDropDown(UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY, UI_FILENAME_OCCURRENCE_ID_SEPERATOR_NAME, UI_FILENAME_OCCURRENCE_ID_SEPERATOR_VALUES, getConfiguration(CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY))
+
+    if configurationOnly:
+        addGroup(inputs, UI_COMMON_GROUP_ID, UI_COMMON_GROUP_NAME, True)
+        addTextListDropDown(UI_COMMON_GROUP_ID, CONF_SHOW_SUMMARY_FOR_KEY, UI_SHOW_SUMMARY_FOR_NAME, UI_SHOW_SUMMARY_FOR_VALUES, getConfiguration(CONF_SHOW_SUMMARY_FOR_KEY))
 
     if configurationOnly or checkForUpdates:
         # add group for version information
@@ -254,6 +262,7 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
         # if occurrence has bodies, add occurrence to the list of exportable objects
         exportObjects.append({REC_OCCURRENCE: occurrence, REC_OCCURRENCE_PATH: occurrenceFullPathName, REC_IS_UNIQUE: isUnique, REC_IS_REFERENCED_COMPONENT: isReferencedComponent, REC_BODIES: occurrenceBodies})
 
+    logger.debug(exportObjects)
     return exportObjects
 
 def updateProgressDialog():
@@ -453,6 +462,93 @@ def copyDesignToExportDocument(exportObjects):
 
     return document, rootComponent
 
+def addInfoToSummary(suffix, fullFileName):
+    global summary
+    filename = fullFileName
+
+    if len(filename) > 50:
+        filename = filename[0:10] + "..." + filename[-37:]
+
+    summary[SUMMARY_INFOS].append("   " + suffix + ": " + filename)
+
+def addWarningToSummary(suffix, errorType, objectPath):
+    global summary
+    path = objectPath
+
+    if len(path) > 50:
+        path = path[0:10] + "..." + path[-37:]
+
+    summary[SUMMARY_WARNINGS].append("   " + suffix + ": " + path)
+
+def addErrorToSummary(suffix, errorType, objectPath):
+    global summary
+    path = objectPath
+
+    if len(path) > 50:
+        path = path[0:10] + "..." + path[-37:]
+    
+    summary[SUMMARY_WARNINGS].append("   " + suffix + ": " + path)
+
+def getSummaryMessageFor(category, allEntries, maxEntries):
+    numberOfEntries = len(allEntries)
+    entries = allEntries
+    message = category + ":"
+
+    if numberOfEntries > maxEntries:
+        lastEntry = entries[numberOfEntries - 1]
+        entries = []
+        entries = allEntries[0:maxEntries-3]
+        entries.append('   ...')
+        entries.append(lastEntry)
+
+    message = message + "\n".join(entries)
+    message = message + "\n"
+    message = message + "\n"
+
+    return message
+
+def showSummary():
+    global summary
+    message = ""
+    showMessage = False
+
+    logger.debug("Process summary entries")
+
+    if getConfiguration(CONF_SHOW_SUMMARY_FOR_KEY) == UI_SHOW_SUMMARY_FOR_INFO_VALUE:
+        allEntries = summary.get(SUMMARY_INFOS)
+        numberOfEntries = len(allEntries)
+        
+        if numberOfEntries > 0:
+            logger.debug("Rendering summary info message(s)")
+
+            showMessage = True
+            message = message + getSummaryMessageFor("Info", allEntries, 20)
+
+    if getConfiguration(CONF_SHOW_SUMMARY_FOR_KEY) in [UI_SHOW_SUMMARY_FOR_INFO_VALUE, UI_SHOW_SUMMARY_FOR_WARNING_VALUE]:
+        allEntries = summary.get(SUMMARY_WARNINGS)
+        numberOfEntries = len(allEntries)
+        
+        if numberOfEntries > 0:
+            logger.debug("Rendering summary info message(s)")
+
+            showMessage = True
+            message = message + getSummaryMessageFor("Warnings", allEntries, 20)
+
+    if getConfiguration(CONF_SHOW_SUMMARY_FOR_KEY) in [UI_SHOW_SUMMARY_FOR_INFO_VALUE, UI_SHOW_SUMMARY_FOR_WARNING_VALUE, UI_SHOW_SUMMARY_FOR_ERROR_VALUE]:
+        allEntries = summary.get(SUMMARY_ERRORS)
+        numberOfEntries = len(allEntries)
+        
+        if numberOfEntries > 0:
+            logger.debug("Rendering summary info message(s)")
+
+            showMessage = True
+            message = message + getSummaryMessageFor("Warnings", allEntries, 20)
+
+    if showMessage:
+        logger.debug("Showing summary")
+        ao = AppObjects()
+        ao.ui.messageBox(message)
+
 def exportStepAsOneFile(projectName, designName, rootComponent, ao):
     # create filename
     fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_STEP_VALUE)
@@ -462,6 +558,12 @@ def exportStepAsOneFile(projectName, designName, rootComponent, ao):
 
     # export design as single step file
     exportResult = ao.export_manager.execute(stepExportOptions)
+    # update summary
+    if exportResult:
+        addInfoToSummary(UI_EXPORT_TYPES_STEP_VALUE, fullFileName)
+    else:
+        addErrorToSummary(UI_EXPORT_TYPES_STEP_VALUE, exportResult, fullFileName)
+
     updateProgressDialog()
 
 def exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao):
@@ -479,6 +581,13 @@ def exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao):
 
         # export component as single step file
         exportResult = ao.export_manager.execute(stepExportOptions)
+
+        # update summary
+        if exportResult:
+            addInfoToSummary(UI_EXPORT_TYPES_STEP_VALUE, fullFileName)
+        else:
+            addErrorToSummary(UI_EXPORT_TYPES_STEP_VALUE, exportResult, fullFileName)
+
         updateProgressDialog()
 
 def exportF3dAsOneFile(projectName, designName, rootComponent, ao):
@@ -499,6 +608,15 @@ def exportF3dAsOneFile(projectName, designName, rootComponent, ao):
 
         # export design as single f3d file
         exportResult = ao.export_manager.execute(f3dExportOptions)
+
+        # update summary
+        if exportResult:
+            addInfoToSummary(UI_EXPORT_TYPES_F3D_VALUE, fullFileName)
+        else:
+            addErrorToSummary(UI_EXPORT_TYPES_F3D_VALUE, exportResult, fullFileName)
+    else:
+        # update external reference warning to summary
+        addWarningToSummary(UI_EXPORT_TYPES_F3D_VALUE, "Link", designName)
 
     updateProgressDialog()
 
@@ -524,6 +642,15 @@ def exportF3dAsOneFilePerComponent(exportObjects, projectName, designName, ao):
 
             # export component as single f3d file
             exportResult = ao.export_manager.execute(f3dExportOptions)
+
+            # update summary
+            if exportResult:
+                addInfoToSummary(UI_EXPORT_TYPES_F3D_VALUE, fullFileName)
+            else:
+                addErrorToSummary(UI_EXPORT_TYPES_F3D_VALUE, exportResult, fullFileName)
+        else:
+            # update external reference warning to summary
+            addWarningToSummary(UI_EXPORT_TYPES_F3D_VALUE, "Link", exportObject.get(REC_OCCURRENCE_PATH))
 
         updateProgressDialog()
 
@@ -568,6 +695,13 @@ def exportStlAsOneFile(projectName, designName, rootComponent, ao):
 
         # export design as single stl file
         exportResult = ao.export_manager.execute(stlExportOptions)
+
+        # update summary
+        if exportResult:
+            addInfoToSummary(UI_EXPORT_TYPES_STL_VALUE, fullFileName)
+        else:
+            addErrorToSummary(UI_EXPORT_TYPES_STL_VALUE, exportResult, fullFileName)
+
         updateProgressDialog()
 
 def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName, ao):
@@ -606,6 +740,13 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
 
                 # export body as single stl file
                 exportResult = ao.export_manager.execute(stlExportOptions)
+
+                # update summary
+                if exportResult:
+                    addInfoToSummary(UI_EXPORT_TYPES_STL_VALUE, fullFileName)
+                else:
+                    addErrorToSummary(UI_EXPORT_TYPES_STL_VALUE, exportResult, fullFileName)
+
                 updateProgressDialog()
 
 def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName, ao):
@@ -647,7 +788,29 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
 
                 # export body as single stl file
                 exportResult = ao.export_manager.execute(stlExportOptions)
+
+                # update summary
+                if exportResult:
+                    addInfoToSummary(UI_EXPORT_TYPES_STL_VALUE, fullFileName)
+                else:
+                    addErrorToSummary(UI_EXPORT_TYPES_STL_VALUE, exportResult, fullFileName)
+
                 updateProgressDialog()
+
+def resetData():
+    global progressDialog
+    global progressValue
+    global summary
+
+    # reset configuration
+    resetConfiguration()
+
+    # reset progress dialog
+    progressDialog = adsk.core.ProgressDialog.cast(None)
+    progressValue = 0
+
+    # reset summary data
+    summary = {SUMMARY_INFOS: [], SUMMARY_WARNINGS: [], SUMMARY_ERRORS: []}
 
 class ExportItExportDesignCommand(apper.Fusion360CommandBase):
     def on_preview(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, args, input_values):
@@ -655,9 +818,6 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
 
     def on_destroy(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, reason, input_values):
         try:
-            global progressDialog
-            global progressValue
-
             ao = AppObjects()
             designName = ao.design.rootComponent.name
             projectName = ao.app.activeDocument.dataFile.parentProject.name
@@ -667,12 +827,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             logger.info("--------------------------------------------------------------------------------")
 
             # reset configuration
-            resetConfiguration()
-
-            # reset progress dialog
-            progressDialog.hide()
-            progressDialog = adsk.core.ProgressDialog.cast(None)
-            progressValue = 0
+            resetData()
 
         except:
             logger.info("--------------------------------------------------------------------------------")
@@ -778,6 +933,9 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             writeConfiguration(ao.document, CONF_PROJECT_ATTRIBUTE_GROUP, CONF_PROJECT_ATTRIBUTE_KEY)
             showSaveConfigWarning()
 
+            # show summary
+            showSummary()
+
         except:
             logger.error(traceback.format_exc())
 
@@ -795,6 +953,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             logger.info("--------------------------------------------------------------------------------")
 
             # load or create configuration
+            resetData()
             initializeConfiguration(ao.document, CONF_PROJECT_ATTRIBUTE_GROUP, CONF_PROJECT_ATTRIBUTE_KEY, createDefaultConfiguration())
 
             #print configuration to the log file

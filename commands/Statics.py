@@ -18,6 +18,9 @@ UI_SELECTION_FILTER_BODY_VALUE = 'SolidBodies'                                  
 UI_EXPORT_TYPES_STL_VALUE = 'stl'                                                           # STL format
 UI_EXPORT_TYPES_STEP_VALUE = 'step'                                                         # STEP format
 UI_EXPORT_TYPES_F3D_VALUE = 'f3d'                                                           # F3D / Fusion Archive format
+UI_SHOW_SUMMARY_FOR_INFO_VALUE = 'Info'                                                     # Show info, warning and error messages
+UI_SHOW_SUMMARY_FOR_WARNING_VALUE = 'Warning'                                               # Show warning and error messages
+UI_SHOW_SUMMARY_FOR_ERROR_VALUE= 'Error'                                                    # Show error messages
 
 # user interface - export options
 UI_EXPORT_OPTIONS_GROUP_ID = 'ExportOptions'                                                # group id that contains the export options UI elements
@@ -81,8 +84,17 @@ UI_FILENAME_ELEMENT_SEPERATOR_VALUES = ['.', '-', '_']                          
 UI_FILENAME_OCCURRENCE_ID_SEPERATOR_NAME = 'Occurrence ID Separator'                        # character that separates the occurrence name and the instance id
 UI_FILENAME_OCCURRENCE_ID_SEPERATOR_VALUES = ['.', '-', '_']                                # list of valid characters
 
+# user interface - common
+UI_COMMON_GROUP_ID = 'Common'                                                               # group id that contains common settings
+UI_COMMON_GROUP_NAME = 'Common'                                                             # name of the group that contains common settings
+
+UI_SHOW_SUMMARY_FOR_NAME = 'Show Summary For'                                               # Show export summary for infos, warnings or errors
+UI_SHOW_SUMMARY_FOR_VALUES = [UI_SHOW_SUMMARY_FOR_INFO_VALUE, 
+                                UI_SHOW_SUMMARY_FOR_WARNING_VALUE,
+                                UI_SHOW_SUMMARY_FOR_ERROR_VALUE]                            # Show warnings and errors
+
 # user interface - version information
-UI_VERSION_GROUP_ID = 'NewVersion'                                                          # group id that contains version information
+UI_VERSION_GROUP_ID = 'VersionInfo'                                                         # group id that contains version information
 UI_VERSION_GROUP_NAME = 'Version Info'                                                      # name of the group that contains version information
 
 UI_VERSION_CHECK_INTERVAL_NAME = 'Version Check Interval'                                   # name of the field that contains the check interval
@@ -136,6 +148,10 @@ CONF_FILENAME_ELEMENT_SEPERATOR_DEFAULT = '.'                                   
 CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY = 'occurrenceIdSeparator'                         # character that separates the occurrence name and the instance id
 CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_DEFAULT = '_'                                         # valid values for the default: '.', '-', '_'
 
+# configuration - common
+CONF_SHOW_SUMMARY_FOR_KEY = 'showSummaryFor'                                                # Show export summary for infos, warnings or errors
+CONF_SHOW_SUMMARY_FOR_DEFAULT = UI_SHOW_SUMMARY_FOR_WARNING_VALUE                           # Show warnings and errors
+
 # configuration - check for updates
 CONF_VERSION_CHECK_INTERVAL_IN_DAYS_KEY = 'checkVersionFrequencyInDays'                     # key that contains the frequency
 CONF_VERSION_CHECK_INTERVAL_IN_DAYS_DEFAULT = 1                                             # default value for the polling interval
@@ -148,6 +164,12 @@ REC_BODIES = 'bodies'                                                           
 REC_OCCURRENCE = 'occurrence'                                                               # Occurrence
 REC_IS_UNIQUE = 'isUnique'                                                                  # Marker if this record should be used, if all components (not occurrences) should be exported
 REC_IS_REFERENCED_COMPONENT = 'isReferencedComponent'                                       # True if this occurrence is referencing an external component otherwise false
+
+# internal structure of summary
+SUMMARY_INFOS = 'info'                                                                      # list of info messages
+SUMMARY_WARNINGS = 'warnings'                                                               # list of warnings messages
+SUMMARY_ERRORS = 'errors'                                                                   # list of error messages
+
 # internal attributes version check
 VERSION_LAST_CHECKED_FILENAME = "VersionCheck.json"                                         # name of the file that contains the date of the last check.
 VERSION_API_URL = 'https://api.github.com/repos/WilkoV/Fusion360_ExportIt/releases/latest'  # api ULR to get the latest release information
