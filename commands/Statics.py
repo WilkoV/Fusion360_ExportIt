@@ -105,6 +105,8 @@ UI_SHOW_SUMMARY_FOR_VALUES = [UI_SHOW_SUMMARY_FOR_INFO_VALUE,
                                 UI_SHOW_SUMMARY_FOR_WARNING_VALUE,
                                 UI_SHOW_SUMMARY_FOR_ERROR_VALUE]                            # Show warnings and errors
 
+UI_AUTOSAVE_PROJECT_CONFIGURATION_NAME = 'Autos Save'                                       # Auto save project configuration
+UI_AUTOSAVE_DESCRIPTION_NAME = 'Auto Save Message'                                          # Message for the auto save action
 # user interface - version information
 UI_VERSION_GROUP_ID = 'VersionInfo'                                                         # group id that contains version information
 UI_VERSION_GROUP_NAME = 'Version Info'                                                      # name of the group that contains version information
@@ -163,6 +165,10 @@ CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_DEFAULT = '_'                             
 # configuration - common
 CONF_SHOW_SUMMARY_FOR_KEY = 'showSummaryFor'                                                # Show export summary for infos, warnings or errors
 CONF_SHOW_SUMMARY_FOR_DEFAULT = UI_SHOW_SUMMARY_FOR_WARNING_VALUE                           # Show warnings and errors
+CONF_AUTOSAVE_PROJECT_CONFIGURATION_KEY = 'autoSaveProjectConfiguration'                    # Key that contains the auto save project configuration
+CONF_AUTOSAVE_PROJECT_CONFIGURATION_DEFAULT = False                                         # rue if project configurations should be saved automatically, otherwise False
+CONF_AUTOSAVE_DESCRIPTION_KEY = 'autoSaveMessage'                                           # Key that contains the version description
+CONF_AUTOSAVE_DESCRIPTION_DEFAULT = 'ExportIt configuration changed'                        # Description for the version 
 
 # configuration - check for updates
 CONF_VERSION_CHECK_INTERVAL_IN_DAYS_KEY = 'checkVersionFrequencyInDays'                     # key that contains the frequency

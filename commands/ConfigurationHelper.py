@@ -209,6 +209,14 @@ def initializeConfiguration(document, attributeGroup, attributeKey, generatedCon
         editDefaultsMode = True
         logger.debug("Edit defaults mode enabled")
 
+def saveConfigurationInDocument(document, description):
+    global configurationChanged
+
+    if configurationChanged:
+        document.save(description)
+
+    configurationChanged = False
+
 def logConfiguration():
     global projectConfiguration
 

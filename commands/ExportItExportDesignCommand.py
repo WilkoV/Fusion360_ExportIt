@@ -5,7 +5,7 @@ import os, re, json
 from apper import AppObjects
 from .BaseLogger import logger
 from .UiHelper import addTab, addGroupToTab, addGroup, addStringInputToGroup, addBoolInputToGroup, addCheckBoxDropDown, selectDropDownItemByNames, getSelectedDropDownItems, addTextListDropDown, getSelectedDropDownItem, addSelectionCommandToInputs, addIntergerInputSpinnerToGroup
-from .ConfigurationHelper import initializeConfiguration, getDefaultConfiguration, getConfiguration, setConfiguration, writeConfiguration, showSaveConfigWarning, resetConfiguration, logConfiguration
+from .ConfigurationHelper import initializeConfiguration, getDefaultConfiguration, getConfiguration, setConfiguration, writeConfiguration, showSaveConfigWarning, resetConfiguration, logConfiguration, saveConfigurationInDocument
 from .GithubReleaseHelper import checkForUpdates, getGithubReleaseInformation, showReleaseNotes
 from .Statics import *
 
@@ -53,6 +53,8 @@ def createDefaultConfiguration():
 
     # common
     defaultConfiguration[CONF_SHOW_SUMMARY_FOR_KEY] = CONF_SHOW_SUMMARY_FOR_DEFAULT
+    defaultConfiguration[CONF_AUTOSAVE_PROJECT_CONFIGURATION_KEY] = CONF_AUTOSAVE_PROJECT_CONFIGURATION_DEFAULT
+    defaultConfiguration[CONF_AUTOSAVE_DESCRIPTION_KEY] = CONF_AUTOSAVE_DESCRIPTION_DEFAULT
 
     # check for updates configuration
     defaultConfiguration[CONF_VERSION_CHECK_INTERVAL_IN_DAYS_KEY] = CONF_VERSION_CHECK_INTERVAL_IN_DAYS_DEFAULT
@@ -118,6 +120,8 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
     if configurationOnly:
         addGroupToTab(UI_MISC_TAB_ID, UI_COMMON_GROUP_ID, UI_COMMON_GROUP_NAME, True)
         addTextListDropDown(UI_COMMON_GROUP_ID, CONF_SHOW_SUMMARY_FOR_KEY, UI_SHOW_SUMMARY_FOR_NAME, UI_SHOW_SUMMARY_FOR_VALUES, getConfiguration(CONF_SHOW_SUMMARY_FOR_KEY))
+        addBoolInputToGroup(UI_COMMON_GROUP_ID, CONF_AUTOSAVE_PROJECT_CONFIGURATION_KEY, UI_AUTOSAVE_PROJECT_CONFIGURATION_NAME, getConfiguration(CONF_AUTOSAVE_PROJECT_CONFIGURATION_KEY))
+        addStringInputToGroup(UI_COMMON_GROUP_ID, CONF_AUTOSAVE_DESCRIPTION_KEY, UI_AUTOSAVE_DESCRIPTION_NAME, getConfiguration(CONF_AUTOSAVE_DESCRIPTION_KEY))
 
     if configurationOnly or checkForUpdates:
         # add group for version information
@@ -873,7 +877,8 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             ao = AppObjects()
             rootComponent = ao.design.rootComponent
             designName = rootComponent.name
-            projectName = ao.app.activeDocument.dataFile.parentProject.name
+            activeDocument = ao.app.activeDocument
+            projectName = activeDocument.dataFile.parentProject.name
 
             logger.info("--------------------------------------------------------------------------------")
             logger.info("Starting processing of %s - %s", projectName, designName)
@@ -948,7 +953,11 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
 
             # write modified configuration
             writeConfiguration(ao.document, CONF_PROJECT_ATTRIBUTE_GROUP, CONF_PROJECT_ATTRIBUTE_KEY)
-            showSaveConfigWarning()
+            
+            if getConfiguration(CONF_AUTOSAVE_PROJECT_CONFIGURATION_KEY):
+                saveConfigurationInDocument(activeDocument, getConfiguration(CONF_AUTOSAVE_DESCRIPTION_KEY))
+            else:
+                showSaveConfigWarning()
 
             # show summary
             showSummary()

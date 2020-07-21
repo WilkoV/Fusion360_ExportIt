@@ -19,6 +19,7 @@
     - [Misc](#misc)
       - [Common](#common)
         - [Show Summary](#show-summary)
+        - [Auto Save](#auto-save)
       - [Version Info](#version-info)
   - [Elements Of The Export Name](#elements-of-the-export-name)
     - [STL Export Name](#stl-export-name)
@@ -196,6 +197,12 @@ Info | Information are created for successfully created exports. If this level i
 Warning | Warning are created if a f3d export contains references (links) to external designs. If this level is activated errors are shown, tool.
 Error | Errors are created if an export fails.
 
+##### Auto Save
+
+If _Auto Save_ is enabled and the configuration is changed, the active document will be saved to store the embedded _ExportIt project configuration_. The _Auto Save Message_ will be applied as a version description.
+
+![Auto Save](doc/autoSave.png)
+
 #### Version Info
 
 This section allows the configuration of the check interval and shows the download URL if an update is available.
@@ -282,8 +289,6 @@ TODO 0.4.0 | XX.XX.2020 | XXXX
 - [ ] Custom stl refinement.
 - [ ] Filename filter to replace spaces with configurable character.
 - [ ] Export filter that excludes linked components.
-- [ ] Add auto save option for changed configuration
-- [ ] Store folded / unfolded state of groups
 - [x] Defaults editor.
 - [x] Export of selected bodies.
 - [x] STEP Exports.
@@ -292,3 +297,4 @@ TODO 0.4.0 | XX.XX.2020 | XXXX
 - [x] Show export summary message after export.
 - [x] Show progress dialog
 - [X] Cleaner user interface
+- [x] Add auto save option for changed configuration
