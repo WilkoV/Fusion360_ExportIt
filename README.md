@@ -10,6 +10,7 @@
     - [Configuration](#configuration)
   - [Default Configuration Command](#default-configuration-command)
     - [Export](#export)
+    - [Export Options](#export-options)
       - [STL Options](#stl-options)
       - [STEP Options](#step-options)
       - [F3D Options](#f3d-options)
@@ -67,6 +68,19 @@ The user interface is divided into the following sections:
 ### Export
 
 This tab provides all functions to configure what export formats are created and how they're structured.
+
+### Export Options
+
+Export options are top level filters that are applied to STL, STEP or F3D exports.
+
+![Export Options](doc/exportOptions.png)
+
+Label | Option | Description
+---------|----------|---------
+Export Types | stl | Enables or disables the export of STL files
+Export Types | step | Enables or disables the export of STEP files
+Export Types | f3d | Enables or disables the export of F3D files
+Exclude Links | | If checked references to external designs (links) are not exported. This option will not effect exports with the structure _One File_
 
 #### STL Options
 
@@ -273,7 +287,7 @@ Version | Date | Description
 0.1.0 | 09.07.2020 | Initial version that includes a defaults editor and stl exports that supports different structures and refinements.
 0.2.0 | 15.07.2020 | Main enhancement is the addition of STEP exports. Additionally basic configuration validation is added.
 0.3.0 | 21.07.2020 | Main enhancement is the addition of F3D exports. Additionally a progress dialog is shown on larger exports and a summary message is shown at the end of an export.
-TODO 0.4.0 | XX.XX.2020 | XXXX
+0.4.0 | 22.07.2020 | UI cleaned up by adding _Export_, _Location_ and _Misc_ tabs. Filename filter added to remove spaces from filenames. Export filter added that prevents linked components to be exported.
 
 ## Known Issus
 
@@ -287,7 +301,6 @@ TODO 0.4.0 | XX.XX.2020 | XXXX
 - [ ] Export of projects.
 - [ ] Selection of stl format (text / binary).
 - [ ] Custom stl refinement.
-- [ ] Export filter that excludes linked components.
 - [x] Defaults editor.
 - [x] Export of selected bodies.
 - [x] STEP Exports.
@@ -298,3 +311,4 @@ TODO 0.4.0 | XX.XX.2020 | XXXX
 - [X] Cleaner user interface
 - [x] Add auto save option for changed configuration
 - [x] Filename filter to replace spaces with configurable character.
+- [x] Export filter that excludes linked components.

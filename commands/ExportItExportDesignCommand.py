@@ -24,6 +24,7 @@ def createDefaultConfiguration():
 
     # export options
     defaultConfiguration[CONF_EXPORT_OPTIONS_TYPE_KEY] = CONF_EXPORT_OPTIONS_TYPE_DEFAULT
+    defaultConfiguration[CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY] = CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_DEFAULT
 
     # stl options
     defaultConfiguration[CONF_STL_STRUCTURE_KEY] = CONF_STL_STRUCTURE_DEFAULT
@@ -40,7 +41,6 @@ def createDefaultConfiguration():
 
     defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY] = CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_DEFAULT
     defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY] = CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_DEFAULT
-
     defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY] = CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_DEFAULT
 
     # filename options
@@ -77,6 +77,7 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
         addSelectionCommandToInputs(UI_EXPORT_OPTIONS_GROUP_ID, UI_EXPORT_OPTIONS_BODIES_SELECTION_ID, UI_EXPORT_OPTIONS_BODIES_SELECTION_NAME, UI_EXPORT_OPTIONS_BODIES_SELECTION_VALUES)
 
     addCheckBoxDropDown(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_TYPE_KEY, UI_EXPORT_OPTIONS_TYPE_NAME, UI_EXPORT_OPTIONS_TYPE_VALUES, getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY))
+    addBoolInputToGroup(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY, UI_EXPORT_OPTIONS_EXCLUDE_LINKS_NAME, getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY))
 
     # stl export
     addGroupToTab(UI_EXPORT_TAB_ID, UI_STL_OPTIONS_GROUP_ID, UI_STL_OPTIONS_GROUP_NAME, True)
@@ -254,8 +255,12 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
 
         # check if occurrence is referencing a external component
         if occurrence.isReferencedComponent:
-            logger.info("component is a external reference", occurrenceFullPathName)
-            isReferencedComponent = occurrence.isReferencedComponent
+            if getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY):
+                logger.info("component is excluded, because it's a external reference", occurrenceFullPathName)
+                continue
+            else:
+                logger.info("component is a external reference", occurrenceFullPathName)
+                isReferencedComponent = occurrence.isReferencedComponent
 
         # get visible occurrence bodies
         occurrenceBodies = []
@@ -517,7 +522,7 @@ def addErrorToSummary(suffix, errorType, objectPath):
 def getSummaryMessageFor(category, allEntries, maxEntries):
     numberOfEntries = len(allEntries)
     entries = allEntries
-    message = category + ":"
+    message = category + ":\n"
 
     if numberOfEntries > maxEntries:
         lastEntry = entries[numberOfEntries - 1]

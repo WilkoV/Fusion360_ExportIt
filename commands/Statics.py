@@ -37,6 +37,7 @@ UI_EXPORT_OPTIONS_TYPE_NAME = 'Export Types'                                    
 UI_EXPORT_OPTIONS_TYPE_VALUES = [UI_EXPORT_TYPES_STL_VALUE,
                                     UI_EXPORT_TYPES_STEP_VALUE,
                                     UI_EXPORT_TYPES_F3D_VALUE]                              # Elements of the dropdown list
+UI_EXPORT_OPTIONS_EXCLUDE_LINKS_NAME = 'Exclude Links'                                      # Name of the field that contains the option to exclude external links from the export
 
 # user interface - stl options
 UI_STL_OPTIONS_GROUP_ID = 'StlOptions'                                                      # group id that contains the stl options UI elements
@@ -126,17 +127,19 @@ CONF_VERSION_KEY = 'version'                                                    
 CONF_VERSION_DEFAULT = '0.4.0'                                                              # default version of the default configuration
 
 # configuration - export options
-CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # name of the element that contains the stl refinement
+CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # name of the element that contains the export types
 CONF_EXPORT_OPTIONS_TYPE_DEFAULT = [UI_EXPORT_TYPES_STL_VALUE, UI_EXPORT_TYPES_STEP_VALUE]  # valid values STEP, STL
+CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY = 'excludeExternalLinks'                              # name of the element that contains the export types
+CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_DEFAULT = False                                           # True if external links should be exclude, otherwise False
 
 # configuration - stl options
-CONF_STL_STRUCTURE_KEY = 'StlStructure'                                                     # name of the element that contains the stl refinement
+CONF_STL_STRUCTURE_KEY = 'StlStructure'                                                     # name of the element that contains the stl structure
 CONF_STL_STRUCTURE_DEFAULT = [UI_STRUCTURE_ONE_FILE_VALUE]                                  # valid values 'One File', 'One File Per Body In Component, 'One File Per Body In Occurrence'
 CONF_STL_REFINEMENT_KEY = 'StlRefinement'                                                   # name of the element that contains the stl refinement
 CONF_STL_REFINEMENT_DEFAULT = [UI_STL_REFINEMENT_LOW_VALUE]                                 # valid values 'Low', 'Medium', 'Hight', 'Ultra'
 
 # configuration - step options
-CONF_STEP_STRUCTURE_KEY = 'stepStructure'                                                   # name of the element that contains the f3d structure
+CONF_STEP_STRUCTURE_KEY = 'stepStructure'                                                   # name of the element that contains the step structure
 CONF_STEP_STRUCTURE_DEFAULT = [UI_STRUCTURE_ONE_FILE_VALUE]                                 # valid values 'One File', 'One File Per Component
 
 # configuration - f3d options
