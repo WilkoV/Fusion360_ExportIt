@@ -7,21 +7,21 @@
   - [Summary](#summary)
   - [Export Design Command](#export-design-command)
     - [Basic workflow](#basic-workflow)
+    - [Configuration](#configuration)
   - [Default Configuration Command](#default-configuration-command)
-    - [STL Options](#stl-options)
-      - [STL Structure](#stl-structure)
-      - [STL Refinement](#stl-refinement)
-    - [STEP Options](#step-options)
-      - [STEP Structure](#step-structure)
-    - [F3D Options](#f3d-options)
-      - [F3D Structure](#f3d-structure)
-    - [Export Directory Options](#export-directory-options)
-    - [Filename Options](#filename-options)
-      - [Prefix](#prefix)
-      - [Filter](#filter)
-    - [Common](#common)
-      - [Show Summary For](#show-summary-for)
-    - [Version Info](#version-info)
+    - [Export](#export)
+    - [Export Options](#export-options)
+      - [STL Options](#stl-options)
+      - [STEP Options](#step-options)
+      - [F3D Options](#f3d-options)
+    - [Location](#location)
+      - [Export Directory Options](#export-directory-options)
+      - [Filename Options](#filename-options)
+    - [Misc](#misc)
+      - [Common](#common)
+        - [Show Summary](#show-summary)
+        - [Auto Save](#auto-save)
+      - [Version Info](#version-info)
   - [Elements Of The Export Name](#elements-of-the-export-name)
     - [STL Export Name](#stl-export-name)
     - [STEP Export Name](#step-export-name)
@@ -43,7 +43,7 @@ This add-in exports designs in various resolutions, structures and formats withi
 
 ## Export Design Command
 
-This command exports the active design (or parts of it) into several formats, structures and refinements in one run. The command is located in the *EXPORTIT*. When the command starts, the user interface displays the [preconfigured default](Default-Configuration-Command) values. These can be adjusted and the changed values (deltas) can be saved in the design.
+This command exports the active design (or parts of it) into several formats, structures and refinements in one run. When the command starts, the user interface displays the [preconfigured default](Default-Configuration-Command) values. These can be adjusted and the changed values (deltas) can be saved in the design.
 
 ### Basic workflow
 
@@ -54,18 +54,39 @@ This command exports the active design (or parts of it) into several formats, st
   ![Save Configuration Reminder](doc/saveConfigurationRiminder.png)
 - In the case of *One File Per Body In Occurrence* STL exports, a temporary document must be closed.
 
+### Configuration
+
+Most parameters correspond to those from the [Default Configuration Command](#default-configuration-command). The one exception is the field _Export Bodies_ that is used to select bodies to limit the exported to a subset of the design. Export formats like STEP or F3D don't support exports of single bodies and will interpret this selection as a selection of a component / occurrence and may contain more than one body.
+Not all fields shown in the [Default Configuration Command](#default-configuration-command) are also used in this command.
+
 ## Default Configuration Command
 
 This command allows the definition of the default configuration that is used in the *Export Design* dialog. The commands is located in the workspace *EXPORTIT*.
+
 The user interface is divided into the following sections:
 
-### STL Options
+### Export
+
+This tab provides all functions to configure what export formats are created and how they're structured.
+
+### Export Options
+
+Export options are top level filters that are applied to STL, STEP or F3D exports.
+
+![Export Options](doc/exportOptions.png)
+
+Label | Option | Description
+---------|----------|---------
+Export Types | stl | Enables or disables the export of STL files
+Export Types | step | Enables or disables the export of STEP files
+Export Types | f3d | Enables or disables the export of F3D files
+Exclude Links | | If checked references to external designs (links) are not exported. This option will not effect exports with the structure _One File_
+
+#### STL Options
 
 The behavior of STL export is configured in this section. Following options are available:
 
 ![Stl Options](doc/stlOptions.png)
-
-#### STL Structure
 
 Structures are used to define the granularity of exports.
 
@@ -74,8 +95,6 @@ Option |Description
 One File | This structure corresponds to the built-in one and creates one file containing all visible BRep bodies.
 One File Per Body In Component | A component can have many occurrences in one design. This option will export each component only once regardless of the number of occurrences. It creates one file per body (or per selected body) in a component. Due to this filter, it will not keep the original position in the 3d space. This structure is e.g useful if a design reuses components and wants to keep the number of exported files small.
 One File Per Body In Occurrence | This option corresponds to the integrated *One File Per Body*, but does not create double exports of the same body and works with selected bodis, too. It maintains the positions of the bodies at different occurrences. This structure is useful if the stl files are reassembled at a later point - e.g. in a slicer for multi color / multi material 3d prints.
-
-#### STL Refinement
 
 Refinements can roughly be described as the mesh density of an export. Following refinements are pre-configured.
 
@@ -88,39 +107,47 @@ Ultra | This one is based on the built-in *High* settings, but sets surface devi
 
 One to many structures or refinements can be selected.
 
-### STEP Options
+#### STEP Options
 
 The granularity of STEP exports is configured in this section.
 
 ![STEP Options](doc/stepOptions.png)
 
-#### STEP Structure
+Structures are used to define the granularity of exports.
 
 Option |Description
 ---------|---------
 One File | This structure corresponds to exporting the root component with the built-in function and creates one file containing all visible BRep bodies.
 One File Per Component | This function corresponds to exporting a selected component but will create one file per component or selected component.
 
-### F3D Options
+One to many structures can be selected.
+
+#### F3D Options
 
 The granularity of F3D exports is configured in this section.
 
 ![F3D Options](doc/f3dOptions.png)
 
-#### F3D Structure
+The granularity of STEP exports is configured in this section.
 
 Option |Description
 ---------|---------
 One File | This structure corresponds to exporting the root component with the built-in function and creates one file containing all visible BRep bodies.
 One File Per Component | This function corresponds to exporting a selected component but will create one file per component or selected component.
 
-### Export Directory Options
+One to many structures can be selected.
+
+### Location
+
+This tab provides all functions to configure the export directory and the filename.
+
+#### Export Directory Options
 
 The export directory and generated subdirectories are defined in this section.
 
 ![Export Directory](doc/exportDirectory.png)
 
-The full path can be composed out of the export directory, the project name and the design name. Three scenarios are useful here:
+The full path can be composed out of the export directory, the project name and the design name. Here are some configuration scenarios:
 
 - Projects with many designs -> A base directory is selected for all projects and the export logic adds the project and design names to create an export structure that corresponds to the data panel structure in Fusion 360.
 - Projects with one design -> A base directory is selected for all projects and the export logic adds the project name. This might work with multi design projects too, because the flat structure is still manageable if file options are chosen carefully.
@@ -133,24 +160,20 @@ Add Project Name | If checked the project name will be added to the export path 
 Add Design Name | If checked the design name will be added to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest/01-Default
 Add Export Type | If checked the name of the export type (stl, step) to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest/01-Default/step
 
-### Filename Options
+#### Filename Options
 
-The elements of a filename and how they're connected are configured in this section. More details about the components of the export name can be found [here](Elements-Of-The-Export-Name).
+The elements of a filename and how they're connected are configured in this section.
 
 ![Filename Options](doc/filenameOptions.png)
 
-#### Prefix
-
-Prefix are used for better grouping of exports.
+Following options are used for better grouping of exports.
 
 Label | Options | Description
 ---------|----------|---------
 Add Project Name |  | Adds the project name as a prefix to the filename.
-Add Design Name |  | Adds the design name as a prefix to the filename. This is useful if a project contains several designs and the design name is not part of the export directory (more [here](Export-Directory))
+Add Design Name |  | Adds the design name as a prefix to the filename. This is useful if a project contains several designs and the design name is not part of the export directory (more [here](#export-directory-options))
 
-#### Filter
-
-Filters are used to make filenames more stable, readable or to remove characters that are not supported by the filesystem.
+Filters are used to make filenames more (stable e.g. for external versioning), more readable or to remove characters that are not supported by the filesystem.
 
 Label | Options | Description | Example
 ---------|----------|----------|---------
@@ -161,19 +184,26 @@ Element Separator Tags | \_ | This options uses a "_" (underscore) as the separa
 Occurrence ID Separator | . | This options uses a "." (dot) as the separator. | 01-Default.Component.1.Component.2.BodyName
 Occurrence ID Separator | - | This options uses a "-" (dash) as the separator. | 01-Default-Component-1.Component-2.BodyName
 Occurrence ID Separator | \_ | This options uses a "_" (underscore) as the separator. | 01-Default\_Component\_1.Component\_2.BodyName
+Replace Spaces | True / False | This option enables the replacement of spaces in the filename. | 08-ReplaceSpaces.just-a-block_1.Body1.low.stl
+Replace Spaces With | . | This options uses a "." (dot) as a replacement. | 08-ReplaceSpaces.just.a.block_1.Body1.low.stl
+Replace Spaces With | - | This options uses a "-" (dash) as a replacement. |  08-ReplaceSpaces.just-a-block_1.Body1.low.stl
+Replace Spaces With | \_ | This options uses a "_" (underscore) as a replacement. |  08-ReplaceSpaces.just\_a\_block_1.Body1.low.stl
 
-The default setting uses the dot for the element separator and the underscore for the occurrence ID separator and the resulting filenames will look like this:
+More details about the components of the export name can be found [here](#elements-of-the-export-name).
 
->01-Default.blocks_1.deep_1.deeper_1.deepest_1.block_5.Body1.stl
+### Misc
 
-### Common
+This tab provides various functions to configure the general behavior of the add-in or the UI
 
+#### Common
 
-#### Show Summary For
+This section provides functions to configure the behavior of the UI and the add-in
+
+##### Show Summary
 
 Like for logging levels, this parameter controls what level of messages are shown in the summary message at the end of an export.
 
-![Show Summary For](doc/showSummary.png)
+![Show Summary](doc/showSummary.png)
 
 Level | Description
 ---------|---------
@@ -181,7 +211,13 @@ Info | Information are created for successfully created exports. If this level i
 Warning | Warning are created if a f3d export contains references (links) to external designs. If this level is activated errors are shown, tool.
 Error | Errors are created if an export fails.
 
-### Version Info
+##### Auto Save
+
+If _Auto Save_ is enabled and the configuration is changed, the active document will be saved to store the embedded _ExportIt project configuration_. The _Auto Save Message_ will be applied as a version description.
+
+![Auto Save](doc/autoSave.png)
+
+#### Version Info
 
 This section allows the configuration of the check interval and shows the download URL if an update is available.
 
@@ -251,6 +287,7 @@ Version | Date | Description
 0.1.0 | 09.07.2020 | Initial version that includes a defaults editor and stl exports that supports different structures and refinements.
 0.2.0 | 15.07.2020 | Main enhancement is the addition of STEP exports. Additionally basic configuration validation is added.
 0.3.0 | 21.07.2020 | Main enhancement is the addition of F3D exports. Additionally a progress dialog is shown on larger exports and a summary message is shown at the end of an export.
+0.4.0 | 22.07.2020 | UI cleaned up by adding _Export_, _Location_ and _Misc_ tabs. Filename filter added to remove spaces from filenames. Export filter added that prevents linked components to be exported.
 
 ## Known Issus
 
@@ -263,11 +300,7 @@ Version | Date | Description
 - [ ] Special refinement for selected bodies that is stored in the project configuration.
 - [ ] Export of projects.
 - [ ] Selection of stl format (text / binary).
-- [ ] Custom refinement.
-- [ ] Filename filter to replace spaces with configurable character.
-- [ ] Export filter that excludes linked components.
-- [ ] Store folded / unfolded state of groups
-- [ ] Add auto save option for changed configuration
+- [ ] Custom stl refinement.
 - [x] Defaults editor.
 - [x] Export of selected bodies.
 - [x] STEP Exports.
@@ -275,3 +308,7 @@ Version | Date | Description
 - [x] Configuration validation.
 - [x] Show export summary message after export.
 - [x] Show progress dialog
+- [X] Cleaner user interface
+- [x] Add auto save option for changed configuration
+- [x] Filename filter to replace spaces with configurable character.
+- [x] Export filter that excludes linked components.

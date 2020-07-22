@@ -22,6 +22,10 @@ UI_SHOW_SUMMARY_FOR_INFO_VALUE = 'Info'                                         
 UI_SHOW_SUMMARY_FOR_WARNING_VALUE = 'Warning'                                               # Show warning and error messages
 UI_SHOW_SUMMARY_FOR_ERROR_VALUE= 'Error'                                                    # Show error messages
 
+# user interface - export
+UI_EXPORT_TAB_ID = 'Export'
+UI_EXPORT_TAB_NAME = 'Export'
+
 # user interface - export options
 UI_EXPORT_OPTIONS_GROUP_ID = 'ExportOptions'                                                # group id that contains the export options UI elements
 UI_EXPORT_OPTIONS_GROUP_NAME = 'Export Options'                                             # name of the group that contains the export options UI elements
@@ -33,6 +37,7 @@ UI_EXPORT_OPTIONS_TYPE_NAME = 'Export Types'                                    
 UI_EXPORT_OPTIONS_TYPE_VALUES = [UI_EXPORT_TYPES_STL_VALUE,
                                     UI_EXPORT_TYPES_STEP_VALUE,
                                     UI_EXPORT_TYPES_F3D_VALUE]                              # Elements of the dropdown list
+UI_EXPORT_OPTIONS_EXCLUDE_LINKS_NAME = 'Exclude Links'                                      # Name of the field that contains the option to exclude external links from the export
 
 # user interface - stl options
 UI_STL_OPTIONS_GROUP_ID = 'StlOptions'                                                      # group id that contains the stl options UI elements
@@ -63,6 +68,10 @@ UI_F3D_STRUCTURE_NAME = 'Structure'                                             
 UI_F3D_STRUCTURE_VALUES = [UI_STRUCTURE_ONE_FILE_VALUE,
                             UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE]                      # Elements of the dropdown list
 
+# user interface - location
+UI_LOCATION_TAB_ID = 'Location'
+UI_LOCATION_TAB_NAME = 'Location'
+
 # user interface - export directory
 UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID = 'ExportDirectoryOptions'                             # group id that contains the export directory UI elements
 UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME = 'Export Directory Options'                         # name of the group that contains the export directory UI elements
@@ -83,6 +92,13 @@ UI_FILENAME_ELEMENT_SEPERATOR_NAME = 'Element Separator'                        
 UI_FILENAME_ELEMENT_SEPERATOR_VALUES = ['.', '-', '_']                                      # list of valid characters
 UI_FILENAME_OCCURRENCE_ID_SEPERATOR_NAME = 'Occurrence ID Separator'                        # character that separates the occurrence name and the instance id
 UI_FILENAME_OCCURRENCE_ID_SEPERATOR_VALUES = ['.', '-', '_']                                # list of valid characters
+UI_FILENAME_REPLACE_SPACES_NAME = 'Replace Spaces'                                          # True if spaces should be replaced, otherwise False
+UI_FILENAME_REPLACE_SPACES_WITH_NAME = 'Replace Spaces With'                                # character that replaces spaces in the filename
+UI_FILENAME_REPLACE_SPACES_WITH_VALUES = ['.', '-', '_']                                    # list of valid characters
+
+# user interface - misc
+UI_MISC_TAB_ID = 'Misc'
+UI_MISC_TAB_NAME = 'Misc'
 
 # user interface - common
 UI_COMMON_GROUP_ID = 'Common'                                                               # group id that contains common settings
@@ -93,6 +109,8 @@ UI_SHOW_SUMMARY_FOR_VALUES = [UI_SHOW_SUMMARY_FOR_INFO_VALUE,
                                 UI_SHOW_SUMMARY_FOR_WARNING_VALUE,
                                 UI_SHOW_SUMMARY_FOR_ERROR_VALUE]                            # Show warnings and errors
 
+UI_AUTOSAVE_PROJECT_CONFIGURATION_NAME = 'Autos Save'                                       # Auto save project configuration
+UI_AUTOSAVE_DESCRIPTION_NAME = 'Auto Save Message'                                          # Message for the auto save action
 # user interface - version information
 UI_VERSION_GROUP_ID = 'VersionInfo'                                                         # group id that contains version information
 UI_VERSION_GROUP_NAME = 'Version Info'                                                      # name of the group that contains version information
@@ -106,20 +124,22 @@ CONF_DEFAULT_CONFIG_NAME = 'Defaults.json'                                      
 CONF_PROJECT_ATTRIBUTE_GROUP = 'ExportIt'                                                   # name of the attribute group that stores the project specific data
 CONF_PROJECT_ATTRIBUTE_KEY = 'projectConfiguration'                                         # key of the key that contains the project specific configuration (delta to default configuration)
 CONF_VERSION_KEY = 'version'                                                                # key of the element that contains the version of the default configuration
-CONF_VERSION_DEFAULT = '0.3.0'                                                              # default version of the default configuration
+CONF_VERSION_DEFAULT = '0.4.0'                                                              # default version of the default configuration
 
 # configuration - export options
-CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # name of the element that contains the stl refinement
+CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # name of the element that contains the export types
 CONF_EXPORT_OPTIONS_TYPE_DEFAULT = [UI_EXPORT_TYPES_STL_VALUE, UI_EXPORT_TYPES_STEP_VALUE]  # valid values STEP, STL
+CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY = 'excludeExternalLinks'                              # name of the element that contains the export types
+CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_DEFAULT = False                                           # True if external links should be exclude, otherwise False
 
 # configuration - stl options
-CONF_STL_STRUCTURE_KEY = 'StlStructure'                                                     # name of the element that contains the stl refinement
+CONF_STL_STRUCTURE_KEY = 'StlStructure'                                                     # name of the element that contains the stl structure
 CONF_STL_STRUCTURE_DEFAULT = [UI_STRUCTURE_ONE_FILE_VALUE]                                  # valid values 'One File', 'One File Per Body In Component, 'One File Per Body In Occurrence'
 CONF_STL_REFINEMENT_KEY = 'StlRefinement'                                                   # name of the element that contains the stl refinement
 CONF_STL_REFINEMENT_DEFAULT = [UI_STL_REFINEMENT_LOW_VALUE]                                 # valid values 'Low', 'Medium', 'Hight', 'Ultra'
 
 # configuration - step options
-CONF_STEP_STRUCTURE_KEY = 'stepStructure'                                                   # name of the element that contains the f3d structure
+CONF_STEP_STRUCTURE_KEY = 'stepStructure'                                                   # name of the element that contains the step structure
 CONF_STEP_STRUCTURE_DEFAULT = [UI_STRUCTURE_ONE_FILE_VALUE]                                 # valid values 'One File', 'One File Per Component
 
 # configuration - f3d options
@@ -147,10 +167,18 @@ CONF_FILENAME_ELEMENT_SEPERATOR_KEY = 'elementSeparator'                        
 CONF_FILENAME_ELEMENT_SEPERATOR_DEFAULT = '.'                                               # valid values for the default: '.', '-', '_'
 CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY = 'occurrenceIdSeparator'                         # character that separates the occurrence name and the instance id
 CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_DEFAULT = '_'                                         # valid values for the default: '.', '-', '_'
+CONF_FILENAME_REPLACE_SPACES_KEY = 'replaceSpaces'                                          # True if spaces should be replaced, otherwise False
+CONF_FILENAME_REPLACE_SPACES_DEFAULT = False                                                # valid values are True or False
+CONF_FILENAME_REPLACE_SPACES_WITH_KEY = 'replaceSpacesWith'                                 # character that replaces spaces in the filename
+CONF_FILENAME_REPLACE_SPACES_WITH_DEFAULT = '-'                                             # valid values for the default: '.', '-', '_'
 
 # configuration - common
 CONF_SHOW_SUMMARY_FOR_KEY = 'showSummaryFor'                                                # Show export summary for infos, warnings or errors
 CONF_SHOW_SUMMARY_FOR_DEFAULT = UI_SHOW_SUMMARY_FOR_WARNING_VALUE                           # Show warnings and errors
+CONF_AUTOSAVE_PROJECT_CONFIGURATION_KEY = 'autoSaveProjectConfiguration'                    # Key that contains the auto save project configuration
+CONF_AUTOSAVE_PROJECT_CONFIGURATION_DEFAULT = False                                         # rue if project configurations should be saved automatically, otherwise False
+CONF_AUTOSAVE_DESCRIPTION_KEY = 'autoSaveMessage'                                           # Key that contains the version description
+CONF_AUTOSAVE_DESCRIPTION_DEFAULT = 'ExportIt configuration changed'                        # Description for the version 
 
 # configuration - check for updates
 CONF_VERSION_CHECK_INTERVAL_IN_DAYS_KEY = 'checkVersionFrequencyInDays'                     # key that contains the frequency

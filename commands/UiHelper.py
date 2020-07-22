@@ -3,7 +3,31 @@ import adsk.core, adsk.fusion, adsk.cam, traceback
 from .BaseLogger import logger
 
 # dict with inputCommands
+tabs = {}
 groups = {}
+
+def addTab(inputs :adsk.core.CommandInputs, tabId, tabName, isActive):
+    # tab group
+    tabCmdInput = inputs.addTabCommandInput(tabId, tabName)
+
+    # set tab behavior
+    tabCmdInput.isActive = isActive
+
+    if isActive:
+        # activate tab in the UI
+        tabCmdInput.activate()
+
+    tabInputs = tabCmdInput.children
+
+    # cache tab inputs
+    tabs[tabId] = tabInputs
+
+    logger.debug("tab %s added", tabId)
+    logger.debug("isActive %s", isActive)
+
+def addGroupToTab(tabId, groupId, groupName, isExpanded):
+    tabInputs = tabs.get(tabId)
+    addGroup(tabInputs, groupId, groupName, isExpanded)
 
 def addGroup(inputs :adsk.core.CommandInputs, groupId, groupName, isExpanded):
     # create group
@@ -14,6 +38,7 @@ def addGroup(inputs :adsk.core.CommandInputs, groupId, groupName, isExpanded):
     groupCmdInput.isEnabledCheckBoxDisplayed = False
     groupInputs = groupCmdInput.children
 
+    # cache group inputs
     groups[groupId] = groupInputs
 
     logger.debug("group %s added", groupId)
