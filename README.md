@@ -155,6 +155,7 @@ The full path can be composed out of the export directory, the project name and 
 
 Label | Description | Example
 ---------|----------|--------
+Reset Export Directory | If activated, the dialog for selecting a base / export directory is displayed after the _Default Configuration_ command has been closed by pressing _OK_ or by starting an export in the _Export Design_ command. |
 Export Directory | Target directory of the export or base directory of all exports | D:/Google Drive/3d Printing/Fusion 360
 Add Project Name | If checked the project name will be added to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest
 Add Design Name | If checked the design name will be added to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest/01-Default
@@ -288,7 +289,7 @@ Version | Date | Description
 0.2.0 | 15.07.2020 | Main enhancement is the addition of STEP exports. Additionally basic configuration validation is added.
 0.3.0 | 21.07.2020 | Main enhancement is the addition of F3D exports. Additionally a progress dialog is shown on larger exports and a summary message is shown at the end of an export.
 0.4.0 | 22.07.2020 | UI cleaned up by adding _Export_, _Location_ and _Misc_ tabs. Filename filter added to remove spaces from filenames. Export filter added that prevents linked components to be exported.
-TODO 0.5.0 | XX.08.2020 | XXX
+TODO 0.5.0 | XX.08.2020 | A checkbox is added that allows the user to reset the base directory / export directory after closing the _Default Configuration_ command with the _OK_ button or by starting an export in the _Export Design_ command. The new workflow closes the issue #1 and the new checkbox closes the enhancement #8.
 
 ## Known Issus
 

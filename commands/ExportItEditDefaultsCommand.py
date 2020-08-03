@@ -3,7 +3,7 @@ import apper
 
 from apper import AppObjects
 from .BaseLogger import logger
-from .ExportItExportDesignCommand import initializeConfiguration, initializeUi, createDefaultConfiguration, validateConfiguration
+from .ExportItExportDesignCommand import initializeConfiguration, initializeUi, createDefaultConfiguration, validateConfiguration, validateExportDirectory, resetExportDirecotry
 from .UiHelper import getSelectedDropDownItems
 from .ConfigurationHelper import writeDefaultConfiguration, logConfiguration, resetConfiguration, setDefaultConfiguration
 from .GithubReleaseHelper import checkForUpdates, getGithubReleaseInformation, showReleaseNotes
@@ -50,6 +50,9 @@ class ExportItEditDefaultsCommand(apper.Fusion360CommandBase):
             logger.info("--------------------------------------------------------------------------------")
             logger.info("Start processing configuration")
             logger.info("--------------------------------------------------------------------------------")
+
+            resetExportDirecotry(input_values)
+            validateExportDirectory()
 
             # print configuration to the log file
             logConfiguration()

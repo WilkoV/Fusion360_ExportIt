@@ -97,8 +97,9 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
 
     # export directory
     addGroupToTab(UI_LOCATION_TAB_ID, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME, True)
+    addStringInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_KEY, UI_EXPORT_DIRECTORY_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_KEY), False)
+    addBoolInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, UI_EXPORT_DIRECTORY_RESET_ID, UI_EXPORT_DIRECTORY_RESET_NAME, UI_EXPORT_DIRECTORY_RESET_DEFAULT)
 
-    addStringInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_KEY, UI_EXPORT_DIRECTORY_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_KEY))
     addBoolInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY, UI_EXPORT_DIRECTORY_ADD_PROJECT_NAME_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY))
     addBoolInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY, UI_EXPORT_DIRECTORY_ADD_DESIGN_NAME_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY))
     addBoolInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY, UI_EXPORT_DIRECTORY_EXPORT_TYPE_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY))
@@ -123,7 +124,7 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
         addGroupToTab(UI_MISC_TAB_ID, UI_COMMON_GROUP_ID, UI_COMMON_GROUP_NAME, True)
         addTextListDropDown(UI_COMMON_GROUP_ID, CONF_SHOW_SUMMARY_FOR_KEY, UI_SHOW_SUMMARY_FOR_NAME, UI_SHOW_SUMMARY_FOR_VALUES, getConfiguration(CONF_SHOW_SUMMARY_FOR_KEY))
         addBoolInputToGroup(UI_COMMON_GROUP_ID, CONF_AUTOSAVE_PROJECT_CONFIGURATION_KEY, UI_AUTOSAVE_PROJECT_CONFIGURATION_NAME, getConfiguration(CONF_AUTOSAVE_PROJECT_CONFIGURATION_KEY))
-        addStringInputToGroup(UI_COMMON_GROUP_ID, CONF_AUTOSAVE_DESCRIPTION_KEY, UI_AUTOSAVE_DESCRIPTION_NAME, getConfiguration(CONF_AUTOSAVE_DESCRIPTION_KEY))
+        addStringInputToGroup(UI_COMMON_GROUP_ID, CONF_AUTOSAVE_DESCRIPTION_KEY, UI_AUTOSAVE_DESCRIPTION_NAME, getConfiguration(CONF_AUTOSAVE_DESCRIPTION_KEY), True)
 
     if configurationOnly or checkForUpdates:
         # add group for version information
@@ -135,7 +136,7 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
     if checkForUpdates:
         # add field that can show the download url for easy copy/past
         addinVersion, githubRemoteVersion, githubTitle, githubDescription, githubDownloadUrl = getGithubReleaseInformation()
-        addStringInputToGroup(UI_VERSION_GROUP_ID, UI_VERSION_DOWNLOAD_URL_ID, UI_VERSION_DOWNLOAD_URL_NAME, githubDownloadUrl)
+        addStringInputToGroup(UI_VERSION_GROUP_ID, UI_VERSION_DOWNLOAD_URL_ID, UI_VERSION_DOWNLOAD_URL_NAME, githubDownloadUrl, True)
 
 def getExportDirectory():
     # check if export direcotry is set
@@ -189,6 +190,7 @@ def validateConfiguration(inputs):
         # check if any export structure is selected
         validateCheckBoxDropDown(inputs, CONF_STEP_STRUCTURE_KEY, CONF_STEP_STRUCTURE_DEFAULT)
 
+def validateExportDirectory():
     # check if export directory is defined
     while not getConfiguration(CONF_EXPORT_DIRECTORY_KEY):
         logger.warning('Exportdirecotry is not set. Opening requestor')
@@ -196,9 +198,12 @@ def validateConfiguration(inputs):
         exportPath, isValid = getExportDirectory()
         setConfiguration(CONF_EXPORT_DIRECTORY_KEY, exportPath)
 
-        stringInput = inputs.itemById(CONF_EXPORT_DIRECTORY_KEY)
-        stringInput.value = exportPath
+def resetExportDirecotry(input_values):
+    if input_values[UI_EXPORT_DIRECTORY_RESET_ID]:
+        logger.warning('Resetting export directory. Opening requestor')
 
+        exportPath, isValid = getExportDirectory()
+        setConfiguration(CONF_EXPORT_DIRECTORY_KEY, exportPath)
 
 def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
     exportObjects = []
@@ -884,9 +889,6 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
 
     def on_execute(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, args, input_values):
         try:
-            if not getConfiguration(CONF_EXPORT_DIRECTORY_KEY):
-                return
-
             ao = AppObjects()
             rootComponent = ao.design.rootComponent
             designName = rootComponent.name
@@ -896,6 +898,9 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             logger.info("--------------------------------------------------------------------------------")
             logger.info("Starting processing of %s - %s", projectName, designName)
             logger.info("--------------------------------------------------------------------------------")
+
+            resetExportDirecotry(input_values)
+            validateExportDirectory()
 
             # print configuration to the log file
             logConfiguration()
