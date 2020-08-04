@@ -292,7 +292,6 @@ Version | Date | Description
 
 ## Known Issus
 
-- [Updates of the field *Export Directory* are not shown after selecting a directory in the requester.](https://github.com/WilkoV/Fusion360_ExportIt/issues/1)
 - [STL exports with the structure "One File Per Body In Occurrence" does not close the temporary document.](https://github.com/WilkoV/Fusion360_ExportIt/issues/2)
 
 ## Wishlist
