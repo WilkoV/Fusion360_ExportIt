@@ -21,6 +21,9 @@ UI_EXPORT_TYPES_F3D_VALUE = 'f3d'                                               
 UI_SHOW_SUMMARY_FOR_INFO_VALUE = 'Info'                                                     # Show info, warning and error messages
 UI_SHOW_SUMMARY_FOR_WARNING_VALUE = 'Warning'                                               # Show warning and error messages
 UI_SHOW_SUMMARY_FOR_ERROR_VALUE= 'Error'                                                    # Show error messages
+UI_EXPORT_DIRECTORY_CONFIGURE_DEFAULT_VALUE = 'As Base Directory'                           # Configure export directory as base directory in the default configuration command
+UI_EXPORT_DIRECTORY_CONFIGURE_NEW_DESIGN_VALUE = 'When Exporting A New Design'              # Configure export directory in the export design command on the first export
+UI_EXPORT_DIRECTORY_CONFIGURE_ALWAYS_VALUE = 'For Each Export'                              # Configure export directory in the export design command on every export
 
 # user interface - export
 UI_EXPORT_TAB_ID = 'Export'
@@ -76,6 +79,10 @@ UI_LOCATION_TAB_NAME = 'Location'
 UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID = 'ExportDirectoryOptions'                             # Group id that contains the export directory UI elements
 UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME = 'Export Directory Options'                         # Name of the group that contains the export directory UI elements
 
+UI_EXPORT_DIRECTORY_CONFIGURE_NAME = 'Configure Export Directory'                           # Name of the element that contains the configuration of the export directory
+UI_EXPORT_DIRECTORY_CONFIGURE_VALUES = [UI_EXPORT_DIRECTORY_CONFIGURE_DEFAULT_VALUE,
+                                        UI_EXPORT_DIRECTORY_CONFIGURE_NEW_DESIGN_VALUE,
+                                        UI_EXPORT_DIRECTORY_CONFIGURE_ALWAYS_VALUE]         # Elements of the dropdown list
 UI_EXPORT_DIRECTORY_NAME = 'Export Directory'                                               # Base path for the export process
 UI_EXPORT_DIRECTORY_RESET_ID = 'resetExportDirectory'                                       # Id of the check box that triggers the reset of the export directory
 UI_EXPORT_DIRECTORY_RESET_NAME = 'Reset Export Directory'                                   # Name of the check box that triggers the reset of the export directory
@@ -127,7 +134,7 @@ CONF_DEFAULT_CONFIG_NAME = 'Defaults.json'                                      
 CONF_PROJECT_ATTRIBUTE_GROUP = 'ExportIt'                                                   # Name of the attribute group that stores the project specific data
 CONF_PROJECT_ATTRIBUTE_KEY = 'projectConfiguration'                                         # Key of the key that contains the project specific configuration (delta to default configuration)
 CONF_VERSION_KEY = 'version'                                                                # Key of the element that contains the version of the default configuration
-CONF_VERSION_DEFAULT = '0.4.0'                                                              # Default version of the default configuration
+CONF_VERSION_DEFAULT = '0.5.0'                                                              # Default version of the default configuration
 
 # configuration - export options
 CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # Name of the element that contains the export types
@@ -150,6 +157,8 @@ CONF_F3D_STRUCTURE_KEY = 'f3dStructure'                                         
 CONF_F3D_STRUCTURE_DEFAULT = [UI_STRUCTURE_ONE_FILE_VALUE]                                  # Valid values 'One File', 'One File Per Component
 
 # configuration - export directory
+CONF_EXPORT_DIRECTORY_CONFIGURE_KEY = 'exportDirectoryConfiguration'                        # Key of the element that contains the kind of export directory
+CONF_EXPORT_DIRECTORY_CONFIGURE_DEFAULT = UI_EXPORT_DIRECTORY_CONFIGURE_DEFAULT_VALUE       # Default value for the export directory configuration
 CONF_EXPORT_DIRECTORY_KEY = 'exportDirectory'                                               # Key of the element that contains the export directory
 CONF_EXPORT_DIRECTORY_DEFAULT = ''                                                          # Value that's used to initialize the export directory
 CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY = 'addProjectNameToDirectory'                    # True if the name of the project should be added to the export directory otherwise False

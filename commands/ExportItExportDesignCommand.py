@@ -37,8 +37,8 @@ def createDefaultConfiguration():
     defaultConfiguration[CONF_F3D_STRUCTURE_KEY] = CONF_F3D_STRUCTURE_DEFAULT
 
     # export directory options
+    defaultConfiguration[CONF_EXPORT_DIRECTORY_CONFIGURE_KEY] = UI_EXPORT_DIRECTORY_CONFIGURE_DEFAULT_VALUE
     defaultConfiguration[CONF_EXPORT_DIRECTORY_KEY] = CONF_EXPORT_DIRECTORY_DEFAULT
-
     defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY] = CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_DEFAULT
     defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY] = CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_DEFAULT
     defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY] = CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_DEFAULT
@@ -46,7 +46,6 @@ def createDefaultConfiguration():
     # filename options
     defaultConfiguration[CONF_FILENAME_ADD_PROJECT_NAME_KEY] = CONF_FILENAME_ADD_PROJECT_NAME_DEFAULT
     defaultConfiguration[CONF_FILENAME_ADD_DESIGN_NAME_KEY] = CONF_FILENAME_ADD_DESIGN_NAME_DEFAULT
-
     defaultConfiguration[CONF_FILENAME_REMOVE_VERSION_TAGS_KEY] = CONF_FILENAME_REMOVE_VERSION_TAGS_DEFAULT
     defaultConfiguration[CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY] = CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_DEFAULT
     defaultConfiguration[CONF_FILENAME_ELEMENT_SEPERATOR_KEY] = CONF_FILENAME_ELEMENT_SEPERATOR_DEFAULT
@@ -97,9 +96,12 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
 
     # export directory
     addGroupToTab(UI_LOCATION_TAB_ID, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, UI_EXPORT_DIRECTORY_OPTIONS_GROUP_NAME, True)
+
+    if configurationOnly:
+        addTextListDropDown(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_CONFIGURE_KEY, UI_EXPORT_DIRECTORY_CONFIGURE_NAME, UI_EXPORT_DIRECTORY_CONFIGURE_VALUES, getConfiguration(CONF_EXPORT_DIRECTORY_CONFIGURE_KEY))
+
     addStringInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_KEY, UI_EXPORT_DIRECTORY_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_KEY), False)
     addBoolInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, UI_EXPORT_DIRECTORY_RESET_ID, UI_EXPORT_DIRECTORY_RESET_NAME, UI_EXPORT_DIRECTORY_RESET_DEFAULT)
-
     addBoolInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY, UI_EXPORT_DIRECTORY_ADD_PROJECT_NAME_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY))
     addBoolInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY, UI_EXPORT_DIRECTORY_ADD_DESIGN_NAME_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY))
     addBoolInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY, UI_EXPORT_DIRECTORY_EXPORT_TYPE_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY))
@@ -199,11 +201,10 @@ def validateExportDirectory():
         setConfiguration(CONF_EXPORT_DIRECTORY_KEY, exportPath)
 
 def resetExportDirecotry(input_values):
-    if input_values[UI_EXPORT_DIRECTORY_RESET_ID]:
-        logger.warning('Resetting export directory. Opening requestor')
+    logger.warning('Resetting export directory. Opening requestor')
 
-        exportPath, isValid = getExportDirectory()
-        setConfiguration(CONF_EXPORT_DIRECTORY_KEY, exportPath)
+    exportPath, isValid = getExportDirectory()
+    setConfiguration(CONF_EXPORT_DIRECTORY_KEY, exportPath)
 
 def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
     exportObjects = []
@@ -899,7 +900,9 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             logger.info("Starting processing of %s - %s", projectName, designName)
             logger.info("--------------------------------------------------------------------------------")
 
-            resetExportDirecotry(input_values)
+            if input_values[UI_EXPORT_DIRECTORY_RESET_ID] or getConfiguration(CONF_EXPORT_DIRECTORY_CONFIGURE_KEY) == UI_EXPORT_DIRECTORY_CONFIGURE_ALWAYS_VALUE:
+                resetExportDirecotry(input_values)
+            
             validateExportDirectory()
 
             # print configuration to the log file
