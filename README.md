@@ -37,7 +37,7 @@
 This add-in exports designs in various resolutions, structures and formats within one run. The advantages compared to the built-in command includes:
 
 - More meaningful and configurable export names.
-- EThe export configuration can be saved within the design, which makes it possible to export updated designs again and again at the push of a button.
+- The export configuration can be saved within the design, which makes it possible to export updated designs again and again at the push of a button.
 - Create stl exports with different refinements and structures within one run.
 - Avoid export of different occurrences of one component (optional).
 
@@ -143,22 +143,22 @@ This tab provides all functions to configure the export directory and the filena
 
 #### Export Directory Options
 
-The export directory and generated subdirectories are defined in this section.
+This section allows the definition of the components of the export directory and when the directory is selected.
 
 ![Export Directory](doc/exportDirectory.png)
 
-The full path can be composed out of the export directory, the project name and the design name. Here are some configuration scenarios:
+The full path can be composed out of the export directory, the project name, the design name and the export type (stl, stp, f3d).
 
-- Projects with many designs -> A base directory is selected for all projects and the export logic adds the project and design names to create an export structure that corresponds to the data panel structure in Fusion 360.
-- Projects with one design -> A base directory is selected for all projects and the export logic adds the project name. This might work with multi design projects too, because the flat structure is still manageable if file options are chosen carefully.
-- Individual export directories -> Here the final export directory is selected and no additions are created.
-
-Label | Description | Example
----------|----------|--------
-Export Directory | Target directory of the export or base directory of all exports | D:/Google Drive/3d Printing/Fusion 360
-Add Project Name | If checked the project name will be added to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest
-Add Design Name | If checked the design name will be added to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest/01-Default
-Add Export Type | If checked the name of the export type (stl, step) to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest/01-Default/step
+Label | Option | Description | Example
+---------|-------|-----------|--------
+Configure Export Directory | As Base Directory| This option is useful if all exports (cross-project) normally use a common base directory and the individual projects are separated from each other by the generated directory.| D:/Google Drive/3d Printing/Fusion 360
+Configure Export Directory | When Exporting A New Design | This option is useful if cross-project exports do not have a common base directory, but the exports of a design are always saved in the same export directory. | C:/Temp/MySpecialDesign
+Configure Export Directory | For Each Export | This option forces the selection of an export directory on each export. | C:/Temp
+Reset Export Directory | Checked / Unchecked | If activated, the dialog for selecting a base / export directory is displayed after the _Default Configuration_ command has been closed by pressing _OK_ or by starting an export in the _Export Design_ command. |
+Export Directory | Checked / Unchecked| Target directory of the export or base directory of all exports | D:/Google Drive/3d Printing/Fusion 360
+Add Project Name | Checked / Unchecked| If checked the project name will be added to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest
+Add Design Name |Checked / Unchecked | If checked the design name will be added to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest/01-Default
+Add Export Type |Checked / Unchecked | If checked the name of the export type (stl, step) to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest/01-Default/step
 
 #### Filename Options
 
@@ -288,6 +288,7 @@ Version | Date | Description
 0.2.0 | 15.07.2020 | Main enhancement is the addition of STEP exports. Additionally basic configuration validation is added.
 0.3.0 | 21.07.2020 | Main enhancement is the addition of F3D exports. Additionally a progress dialog is shown on larger exports and a summary message is shown at the end of an export.
 0.4.0 | 22.07.2020 | UI cleaned up by adding _Export_, _Location_ and _Misc_ tabs. Filename filter added to remove spaces from filenames. Export filter added that prevents linked components to be exported.
+0.5.0 | 04.08.2020 | A checkbox is added that allows to reset the base directory / export directory after closing the _Default Configuration_ command with the _OK_ button or by starting an export in the _Export Design_ command. The new workflow closes the issue #1 and the new checkbox closes the enhancement #8. In addition, the concept of the export directory is no longer based only on the idea of ​​a standard / base directory. It can now be better adapted to different workflows by enabling the configuration of a base directory or the configuration of the export directory when exporting a new design for the first time, or by having to configure the export directory every time an export is triggered. The new options close the extension #7.
 
 ## Known Issus
 

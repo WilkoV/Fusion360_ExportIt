@@ -43,12 +43,13 @@ def addGroup(inputs :adsk.core.CommandInputs, groupId, groupName, isExpanded):
 
     logger.debug("group %s added", groupId)
 
-def addStringInputToGroup(groupId, stingInputId, label, defaultValue):
+def addStringInputToGroup(groupId, stingInputId, label, defaultValue, isEnabled):
     # get list of UI elements
     groupInputs = groups.get(groupId)
 
     # add UI element to list
-    groupInputs.addStringValueInput(stingInputId, label, defaultValue)
+    input = groupInputs.addStringValueInput(stingInputId, label, defaultValue)
+    input.isEnabled = isEnabled
 
     logger.debug("StringInput %s added to group %s", stingInputId, groupId)
 

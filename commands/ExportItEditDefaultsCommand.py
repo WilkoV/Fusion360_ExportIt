@@ -3,9 +3,9 @@ import apper
 
 from apper import AppObjects
 from .BaseLogger import logger
-from .ExportItExportDesignCommand import initializeConfiguration, initializeUi, createDefaultConfiguration, validateConfiguration
+from .ExportItExportDesignCommand import initializeConfiguration, initializeUi, createDefaultConfiguration, validateConfiguration, resetExportDirecotry, validateExportDirectory
 from .UiHelper import getSelectedDropDownItems
-from .ConfigurationHelper import writeDefaultConfiguration, logConfiguration, resetConfiguration, setDefaultConfiguration
+from .ConfigurationHelper import writeDefaultConfiguration, logConfiguration, resetConfiguration, setDefaultConfiguration, getConfiguration
 from .GithubReleaseHelper import checkForUpdates, getGithubReleaseInformation, showReleaseNotes
 from .Statics import *
 
@@ -50,6 +50,19 @@ class ExportItEditDefaultsCommand(apper.Fusion360CommandBase):
             logger.info("--------------------------------------------------------------------------------")
             logger.info("Start processing configuration")
             logger.info("--------------------------------------------------------------------------------")
+
+            if input_values[UI_EXPORT_DIRECTORY_RESET_ID]:
+                resetExportDirecotry(input_values)
+
+            if getConfiguration(CONF_EXPORT_DIRECTORY_CONFIGURE_KEY) == UI_EXPORT_DIRECTORY_CONFIGURE_DEFAULT_VALUE:
+                
+                validateExportDirectory()
+            
+            elif (getConfiguration(CONF_EXPORT_DIRECTORY_KEY) and
+                    (getConfiguration(CONF_EXPORT_DIRECTORY_CONFIGURE_KEY) == UI_EXPORT_DIRECTORY_CONFIGURE_NEW_DESIGN_VALUE
+                    or getConfiguration(CONF_EXPORT_DIRECTORY_CONFIGURE_KEY) == UI_EXPORT_DIRECTORY_CONFIGURE_ALWAYS_VALUE)):
+                
+                setDefaultConfiguration(CONF_EXPORT_DIRECTORY_KEY, "")    
 
             # print configuration to the log file
             logConfiguration()
