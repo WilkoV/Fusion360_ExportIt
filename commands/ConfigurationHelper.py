@@ -158,10 +158,10 @@ def initializeConfiguration(document, attributeGroup, attributeKey, generatedCon
     logger.debug("generateVersion: %s", generatedVersion)
     logger.debug("defaultConfiguration.get(CONF_VERSION_KEY): %s", defaultConfiguration.get(CONF_VERSION_KEY))
 
+    modified = False
+    
     if not generatedVersion == defaultConfiguration.get(CONF_VERSION_KEY):
         logger.info("Default configuration is outdated")
-
-        modified = False
 
         for key in generatedConfiguration:
             try:
@@ -180,8 +180,23 @@ def initializeConfiguration(document, attributeGroup, attributeKey, generatedCon
 
                 logger.debug("%s = %s added to default configuration", key, generatedConfiguration[key])
 
-        if modified:
-            writeDefaultConfiguration()
+    # remove deprecated entries from dropdown lists
+    if UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE_DEPRECATED in defaultConfiguration.get(CONF_STEP_STRUCTURE_KEY):
+        logger.warning("Found deprecated entry in default step structure. Updating it from %s to %s.", UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE_DEPRECATED, UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE)
+
+        modified = True
+        defaultConfiguration[CONF_STEP_STRUCTURE_KEY].remove(UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE_DEPRECATED)
+        defaultConfiguration[CONF_STEP_STRUCTURE_KEY].append(UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE)
+
+    if UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE_DEPRECATED in defaultConfiguration.get(CONF_F3D_STRUCTURE_KEY):
+        logger.warning("Found deprecated entry in default f3d structure. Updating it from %s to %s.", UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE_DEPRECATED, UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE)
+
+        modified = True
+        defaultConfiguration[CONF_F3D_STRUCTURE_KEY].remove(UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE_DEPRECATED)
+        defaultConfiguration[CONF_F3D_STRUCTURE_KEY].append(UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE)
+
+    if modified:
+        writeDefaultConfiguration()
 
     if document:
         # load project configuration
@@ -190,21 +205,32 @@ def initializeConfiguration(document, attributeGroup, attributeKey, generatedCon
 
         try:
             projectConfiguration = json.loads(attribute.value)
-        except:
-            pass
-
-        if len(projectConfiguration) == 0:
-            projectConfiguration = defaultConfiguration
-            configurationChanged = True
-
-            logger.info('No project configuration found. Defaults copied to project configuration')
-
-        try:
-            projectConfiguration = json.loads(attribute.value)
-            logger.debug("project configuration loaded")
+            logger.info("project configuration loaded")
         except:
             projectConfiguration = {}
             logger.debug("no project configuration found")
+
+        # remove deprecated entries from dropdown lists
+        try:
+            if UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE_DEPRECATED in projectConfiguration.get(CONF_STEP_STRUCTURE_KEY):
+                logger.warning("Found deprecated entry in project step structure. Updating it from %s to %s.", UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE_DEPRECATED, UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE)
+
+                configurationChanged = True
+                projectConfiguration[CONF_STEP_STRUCTURE_KEY].remove(UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE_DEPRECATED)
+                projectConfiguration[CONF_STEP_STRUCTURE_KEY].append(UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE)
+        except:
+            pass
+
+        try:
+            if UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE_DEPRECATED in projectConfiguration.get(CONF_F3D_STRUCTURE_KEY):
+                logger.warning("Found deprecated entry in project f3d structure. Updating it from %s to %s.", UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE_DEPRECATED, UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE)
+
+                configurationChanged = True
+                projectConfiguration[CONF_F3D_STRUCTURE_KEY].remove(UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE_DEPRECATED)
+                projectConfiguration[CONF_F3D_STRUCTURE_KEY].append(UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE)
+        except:
+            pass
+
     else:
         editDefaultsMode = True
         logger.debug("Edit defaults mode enabled")
