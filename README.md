@@ -106,6 +106,28 @@ Medium | This option corresponds to the built-in one.
 High | This option corresponds to the built-in one.
 Ultra | This one is based on the built-in *High* settings, but sets surface deviation to 0.000508mm and normal deviation to 15. This results in a much finer mesh and is great for very detailed geometry or large, roundish objects.
 
+Examples:
+
+- Low
+
+![Refinement Low](doc/refinementLow.png)
+
+- Medium
+
+![Refinement Medium](doc/refinementMedium.png)
+
+- High
+
+![Refinement High](doc/refinementHigh.png)
+
+- Ultra
+
+![Refinement Ultra](doc/refinementUltra.png)
+
+- Size
+
+![Refinement Ultra](doc/refinementFileSizes.png)
+
 One to many structures or refinements can be selected.
 
 #### STEP Options
@@ -291,7 +313,7 @@ Version | Date | Description
 0.3.0 | 21.07.2020 | Main enhancement is the addition of F3D exports. Additionally a progress dialog is shown on larger exports and a summary message is shown at the end of an export.
 0.4.0 | 22.07.2020 | UI cleaned up by adding _Export_, _Location_ and _Misc_ tabs. Filename filter added to remove spaces from filenames. Export filter added that prevents linked components to be exported.
 0.5.0 | 04.08.2020 | A checkbox is added that allows to reset the base directory / export directory after closing the _Default Configuration_ command with the _OK_ button or by starting an export in the _Export Design_ command. The new workflow closes the issue #1 and the new checkbox closes the enhancement #8. In addition, the concept of the export directory is no longer based only on the idea of ​​a standard / base directory. It can now be better adapted to different workflows by enabling the configuration of a base directory or the configuration of the export directory when exporting a new design for the first time, or by having to configure the export directory every time an export is triggered. The new options close the enhancement #7.
-0.6.0 | 15.08.2020 | Some artists use top-level components to group bodies or sub-components by color or material. These groups are then also used for the final STL export. The new STL option _One File Top Level Occurrence_ complies with these exports. This community inspired feature closes enhancement #10.
+0.6.0 | 15.08.2020 | Some artists use top-level components to group bodies or sub-components by color or material. These groups are then also used for the final STL export. The new STL option _One File Top Level Occurrence_ complies with these exports. Documentation slightly enhanced.
 
 ## Known Issus
 
