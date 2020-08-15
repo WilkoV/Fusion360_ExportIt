@@ -52,7 +52,7 @@ This command exports the active design (or parts of it) into several formats, st
 - Start the export by hitting the *OK* button.
 - If the configuration has been changed, the following message appears after the export has been completed:
   ![Save Configuration Reminder](doc/saveConfigurationRiminder.png)
-- In the case of *One File Per Body In Occurrence* STL exports, a temporary document must be closed.
+- In the case of _One File Per Body In Occurrence_ or _One File Top Level Occurrence_ STL exports, a temporary document must be closed.
 
 ### Configuration
 
@@ -94,7 +94,8 @@ Option |Description
 ---------|---------
 One File | This structure corresponds to the built-in one and creates one file containing all visible BRep bodies.
 One File Per Body In Component | A component can have many occurrences in one design. This option will export each component only once regardless of the number of occurrences. It creates one file per body (or per selected body) in a component. Due to this filter, it will not keep the original position in the 3d space. This structure is e.g useful if a design reuses components and wants to keep the number of exported files small.
-One File Per Body In Occurrence | This option corresponds to the integrated *One File Per Body*, but does not create double exports of the same body and works with selected bodis, too. It maintains the positions of the bodies at different occurrences. This structure is useful if the stl files are reassembled at a later point - e.g. in a slicer for multi color / multi material 3d prints.
+One File Per Body In Occurrence | This option corresponds to the integrated *One File Per Body*, but does not create double exports of the same body and works with selected bodies, too. It maintains the positions of the bodies at different occurrences. This structure is useful if the stl files are reassembled at a later point - e.g. in a slicer for multi color / multi material 3d prints.
+One File Top Level Occurrence | This option creates one file for each top level occurrence. It's useful if the occurrences are used treated as logical groups like colors or materials and the stl files are reassembled at a later point. In comparison to _One File Per Body In Occurrence_ this option creates less files but needs a special workflow / structure during the design process.
 
 Refinements can roughly be described as the mesh density of an export. Following refinements are pre-configured.
 
@@ -252,6 +253,7 @@ Structure | Elements | Example
 One File | [projectName] + elementSeparator + designName + refinementName + "." + suffix| 01-Default.low.stl
 One File Per Body In Component | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithoutOccurrenceIDs + elementSeparator + bodyName + elementSeparator + refinementName + "." + suffix | 01-Default.blocks.mixed.bodyInComponentWithSubComponents.low.stl
 One File Per Body In Occurrence | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithOccurrenceIDs + elementSeparator + bodyName + elementSeparator + refinementName + "." + suffix | 01-Default.blocks_1.deep_1.deeper_1.deepest_1.block_5.Body1.low.stl
+One File Per Top Level Occurrence | [projectName] + elementSeparator + [designName] + elementSeparator + topLevelOccurrenceWithOccurrenceIDs + elementSeparator + refinementName + "." + suffix | 08-TopLevelComponentsAsOneFile.green_2.low.stl
 
 ### STEP Export Name
 
@@ -288,8 +290,8 @@ Version | Date | Description
 0.2.0 | 15.07.2020 | Main enhancement is the addition of STEP exports. Additionally basic configuration validation is added.
 0.3.0 | 21.07.2020 | Main enhancement is the addition of F3D exports. Additionally a progress dialog is shown on larger exports and a summary message is shown at the end of an export.
 0.4.0 | 22.07.2020 | UI cleaned up by adding _Export_, _Location_ and _Misc_ tabs. Filename filter added to remove spaces from filenames. Export filter added that prevents linked components to be exported.
-0.5.0 | 04.08.2020 | A checkbox is added that allows to reset the base directory / export directory after closing the _Default Configuration_ command with the _OK_ button or by starting an export in the _Export Design_ command. The new workflow closes the issue #1 and the new checkbox closes the enhancement #8. In addition, the concept of the export directory is no longer based only on the idea of ​​a standard / base directory. It can now be better adapted to different workflows by enabling the configuration of a base directory or the configuration of the export directory when exporting a new design for the first time, or by having to configure the export directory every time an export is triggered. The new options close the extension #7.
-TODO 0.6.0 | XX.08.2020 | XXXX. Additionally some inconsistencies in the naming of structures are fixed.
+0.5.0 | 04.08.2020 | A checkbox is added that allows to reset the base directory / export directory after closing the _Default Configuration_ command with the _OK_ button or by starting an export in the _Export Design_ command. The new workflow closes the issue #1 and the new checkbox closes the enhancement #8. In addition, the concept of the export directory is no longer based only on the idea of ​​a standard / base directory. It can now be better adapted to different workflows by enabling the configuration of a base directory or the configuration of the export directory when exporting a new design for the first time, or by having to configure the export directory every time an export is triggered. The new options close the enhancement #7.
+0.6.0 | 15.08.2020 | Some artists use top-level components to group bodies or sub-components by color or material. These groups are then also used for the final STL export. The new STL option _One File Top Level Occurrence_ complies with these exports. This community inspired feature closes enhancement #10.
 
 ## Known Issus
 
