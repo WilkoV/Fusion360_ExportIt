@@ -240,6 +240,7 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
     # add visible bodies of all occurrences to the list of visible objects
     for occurrence in rootComponent.allOccurrences:
         isUnique = False
+        isTopLevel = False
 
         occurrenceFullPathName = occurrence.fullPathName
 
@@ -257,39 +258,44 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
         if not occurrence.component in uniqueComponents:
             uniqueComponents.append(occurrence.component)
             isUnique = True
-            logger.debug("%s is unique", occurrenceFullPathName)
+            logger.info("%s is unique", occurrenceFullPathName)
 
         # check if occurrence is referencing a external component
         if occurrence.isReferencedComponent:
             if getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY):
-                logger.info("component is excluded, because it's a external reference", occurrenceFullPathName)
+                logger.info("component %s is excluded, because it's a external reference", occurrenceFullPathName)
                 continue
             else:
-                logger.info("component is a external reference", occurrenceFullPathName)
+                logger.info("component %s is an external reference", occurrenceFullPathName)
                 isReferencedComponent = occurrence.isReferencedComponent
+
+        # check if occurrence is a top level component
+        if occurrenceFullPathName.count(":") == 1:
+            isTopLevel = True
+            logger.info("component %s is a top level component", occurrenceFullPathName)
 
         # get visible occurrence bodies
         occurrenceBodies = []
         for body in occurrence.bRepBodies:
             # check if body is visible. if not jump to next body
             if not body.isLightBulbOn:
-                logger.info("body %s in %s is not visible", body.name, occurrence.fullPathName)
+                logger.info("body %s in %s is not visible", body.name, occurrenceFullPathName)
                 continue
 
             if len(selectedBodies) > 0 and body not in selectedBodies:
-                logger.info("body %s in %s is not selected", body.name, occurrence.fullPathName)
+                logger.info("body %s in %s is not selected", body.name, occurrenceFullPathName)
                 continue
 
             # add visible body to the list of occurrence bodies
             occurrenceBodies.append(body)
 
         # check if occurrence has bodies. if not jump to next occurrence
-        if len(occurrenceBodies) == 0:
+        if len(occurrenceBodies) == 0 and not isTopLevel:
             logger.info("%s has no bodies", occurrenceFullPathName)
             continue
 
         # if occurrence has bodies, add occurrence to the list of exportable objects
-        exportObjects.append({REC_OCCURRENCE: occurrence, REC_OCCURRENCE_PATH: occurrenceFullPathName, REC_IS_UNIQUE: isUnique, REC_IS_REFERENCED_COMPONENT: isReferencedComponent, REC_BODIES: occurrenceBodies})
+        exportObjects.append({REC_OCCURRENCE: occurrence, REC_OCCURRENCE_PATH: occurrenceFullPathName, REC_IS_UNIQUE: isUnique, REC_IS_TOP_LEVEL: isTopLevel, REC_IS_REFERENCED_COMPONENT: isReferencedComponent, REC_BODIES: occurrenceBodies})
 
     logger.debug(exportObjects)
     return exportObjects
@@ -301,13 +307,13 @@ def updateProgressDialog():
     # update internal progress counter
     progressValue = progressValue + 1
 
-    if not progressDialog.isShowing:
-        # nothing to do, because the dialog is not visible
-        return
-
     if progressDialog.wasCancelled:
         # nothing to do, because the dialog is cancelled
         progressDialog.hide()
+        return
+
+    if not progressDialog.isShowing:
+        # nothing to do, because the dialog is not visible
         return
 
     # update progress dialog
@@ -317,12 +323,16 @@ def totalNumberOfObjects(exportObjects):
     components = 0
     componentBodies = 0
     occurrenceBodies = 0
+    topLevelOccurrences = 0
     total = 0
 
     for exportObject in exportObjects:
         if exportObject.get(REC_IS_UNIQUE):
             components = components + 1
             componentBodies =  componentBodies + len(exportObject.get(REC_BODIES))
+
+        if exportObject.get(REC_IS_TOP_LEVEL):
+            topLevelOccurrences = topLevelOccurrences + 1
 
         occurrenceBodies =  occurrenceBodies + len(exportObject.get(REC_BODIES))
 
@@ -351,9 +361,13 @@ def totalNumberOfObjects(exportObjects):
             if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
                 total = total + occurrenceBodies
 
+            if UI_STRUCTURE_ONE_FILE_PER_TOP_LEVEL_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
+                total = total + topLevelOccurrences
+
     logger.debug("components: %s", components)
     logger.debug("componentBodies: %s", componentBodies)
     logger.debug("occurrenceBodies: %s", occurrenceBodies)
+    logger.debug("topLevelOccurrences: %s", topLevelOccurrences)
     logger.debug("total: %s", total)
 
     return total
@@ -609,6 +623,11 @@ def exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao):
         if not exportObject.get(REC_IS_UNIQUE):
             continue
 
+        # Components with no bodies are REC_IS_TOP_LEVEL == True records with sub-components and no top level bodies. 
+        # Those records are creating duplicated / unwanted files in this scenario and can be skipped
+        if len(exportObject.get(REC_BODIES)) == 0:
+            continue
+
         # create filename
         fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, "", UI_EXPORT_TYPES_STEP_VALUE)
 
@@ -663,6 +682,11 @@ def exportF3dAsOneFilePerComponent(exportObjects, projectName, designName, ao):
     for exportObject in exportObjects:
         # check if component is unique
         if not exportObject.get(REC_IS_UNIQUE):
+            continue
+
+        # Components with no bodies are REC_IS_TOP_LEVEL == True records with sub-components and no top level bodies. 
+        # Those records are creating duplicated / unwanted files in this scenario and can be skipped
+        if len(exportObject.get(REC_BODIES)) == 0:
             continue
 
         # create filename
@@ -762,6 +786,11 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
             if not exportObject.get(REC_IS_UNIQUE):
                 continue
 
+            # Components with no bodies are REC_IS_TOP_LEVEL == True records with sub-components and no top level bodies. 
+            # Those records are creating duplicated / unwanted files in this scenario and can be skipped
+            if len(exportObject.get(REC_BODIES)) == 0:
+                continue
+
             # iterate over list of bodies
             for body in exportObject.get(REC_BODIES):
                 # cancel loop if user canceld the dialog
@@ -786,12 +815,6 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
                 updateProgressDialog()
 
 def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName, ao):
-    # copy exportObjects into a temporary document and convert all occurrences into unique components.
-    tmpDocument, tmpRootComponent = copyDesignToExportDocument(exportObjects)
-
-    # regenerate list of export objects based
-    tmpExportObjects = getExportObjects(tmpRootComponent, [])
-
     # generate exports for each selected refinement
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
         # cancel loop if user canceld the dialog
@@ -805,19 +828,25 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
             refinementName = refinement
 
         # iterate over list of occurrences
-        for tmpExportObject in tmpExportObjects:
+        for exportObject in exportObjects:
             # cancel loop if user canceld the dialog
             if progressDialog.wasCancelled:
                 break
 
+            # Components with no bodies are REC_IS_TOP_LEVEL == True records with sub-components and no top level bodies. 
+            # Those records are creating duplicated / unwanted files in this scenario and can be skipped
+            if len(exportObject.get(REC_BODIES)) == 0:
+                continue
+
+
             # iterate over list of bodies
-            for body in tmpExportObject.get(REC_BODIES):
+            for body in exportObject.get(REC_BODIES):
                 # cancel loop if user canceld the dialog
                 if progressDialog.wasCancelled:
                     break
 
                 # create filename but remove occurrence id unless they're part of the occurrence name in the temporary document
-                fullFileName = getExportName(projectName, designName, tmpExportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
+                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
 
                 # get stl export options
                 stlExportOptions = getStlExportOptions(ao, body, fullFileName, refinement)
@@ -832,6 +861,49 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
                     addErrorToSummary(UI_EXPORT_TYPES_STL_VALUE, exportResult, fullFileName)
 
                 updateProgressDialog()
+
+def exportStlAsOneFilePerTopOccurrence(exportObjects, projectName, designName, ao):
+    # generate exports for each selected refinement
+    for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
+        # cancel loop if user canceld the dialog
+        if progressDialog.wasCancelled:
+            break
+        # set refinement name
+
+        refinementName = ""
+        if len(getConfiguration(CONF_STL_REFINEMENT_KEY)) > 1:
+            # set refinement name if more than one refinement is defined to keep the exportname unique
+            refinementName = refinement
+
+        # iterate over list of occurrences
+        for exportObject in exportObjects:
+            try:
+                # cancel loop if user canceld the dialog
+                if progressDialog.wasCancelled:
+                    break
+
+                # check if component is unique
+                if not exportObject.get(REC_IS_TOP_LEVEL):
+                    continue
+
+                # create filename but remove occurrence id unless they're part of the occurrence name in the temporary document
+                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
+
+                # get stl export options
+                stlExportOptions = getStlExportOptions(ao, exportObject.get(REC_OCCURRENCE), fullFileName, refinement)
+
+                # export body as single stl file
+                exportResult = ao.export_manager.execute(stlExportOptions)
+
+                # update summary
+                if exportResult:
+                    addInfoToSummary(UI_EXPORT_TYPES_STL_VALUE, fullFileName)
+                else:
+                    addErrorToSummary(UI_EXPORT_TYPES_STL_VALUE, exportResult, fullFileName)
+
+                updateProgressDialog()
+            except:
+                logger.error(traceback.format_exc())
 
 def resetData():
     global progressDialog
@@ -924,9 +996,10 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             exportObjects = []
 
             if (UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_F3D_STRUCTURE_KEY) or
-                UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY) or
+                UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY) or 
                 UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY) or
-                UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY)):
+                UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY) or
+                UI_STRUCTURE_ONE_FILE_PER_TOP_LEVEL_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY)):
 
                 # get list of occurrences and bodies
                 logger.debug("getting list of export objects")
@@ -934,7 +1007,13 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
 
             # Show progress dialog
             logger.debug("Showing progressDialog")
-            progressDialog.show('ExportIt', 'Exports created: %v of %m' , 0, totalNumberOfObjects(exportObjects), 1)
+            
+            numberOfExportObjects = totalNumberOfObjects(exportObjects)
+            
+            try:
+                progressDialog.show('ExportIt', 'Exports created: %v of %m' , 0, numberOfExportObjects, 1)
+            except:
+                pass
 
             if not progressDialog.wasCancelled and UI_EXPORT_TYPES_F3D_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
                 # export design as one step file
@@ -963,13 +1042,26 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
                 if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
                     exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName, ao)
 
-                # export each body in occurrence as individual stl files
-                if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
-                    exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName, ao)
+
+                if not progressDialog.wasCancelled and (UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY)
+                    or UI_STRUCTURE_ONE_FILE_PER_TOP_LEVEL_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY)):
+                    # copy exportObjects into a temporary document and convert all occurrences into unique components.
+                    tmpDocument, tmpRootComponent = copyDesignToExportDocument(exportObjects)
+
+                    # regenerate list of export objects based
+                    tmpExportObjects = getExportObjects(tmpRootComponent, [])
+
+                    # export each body in occurrence as individual stl files
+                    if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
+                        exportStlAsOneFilePerBodyInOccurrence(tmpExportObjects, projectName, designName, ao)
+
+                    # export each top level occurrence as individual stl files
+                    if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_TOP_LEVEL_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
+                        exportStlAsOneFilePerTopOccurrence(tmpExportObjects, projectName, designName, ao)
 
             # hide progress dialog
             logger.debug("Hiding progressDialog")
-            progressDialog.progressValue = progressValue
+            progressDialog.progressValue = numberOfExportObjects
             progressDialog.hide()
 
             # write modified configuration

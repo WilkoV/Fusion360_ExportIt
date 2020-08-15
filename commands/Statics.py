@@ -8,7 +8,9 @@ LOG_LEVEL = logging.DEBUG                                                       
 UI_STRUCTURE_ONE_FILE_VALUE = 'One File'                                                    # Export as one file
 UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE = 'One File Per Body In Component'        # Export one file per body in unique component
 UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE = 'One File Per Body In Occurrence'      # Export one file per body in unique occurrence
-UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE = 'One File Component'                            # Export one file per unique component
+UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE = 'One File Per Component'                        # Export one file per unique component
+UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE_DEPRECATED = 'One File Component'                 # Deprecated
+UI_STRUCTURE_ONE_FILE_PER_TOP_LEVEL_OCCURRENCE_VALUE = 'One File Per Top Level Occurrence'  # Export one file per top level (below root) occurrence
 UI_STL_REFINEMENT_NAME = 'Refinement'                                                       # refinement (resolution / density) for stl exports
 UI_STL_REFINEMENT_ULTRA_VALUE = 'Ultra'                                                     # refinement ultra
 UI_STL_REFINEMENT_HIGH_VALUE = 'High'                                                       # refinement high
@@ -49,7 +51,8 @@ UI_STL_OPTIONS_GROUP_NAME = 'STL Options'                                       
 UI_STL_STRUCTURE_NAME = 'Structure'                                                         # Export bodies as one file, file per body etc.
 UI_STL_STRUCTURE_VALUES = [UI_STRUCTURE_ONE_FILE_VALUE,
                             UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE,
-                            UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE]             # Elements of the dropdown list
+                            UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE,
+                            UI_STRUCTURE_ONE_FILE_PER_TOP_LEVEL_OCCURRENCE_VALUE]           # Elements of the dropdown list
 UI_STL_REFINEMENT_VALUES = [UI_STL_REFINEMENT_ULTRA_VALUE,
                             UI_STL_REFINEMENT_HIGH_VALUE,
                             UI_STL_REFINEMENT_MEDIUM_VALUE,
@@ -203,6 +206,7 @@ REC_OCCURRENCE_PATH = 'occurrencePath'                                          
 REC_BODIES = 'bodies'                                                                       # BREP Body
 REC_OCCURRENCE = 'occurrence'                                                               # Occurrence
 REC_IS_UNIQUE = 'isUnique'                                                                  # Marker if this record should be used, if all components (not occurrences) should be exported
+REC_IS_TOP_LEVEL = 'isTopLevel'                                                             # Marker if this record should be used, if only top level components should be exported
 REC_IS_REFERENCED_COMPONENT = 'isReferencedComponent'                                       # True if this occurrence is referencing an external component otherwise false
 
 # internal structure of summary

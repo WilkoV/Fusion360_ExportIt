@@ -131,5 +131,4 @@ dmypy.json
 /commands/config
 /.vscode/settings.json
 /tests/results
-/tools/ExportIt.zip
-/tools/ExportIt.tar.gz
+/deliverables
