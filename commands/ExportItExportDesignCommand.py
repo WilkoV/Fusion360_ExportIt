@@ -206,6 +206,26 @@ def resetExportDirecotry(input_values):
     exportPath, isValid = getExportDirectory()
     setConfiguration(CONF_EXPORT_DIRECTORY_KEY, exportPath)
 
+def getReferencedOccurrences(occurrences):
+    referencedOccurrences = []
+
+    for occurrence in occurrences:
+        if occurrence.isReferencedComponent:
+            referencedOccurrences.append(occurrence.name)
+
+    return referencedOccurrences
+
+def isReferenced(occurrence, referencedOccurrences):
+    isReferenced = False
+    pathElements = occurrence.fullPathName.split("+")
+
+    for element in pathElements:
+        if element in referencedOccurrences:
+            isReferenced = True
+            logger.debug("isReferenced: %s", element)
+
+    return isReferenced
+
 def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
     exportObjects = []
     rootBodies = []
@@ -237,12 +257,21 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
     else:
         logger.info("%s has no visible bodies folder", "root")
 
+    # get list of referenced occurrences
+    referencedOccurrences = getReferencedOccurrences(rootComponent.allOccurrences)
+
     # add visible bodies of all occurrences to the list of visible objects
     for occurrence in rootComponent.allOccurrences:
         isUnique = False
         isTopLevel = False
 
         occurrenceFullPathName = occurrence.fullPathName
+
+        # check if occurrence is referencing a external component
+        if isReferenced(occurrence, referencedOccurrences):
+            if getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY):
+                logger.info("occurrence %s is excluded, because it's an external reference or part of an external reference", occurrenceFullPathName)
+                continue
 
         # check if occurrence is visible. if not jump to next occurrence
         if not occurrence.isLightBulbOn:
@@ -259,16 +288,7 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
             uniqueComponents.append(occurrence.component)
             isUnique = True
             logger.info("%s is unique", occurrenceFullPathName)
-
-        # check if occurrence is referencing a external component
-        if occurrence.isReferencedComponent:
-            if getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY):
-                logger.info("component %s is excluded, because it's a external reference", occurrenceFullPathName)
-                continue
-            else:
-                logger.info("component %s is an external reference", occurrenceFullPathName)
-                isReferencedComponent = occurrence.isReferencedComponent
-
+       
         # check if occurrence is a top level component
         if occurrenceFullPathName.count(":") == 1:
             isTopLevel = True
@@ -303,6 +323,8 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
 def updateProgressDialog():
     global progressDialog
     global progressValue
+
+    adsk.doEvents()
 
     # update internal progress counter
     progressValue = progressValue + 1
@@ -740,6 +762,7 @@ def exportStlAsOneFile(projectName, designName, rootComponent, ao):
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
         # cancel loop if user canceld the dialog
         if progressDialog.wasCancelled:
+            progressDialog.hide()
             break
 
         refinementName = ""
@@ -768,6 +791,7 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
         # cancel loop if user canceld the dialog
         if progressDialog.wasCancelled:
+            progressDialog.hide()
             break
 
         # set refinement name
@@ -780,6 +804,7 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
         for exportObject in exportObjects:
             # cancel loop if user canceld the dialog
             if progressDialog.wasCancelled:
+                progressDialog.hide()
                 break
 
             # check if component is unique
@@ -795,6 +820,7 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
             for body in exportObject.get(REC_BODIES):
                 # cancel loop if user canceld the dialog
                 if progressDialog.wasCancelled:
+                    progressDialog.hide()
                     break
 
                 # create filename
@@ -819,6 +845,7 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
         # cancel loop if user canceld the dialog
         if progressDialog.wasCancelled:
+            progressDialog.hide()
             break
         # set refinement name
 
@@ -831,6 +858,7 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
         for exportObject in exportObjects:
             # cancel loop if user canceld the dialog
             if progressDialog.wasCancelled:
+                progressDialog.hide()
                 break
 
             # Components with no bodies are REC_IS_TOP_LEVEL == True records with sub-components and no top level bodies. 
@@ -843,6 +871,7 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
             for body in exportObject.get(REC_BODIES):
                 # cancel loop if user canceld the dialog
                 if progressDialog.wasCancelled:
+                    progressDialog.hide()
                     break
 
                 # create filename but remove occurrence id unless they're part of the occurrence name in the temporary document
@@ -867,6 +896,7 @@ def exportStlAsOneFilePerTopOccurrence(exportObjects, projectName, designName, a
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
         # cancel loop if user canceld the dialog
         if progressDialog.wasCancelled:
+            progressDialog.hide()
             break
         # set refinement name
 
@@ -880,6 +910,7 @@ def exportStlAsOneFilePerTopOccurrence(exportObjects, projectName, designName, a
             try:
                 # cancel loop if user canceld the dialog
                 if progressDialog.wasCancelled:
+                    progressDialog.hide()
                     break
 
                 # check if component is unique
@@ -1011,7 +1042,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             numberOfExportObjects = totalNumberOfObjects(exportObjects)
             
             try:
-                progressDialog.show('ExportIt', 'Exports created: %v of %m' , 0, numberOfExportObjects, 1)
+                    progressDialog.show('ExportIt', 'Exports created: %v of %m' , 0, numberOfExportObjects, 0)
             except:
                 pass
 
@@ -1060,9 +1091,10 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
                         exportStlAsOneFilePerTopOccurrence(tmpExportObjects, projectName, designName, ao)
 
             # hide progress dialog
-            logger.debug("Hiding progressDialog")
-            progressDialog.progressValue = numberOfExportObjects
-            progressDialog.hide()
+            if progressDialog.isShowing:
+                logger.debug("Hiding progressDialog")
+                progressDialog.progressValue = numberOfExportObjects
+                progressDialog.hide()
 
             # write modified configuration
             writeConfiguration(ao.document, CONF_PROJECT_ATTRIBUTE_GROUP, CONF_PROJECT_ATTRIBUTE_KEY)
