@@ -80,7 +80,9 @@ Label | Option | Description
 Export Types | stl | Enables or disables the export of STL files
 Export Types | step | Enables or disables the export of STEP files
 Export Types | f3d | Enables or disables the export of F3D files
+Exclude Occurrences | List of occurrences with bodies | Checked occurrences and including sub-components are not exported. This option will not effect exports with the structure _One File_
 Exclude Links | | If checked references to external designs (links) are not exported. This option will not effect exports with the structure _One File_
+
 
 #### STL Options
 
@@ -314,7 +316,7 @@ Version | Date | Description
 0.4.0 | 22.07.2020 | UI cleaned up by adding _Export_, _Location_ and _Misc_ tabs. Filename filter added to remove spaces from filenames. Export filter added that prevents linked components to be exported.
 0.5.0 | 04.08.2020 | A checkbox is added that allows to reset the base directory / export directory after closing the _Default Configuration_ command with the _OK_ button or by starting an export in the _Export Design_ command. The new workflow closes the issue #1 and the new checkbox closes the enhancement #8. In addition, the concept of the export directory is no longer based only on the idea of ​​a standard / base directory. It can now be better adapted to different workflows by enabling the configuration of a base directory or the configuration of the export directory when exporting a new design for the first time, or by having to configure the export directory every time an export is triggered. The new options close the enhancement #7.
 0.6.0 | 15.08.2020 | Some artists use top-level components to group bodies or sub-components by color or material. These groups are then also used for the final STL export. The new STL option _One File Top Level Occurrence_ complies with these exports. Documentation slightly enhanced.
-TODO 0.7.0 | XX.08.2020 | Referenced sub-assemblies are now handled correctly, if "Exclude Links" is activated. This fixes issue #12
+TODO 0.7.0 | XX.08.2020 | "Exclude Occurrences" filter added to the export options. In contrast to the selection filter, this filter is saved in the project configuration and used for every export of the design. Useful for users who import subassemblies and then break the link. This closes the enhancement #13. Referenced sub-assemblies are now handled correctly, if "Exclude Links" is activated. This fixes issue #12
 
 ## Known Issus
 

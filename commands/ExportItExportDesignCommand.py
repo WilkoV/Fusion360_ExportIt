@@ -24,6 +24,7 @@ def createDefaultConfiguration():
 
     # export options
     defaultConfiguration[CONF_EXPORT_OPTIONS_TYPE_KEY] = CONF_EXPORT_OPTIONS_TYPE_DEFAULT
+    defaultConfiguration[CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_KEY] = CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_DEFAULT
     defaultConfiguration[CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY] = CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_DEFAULT
 
     # stl options
@@ -62,6 +63,32 @@ def createDefaultConfiguration():
 
     return defaultConfiguration
 
+def initializeExcludeOccurrencesList():
+    rootComponent = AppObjects().design.rootComponent
+    occurrences = []
+    exportObjects = getExportObjects(rootComponent, [], False)
+
+    for exportObject in exportObjects:
+        if exportObject.get(REC_OCCURRENCE_PATH):
+            occurrences.append(exportObject.get(REC_OCCURRENCE).name)
+
+    configurationElements = getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_KEY)
+    newConfiguration = []
+    isChanged = False
+    
+    for configElement in configurationElements:
+        if configElement in occurrences:
+            newConfiguration.append(configElement) 
+        else:
+            logger.debug("Occurrences structure has changed, removing %s from the list", configElement)
+            isChanged = True
+    
+    if isChanged:
+        logger.info("Updating project configuration, because structure has changed")
+        setConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_KEY, newConfiguration)
+
+    return occurrences
+
 def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpdates):
     logger.debug("not checkForUpdates %s", not checkForUpdates)
     # export
@@ -76,6 +103,10 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
         addSelectionCommandToInputs(UI_EXPORT_OPTIONS_GROUP_ID, UI_EXPORT_OPTIONS_BODIES_SELECTION_ID, UI_EXPORT_OPTIONS_BODIES_SELECTION_NAME, UI_EXPORT_OPTIONS_BODIES_SELECTION_VALUES)
 
     addCheckBoxDropDown(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_TYPE_KEY, UI_EXPORT_OPTIONS_TYPE_NAME, UI_EXPORT_OPTIONS_TYPE_VALUES, getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY))
+
+    if not configurationOnly:
+        addCheckBoxDropDown(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_KEY, UI_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_NAME, initializeExcludeOccurrencesList(), getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_KEY))
+
     addBoolInputToGroup(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY, UI_EXPORT_OPTIONS_EXCLUDE_LINKS_NAME, getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY))
 
     # stl export
@@ -226,7 +257,18 @@ def isReferenced(occurrence, referencedOccurrences):
 
     return isReferenced
 
-def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
+def isExcludeOccurrence(occurrence):
+    isExcluded = False
+    pathElements = occurrence.fullPathName.split("+")
+    
+    for element in pathElements:
+        if element in getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_KEY):
+            isExcluded = True
+            logger.debug("isExcluded: %s", element)
+    
+    return isExcluded
+
+def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies, processExcludeOccurrences):
     exportObjects = []
     rootBodies = []
     uniqueComponents = []
@@ -271,6 +313,11 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
         if isReferenced(occurrence, referencedOccurrences):
             if getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY):
                 logger.info("occurrence %s is excluded, because it's an external reference or part of an external reference", occurrenceFullPathName)
+                continue
+
+        if processExcludeOccurrences:
+            if isExcludeOccurrence(occurrence):
+                logger.info("occurrence %s is excluded from the user", occurrenceFullPathName)
                 continue
 
         # check if occurrence is visible. if not jump to next occurrence
@@ -1034,7 +1081,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
 
                 # get list of occurrences and bodies
                 logger.debug("getting list of export objects")
-                exportObjects = getExportObjects(rootComponent, input_values[UI_EXPORT_OPTIONS_BODIES_SELECTION_ID])
+                exportObjects = getExportObjects(rootComponent, input_values[UI_EXPORT_OPTIONS_BODIES_SELECTION_ID], True)
 
             # Show progress dialog
             logger.debug("Showing progressDialog")
@@ -1080,7 +1127,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
                     tmpDocument, tmpRootComponent = copyDesignToExportDocument(exportObjects)
 
                     # regenerate list of export objects based
-                    tmpExportObjects = getExportObjects(tmpRootComponent, [])
+                    tmpExportObjects = getExportObjects(tmpRootComponent, [], False)
 
                     # export each body in occurrence as individual stl files
                     if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):

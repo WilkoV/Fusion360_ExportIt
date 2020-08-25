@@ -43,6 +43,7 @@ UI_EXPORT_OPTIONS_TYPE_VALUES = [UI_EXPORT_TYPES_STL_VALUE,
                                     UI_EXPORT_TYPES_STEP_VALUE,
                                     UI_EXPORT_TYPES_F3D_VALUE]                              # Elements of the dropdown list
 UI_EXPORT_OPTIONS_EXCLUDE_LINKS_NAME = 'Exclude Links'                                      # Name of the field that contains the option to exclude external links from the export
+UI_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_NAME = 'Exclude Occurrences'                          # List of occurrences that should be excluded
 
 # user interface - stl options
 UI_STL_OPTIONS_GROUP_ID = 'StlOptions'                                                      # Group id that contains the stl options UI elements
@@ -137,13 +138,15 @@ CONF_DEFAULT_CONFIG_NAME = 'Defaults.json'                                      
 CONF_PROJECT_ATTRIBUTE_GROUP = 'ExportIt'                                                   # Name of the attribute group that stores the project specific data
 CONF_PROJECT_ATTRIBUTE_KEY = 'projectConfiguration'                                         # Key of the key that contains the project specific configuration (delta to default configuration)
 CONF_VERSION_KEY = 'version'                                                                # Key of the element that contains the version of the default configuration
-CONF_VERSION_DEFAULT = '0.5.0'                                                              # Default version of the default configuration
+CONF_VERSION_DEFAULT = '0.6.0'                                                              # Default version of the default configuration
 
 # configuration - export options
 CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # Name of the element that contains the export types
 CONF_EXPORT_OPTIONS_TYPE_DEFAULT = [UI_EXPORT_TYPES_STL_VALUE, UI_EXPORT_TYPES_STEP_VALUE]  # Valid values STEP, STL
 CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY = 'excludeExternalLinks'                              # Name of the element that contains the export types
 CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_DEFAULT = False                                           # True if external links should be exclude, otherwise False
+CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_KEY = 'excludeOccurrences'                          # List of occurrences that should be excluded
+CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_DEFAULT = []                                        # Checkbox type list of occurrences that should be excluded
 
 # configuration - stl options
 CONF_STL_STRUCTURE_KEY = 'StlStructure'                                                     # Name of the element that contains the stl structure
