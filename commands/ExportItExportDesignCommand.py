@@ -4,7 +4,7 @@ import os, re, json
 
 from apper import AppObjects
 from .BaseLogger import logger
-from .UiHelper import addTab, addGroupToTab, addGroup, addStringInputToGroup, addBoolInputToGroup, addCheckBoxDropDown, selectDropDownItemByNames, getSelectedDropDownItems, addTextListDropDown, getSelectedDropDownItem, addSelectionCommandToInputs, addIntergerInputSpinnerToGroup
+from .UiHelper import addTab, addGroupToTab, addGroup, addStringInputToGroup, addBoolInputToGroup, addCheckBoxDropDown, selectDropDownItemByNames, getSelectedDropDownItems, addTextListDropDown, getSelectedDropDownItem, addSelectionCommandToInputs, addIntergerInputSpinnerToGroup, addFloatInputSpinnerToGroup, hideUiElement, showUiElement, setUiValue
 from .ConfigurationHelper import initializeConfiguration, getDefaultConfiguration, getConfiguration, setConfiguration, writeConfiguration, showSaveConfigWarning, resetConfiguration, logConfiguration, saveConfigurationInDocument
 from .GithubReleaseHelper import checkForUpdates, getGithubReleaseInformation, showReleaseNotes
 from .Statics import *
@@ -30,7 +30,11 @@ def createDefaultConfiguration():
     # stl options
     defaultConfiguration[CONF_STL_STRUCTURE_KEY] = CONF_STL_STRUCTURE_DEFAULT
     defaultConfiguration[CONF_STL_REFINEMENT_KEY] = CONF_STL_REFINEMENT_DEFAULT
-
+    defaultConfiguration[CONF_STL_SURFACE_DEVIATION_KEY] = CONF_STL_SURFACE_DEVIATION_DEFAULT
+    defaultConfiguration[CONF_STL_NORMAL_DEVIATION_KEY] = CONF_STL_NORMAL_DEVIATION_DEFAULT
+    defaultConfiguration[CONF_STL_MAX_EDGE_LENGTH_KEY] = CONF_STL_MAX_EDGE_LENGTH_DEFAULT
+    defaultConfiguration[CONF_STL_ASPECT_RATIO_KEY] = CONF_STL_ASPECT_RATIO_DEFAULT
+    
     # step options
     defaultConfiguration[CONF_STEP_STRUCTURE_KEY] = CONF_STEP_STRUCTURE_DEFAULT
 
@@ -114,6 +118,11 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
     addCheckBoxDropDown(UI_STL_OPTIONS_GROUP_ID, CONF_STL_STRUCTURE_KEY, UI_STL_STRUCTURE_NAME, UI_STL_STRUCTURE_VALUES, getConfiguration(CONF_STL_STRUCTURE_KEY))
     addCheckBoxDropDown(UI_STL_OPTIONS_GROUP_ID, CONF_STL_REFINEMENT_KEY, UI_STL_REFINEMENT_NAME, UI_STL_REFINEMENT_VALUES, getConfiguration(CONF_STL_REFINEMENT_KEY))
 
+    addFloatInputSpinnerToGroup(UI_STL_OPTIONS_GROUP_ID, CONF_STL_SURFACE_DEVIATION_KEY, UI_STL_SURFACE_DEVIATION_NAME, "", UI_STL_SURFACE_DEVIATION_MIN, UI_STL_SURFACE_DEVIATION_MAX, UI_STL_SURFACE_DEVIATION_STEP, getConfiguration(CONF_STL_SURFACE_DEVIATION_KEY))
+    addFloatInputSpinnerToGroup(UI_STL_OPTIONS_GROUP_ID, CONF_STL_NORMAL_DEVIATION_KEY, UI_STL_NORMAL_DEVIATION_NAME, "", UI_STL_NORMAL_DEVIATION_MIN, UI_STL_NORMAL_DEVIATION_MAX, UI_STL_NORMAL_DEVIATION_STEP,getConfiguration( CONF_STL_NORMAL_DEVIATION_KEY))
+    addFloatInputSpinnerToGroup(UI_STL_OPTIONS_GROUP_ID, CONF_STL_MAX_EDGE_LENGTH_KEY, UI_STL_MAX_EDGE_LENGTH_NAME, "", UI_STL_MAX_EDGE_LENGTH_MIN, UI_STL_MAX_EDGE_LENGTH_MAX, UI_STL_MAX_EDGE_LENGTH_STEP, getConfiguration(CONF_STL_MAX_EDGE_LENGTH_KEY))
+    addFloatInputSpinnerToGroup(UI_STL_OPTIONS_GROUP_ID, CONF_STL_ASPECT_RATIO_KEY, UI_STL_ASPECT_RATIO_NAME, "", UI_STL_ASPECT_RATIO_MIN, UI_STL_ASPECT_RATIO_MAX, UI_STL_ASPECT_RATIO_STEP, getConfiguration(CONF_STL_ASPECT_RATIO_KEY))
+
     # step export
     addGroupToTab(UI_EXPORT_TAB_ID, UI_STEP_OPTIONS_GROUP_ID, UI_STEP_OPTIONS_GROUP_NAME, True)
     addCheckBoxDropDown(UI_STEP_OPTIONS_GROUP_ID, CONF_STEP_STRUCTURE_KEY, UI_STEP_STRUCTURE_NAME, UI_STEP_STRUCTURE_VALUES, getConfiguration(CONF_STEP_STRUCTURE_KEY))
@@ -171,6 +180,22 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
         addinVersion, githubRemoteVersion, githubTitle, githubDescription, githubDownloadUrl = getGithubReleaseInformation()
         addStringInputToGroup(UI_VERSION_GROUP_ID, UI_VERSION_DOWNLOAD_URL_ID, UI_VERSION_DOWNLOAD_URL_NAME, githubDownloadUrl, True)
 
+    showHideCustomStlSettings(inputs)
+
+def showHideCustomStlSettings(inputs):
+    if UI_STL_REFINEMENT_CUSTOM_VALUE in getConfiguration(CONF_STL_REFINEMENT_KEY):
+        # custom stl refinements are enabled. Show additional configuration fields
+        showUiElement(inputs, CONF_STL_SURFACE_DEVIATION_KEY)
+        showUiElement(inputs, CONF_STL_NORMAL_DEVIATION_KEY)
+        showUiElement(inputs, CONF_STL_MAX_EDGE_LENGTH_KEY)
+        showUiElement(inputs, CONF_STL_ASPECT_RATIO_KEY)
+    else:
+        # custom stl refinements are disabled. Hide additional configuration fields
+        hideUiElement(inputs, CONF_STL_SURFACE_DEVIATION_KEY)
+        hideUiElement(inputs, CONF_STL_NORMAL_DEVIATION_KEY)
+        hideUiElement(inputs, CONF_STL_MAX_EDGE_LENGTH_KEY)
+        hideUiElement(inputs, CONF_STL_ASPECT_RATIO_KEY)
+
 def getExportDirectory():
     # check if export direcotry is set
     logger.info('No export path defined. Asking for input')
@@ -223,6 +248,8 @@ def validateConfiguration(inputs):
         # check if any export structure is selected
         validateCheckBoxDropDown(inputs, CONF_STEP_STRUCTURE_KEY, CONF_STEP_STRUCTURE_DEFAULT)
 
+    showHideCustomStlSettings(inputs)
+
 def validateExportDirectory():
     # check if export directory is defined
     while not getConfiguration(CONF_EXPORT_DIRECTORY_KEY):
@@ -240,8 +267,10 @@ def resetExportDirecotry(input_values):
 def getReferencedOccurrences(occurrences):
     referencedOccurrences = []
 
+    # process all occurrences
     for occurrence in occurrences:
         if occurrence.isReferencedComponent:
+            # add referenced occurrence to result list
             referencedOccurrences.append(occurrence.name)
 
     return referencedOccurrences
@@ -250,8 +279,10 @@ def isReferenced(occurrence, referencedOccurrences):
     isReferenced = False
     pathElements = occurrence.fullPathName.split("+")
 
+    # process elements of the occurrence path
     for element in pathElements:
         if element in referencedOccurrences:
+            # path element is part of the occurrence's path, so mark this sub occurrence as referenced occurrence
             isReferenced = True
             logger.debug("isReferenced: %s", element)
 
@@ -261,8 +292,10 @@ def isExcludeOccurrence(occurrence):
     isExcluded = False
     pathElements = occurrence.fullPathName.split("+")
     
+    # process elements of the occurrence path
     for element in pathElements:
         if element in getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_KEY):
+            # element is in the list of excluded occurrences, so exclude all sub occurrences
             isExcluded = True
             logger.debug("isExcluded: %s", element)
     
@@ -315,7 +348,9 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies, proce
                 logger.info("occurrence %s is excluded, because it's an external reference or part of an external reference", occurrenceFullPathName)
                 continue
 
+        # for getting list of UI elements it's not usefull to process excluded occurrences. This flag is used to control the behavior of the functioon
         if processExcludeOccurrences:
+            # function should process excluded occurrences
             if isExcludeOccurrence(occurrence):
                 logger.info("occurrence %s is excluded from the user", occurrenceFullPathName)
                 continue
@@ -802,6 +837,12 @@ def getStlExportOptions(ao, geometry, fullFileName, refinement):
         # TODO Remove hardcoded values
         stlExportOptions.surfaceDeviation = 0.000508
         stlExportOptions.normalDeviation = 5.0000
+    elif refinement == UI_STL_REFINEMENT_CUSTOM_VALUE:
+        stlExportOptions.meshRefinement = adsk.fusion.MeshRefinementSettings.MeshRefinementCustom
+        stlExportOptions.surfaceDeviation = float(getConfiguration(CONF_STL_SURFACE_DEVIATION_KEY))
+        stlExportOptions.normalDeviation = float(getConfiguration(CONF_STL_NORMAL_DEVIATION_KEY))
+        stlExportOptions.maximumEdgeLength = float(getConfiguration(CONF_STL_MAX_EDGE_LENGTH_KEY))
+        stlExportOptions.aspectRatio = float(getConfiguration(CONF_STL_ASPECT_RATIO_KEY))
 
     return stlExportOptions
 
@@ -1089,7 +1130,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             numberOfExportObjects = totalNumberOfObjects(exportObjects)
             
             try:
-                    progressDialog.show('ExportIt', 'Exports created: %v of %m' , 0, numberOfExportObjects, 0)
+                progressDialog.show('ExportIt', 'Exports created: %v of %m' , 0, numberOfExportObjects, 0)
             except:
                 pass
 

@@ -16,6 +16,7 @@ UI_STL_REFINEMENT_ULTRA_VALUE = 'Ultra'                                         
 UI_STL_REFINEMENT_HIGH_VALUE = 'High'                                                       # refinement high
 UI_STL_REFINEMENT_MEDIUM_VALUE = 'Medium'                                                   # refinement medium
 UI_STL_REFINEMENT_LOW_VALUE = 'Low'                                                         # refinement low
+UI_STL_REFINEMENT_CUSTOM_VALUE = 'Custom'                                                   # refinement custom
 UI_SELECTION_FILTER_BODY_VALUE = 'SolidBodies'                                              # Filter name Solid Body
 UI_EXPORT_TYPES_STL_VALUE = 'stl'                                                           # STL format
 UI_EXPORT_TYPES_STEP_VALUE = 'step'                                                         # STEP format
@@ -57,7 +58,24 @@ UI_STL_STRUCTURE_VALUES = [UI_STRUCTURE_ONE_FILE_VALUE,
 UI_STL_REFINEMENT_VALUES = [UI_STL_REFINEMENT_ULTRA_VALUE,
                             UI_STL_REFINEMENT_HIGH_VALUE,
                             UI_STL_REFINEMENT_MEDIUM_VALUE,
-                            UI_STL_REFINEMENT_LOW_VALUE]                                    # Elements of the dropdown list
+                            UI_STL_REFINEMENT_LOW_VALUE, 
+                            UI_STL_REFINEMENT_CUSTOM_VALUE]                                 # Elements of the dropdown list
+UI_STL_SURFACE_DEVIATION_NAME = 'Surface Deviation'                                         # Element that contains the custom surface deviation
+UI_STL_SURFACE_DEVIATION_MIN =  0.000640                                                    # Min value for the custom surface deviation
+UI_STL_SURFACE_DEVIATION_MAX =  0.064031                                                    # Max value for the custom surface deviation
+UI_STL_SURFACE_DEVIATION_STEP = 0.005000                                                    # Step size value for the custom surface deviation
+UI_STL_NORMAL_DEVIATION_NAME = 'Normal Deviation'                                           # Element that contains the custom normal deviation
+UI_STL_NORMAL_DEVIATION_MIN = 1.0                                                           # Min value for the custom normal deviation
+UI_STL_NORMAL_DEVIATION_MAX = 41.0                                                          # Max value for the custom normal deviation
+UI_STL_NORMAL_DEVIATION_STEP = 1.00                                                         # Step size value for the custom normal deviation
+UI_STL_MAX_EDGE_LENGTH_NAME = 'Maximum Edge Length'                                         # Element that contains the custom max edge length
+UI_STL_MAX_EDGE_LENGTH_MIN = 0.06403                                                        # Min value for the custom edge length
+UI_STL_MAX_EDGE_LENGTH_MAX = 64.03124                                                       # Max value for the custom edge length
+UI_STL_MAX_EDGE_LENGTH_STEP = 0.50                                                          # Step size value for the custom edge length
+UI_STL_ASPECT_RATIO_NAME = 'Aspect Ratio'                                                   # Element that contains the custom aspect ratio
+UI_STL_ASPECT_RATIO_MIN = 0.06403                                                           # Min value for the custom aspect ratio
+UI_STL_ASPECT_RATIO_MAX = 64.03124                                                          # Max value for the custom aspect ratio
+UI_STL_ASPECT_RATIO_STEP = 0.50                                                             # Step size value for the custom aspect ratio
 
 # user interface - step options
 UI_STEP_OPTIONS_GROUP_ID = 'StepOptions'                                                    # Group id that contains the step options UI elements
@@ -153,6 +171,14 @@ CONF_STL_STRUCTURE_KEY = 'StlStructure'                                         
 CONF_STL_STRUCTURE_DEFAULT = [UI_STRUCTURE_ONE_FILE_VALUE]                                  # Valid values 'One File', 'One File Per Body In Component, 'One File Per Body In Occurrence'
 CONF_STL_REFINEMENT_KEY = 'StlRefinement'                                                   # Name of the element that contains the stl refinement
 CONF_STL_REFINEMENT_DEFAULT = [UI_STL_REFINEMENT_LOW_VALUE]                                 # Valid values 'Low', 'Medium', 'Hight', 'Ultra'
+CONF_STL_SURFACE_DEVIATION_KEY = 'stlSurfaceDeviation'                                      # Name of the element that contains the stl surface deviation for custom settings
+CONF_STL_SURFACE_DEVIATION_DEFAULT = 0.00321                                                # Default for the custom surface deviation
+CONF_STL_NORMAL_DEVIATION_KEY = 'stlNormalDeviation'                                        # Name of the element that contains the stl normal deviation for custom settings
+CONF_STL_NORMAL_DEVIATION_DEFAULT = 10.00                                                   # Default for the custom normal deviation
+CONF_STL_MAX_EDGE_LENGTH_KEY = 'stlMaxEdgeLength'                                           # Name of the element that contains the stl max edge length for custom settings
+CONF_STL_MAX_EDGE_LENGTH_DEFAULT = 64.0312                                                  # Default for the custom max edge length
+CONF_STL_ASPECT_RATIO_KEY = 'stlAspectRatio'                                                # Name of the element that contains the stl aspect ratio for custom settings
+CONF_STL_ASPECT_RATIO_DEFAULT = 21.5000                                                     # Default for the custom aspect ratio
 
 # configuration - step options
 CONF_STEP_STRUCTURE_KEY = 'stepStructure'                                                   # Name of the element that contains the step structure
