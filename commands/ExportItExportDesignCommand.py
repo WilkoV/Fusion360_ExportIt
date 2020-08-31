@@ -24,7 +24,7 @@ def createDefaultConfiguration():
 
     # export options
     defaultConfiguration[CONF_EXPORT_OPTIONS_TYPE_KEY] = CONF_EXPORT_OPTIONS_TYPE_DEFAULT
-    defaultConfiguration[CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_KEY] = CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_DEFAULT
+    defaultConfiguration[CONF_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_KEY] = CONF_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_DEFAULT
     defaultConfiguration[CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY] = CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_DEFAULT
 
     # stl options
@@ -67,21 +67,24 @@ def createDefaultConfiguration():
 
     return defaultConfiguration
 
-def initializeExcludeOccurrencesList():
+def initializeExcludeComponentList():
     rootComponent = AppObjects().design.rootComponent
-    occurrences = []
+    components = []
     exportObjects = getExportObjects(rootComponent, [], False)
 
     for exportObject in exportObjects:
         if exportObject.get(REC_OCCURRENCE_PATH):
-            occurrences.append(exportObject.get(REC_OCCURRENCE).name)
+            if exportObject.get(REC_IS_UNIQUE):
+                componentNameWidthPath = exportObject.get(REC_OCCURRENCE).name
+                componentName = componentNameWidthPath.split(":")[0]
+                components.append(componentName)
 
-    configurationElements = getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_KEY)
+    configurationElements = getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_KEY)
     newConfiguration = []
     isChanged = False
     
     for configElement in configurationElements:
-        if configElement in occurrences:
+        if configElement in components:
             newConfiguration.append(configElement) 
         else:
             logger.debug("Occurrences structure has changed, removing %s from the list", configElement)
@@ -89,9 +92,9 @@ def initializeExcludeOccurrencesList():
     
     if isChanged:
         logger.info("Updating project configuration, because structure has changed")
-        setConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_KEY, newConfiguration)
+        setConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_KEY, newConfiguration)
 
-    return occurrences
+    return components
 
 def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpdates):
     logger.debug("not checkForUpdates %s", not checkForUpdates)
@@ -109,7 +112,7 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
     addCheckBoxDropDown(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_TYPE_KEY, UI_EXPORT_OPTIONS_TYPE_NAME, UI_EXPORT_OPTIONS_TYPE_VALUES, getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY))
 
     if not configurationOnly:
-        addCheckBoxDropDown(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_KEY, UI_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_NAME, initializeExcludeOccurrencesList(), getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_KEY))
+        addCheckBoxDropDown(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_KEY, UI_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_NAME, initializeExcludeComponentList(), getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_KEY))
 
     addBoolInputToGroup(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY, UI_EXPORT_OPTIONS_EXCLUDE_LINKS_NAME, getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY))
 
@@ -288,20 +291,24 @@ def isReferenced(occurrence, referencedOccurrences):
 
     return isReferenced
 
-def isExcludeOccurrence(occurrence):
+def isExcludeComponent(occurrence):
     isExcluded = False
-    pathElements = occurrence.fullPathName.split("+")
+    pathName = occurrence.fullPathName.split("+")
+    pathElements = pathName
     
     # process elements of the occurrence path
     for element in pathElements:
-        if element in getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_OCCURRENCES_KEY):
+        elementWithoutOccurrenceId = element.split(':')[0]
+        excludedComponents = getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_KEY)
+
+        if elementWithoutOccurrenceId in excludedComponents:
             # element is in the list of excluded occurrences, so exclude all sub occurrences
             isExcluded = True
-            logger.debug("isExcluded: %s", element)
+            logger.debug("%s in path %s is excluded", elementWithoutOccurrenceId, pathName)
     
     return isExcluded
 
-def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies, processExcludeOccurrences):
+def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies, processExcludeComponents):
     exportObjects = []
     rootBodies = []
     uniqueComponents = []
@@ -349,9 +356,9 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies, proce
                 continue
 
         # for getting list of UI elements it's not usefull to process excluded occurrences. This flag is used to control the behavior of the functioon
-        if processExcludeOccurrences:
+        if processExcludeComponents:
             # function should process excluded occurrences
-            if isExcludeOccurrence(occurrence):
+            if isExcludeComponent(occurrence):
                 logger.info("occurrence %s is excluded from the user", occurrenceFullPathName)
                 continue
 
