@@ -7,7 +7,7 @@ sys.path.insert(0, app_path)
 sys.path.insert(0, os.path.join(app_path, 'apper'))
 
 try:
-    import config
+    import ExportItFrameworkConfig
     import apper
 
     # Basic Fusion 360 Command Base samples
@@ -15,7 +15,7 @@ try:
     from .commands.ExportItEditDefaultsCommand import ExportItEditDefaultsCommand
 
 # Create our addin definition object
-    my_addin = apper.FusionApp(config.app_name, config.company_name, False)
+    my_addin = apper.FusionApp(ExportItFrameworkConfig.app_name, ExportItFrameworkConfig.company_name, False)
 
     my_addin.add_command(
         'Export Design',
