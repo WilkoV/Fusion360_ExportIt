@@ -43,29 +43,37 @@ def addGroup(inputs :adsk.core.CommandInputs, groupId, groupName, isExpanded):
 
     logger.debug("group %s added", groupId)
 
-def addStringInputToGroup(groupId, stingInputId, label, defaultValue, isEnabled):
+def addStringInputToGroup(groupId, stingInputId, label, initialValue, isEnabled):
     # get list of UI elements
     groupInputs = groups.get(groupId)
 
     # add UI element to list
-    input = groupInputs.addStringValueInput(stingInputId, label, defaultValue)
+    input = groupInputs.addStringValueInput(stingInputId, label, initialValue)
     input.isEnabled = isEnabled
 
     logger.debug("StringInput %s added to group %s", stingInputId, groupId)
 
-def addIntergerInputSpinnerToGroup(groupId, integerInputId, label, min, max, spinStep, defaultValue):
+def addIntergerInputSpinnerToGroup(groupId, integerInputId, label, minimal, maximal, spinStep, initialValue):
     # get list of UI elements
     groupInputs = groups.get(groupId)
 
     # add UI element to list
-    groupInputs.addIntegerSpinnerCommandInput(integerInputId, label, min, max, spinStep, defaultValue)
+    groupInputs.addIntegerSpinnerCommandInput(integerInputId, label, minimal, maximal, spinStep, initialValue)
 
-def addBoolInputToGroup(groupId, boolInputId, label, defaultValue):
+def addFloatInputSpinnerToGroup(groupId, floatInputId, label, unitType, minimal, maximal, spinStep, initialValue):
+    # get list of UI elements
+    groupInputs = groups.get(groupId)
+
+    logger.warning("%s %f %f %f %f", floatInputId, minimal, maximal, spinStep, initialValue)
+    # add UI element to list
+    groupInputs.addFloatSpinnerCommandInput(floatInputId, label, unitType, minimal, maximal, spinStep, initialValue)
+
+def addBoolInputToGroup(groupId, boolInputId, label, initialValue):
     # get list of UI elements
     groupInputs = groups.get(groupId)
 
     # add UI element to list
-    groupInputs.addBoolValueInput(boolInputId, label, True, '', defaultValue)
+    groupInputs.addBoolValueInput(boolInputId, label, True, '', initialValue)
 
     logger.debug("StringInput %s added to group %s", boolInputId, groupId)
 
@@ -201,3 +209,15 @@ def addSelectionCommandToInputs(groupId, selectionId, label, selectionFilters :l
     # add list of selection filters
     for selectionFilter in selectionFilters:
         selectionCommand.addSelectionFilter(selectionFilter)
+
+def hideUiElement(inputs :adsk.core.CommandInputs, elementId):
+    element = inputs.itemById(elementId)
+    element.isVisible = False
+
+def showUiElement(inputs :adsk.core.CommandInputs, elementId):
+    element = inputs.itemById(elementId)
+    element.isVisible = True
+
+def setUiValue(inputs :adsk.core.CommandInputs, elementId, value):
+    element = inputs.itemById(elementId)
+    element.value = value

@@ -4,7 +4,7 @@ import os, re, json
 
 from apper import AppObjects
 from .BaseLogger import logger
-from .UiHelper import addTab, addGroupToTab, addGroup, addStringInputToGroup, addBoolInputToGroup, addCheckBoxDropDown, selectDropDownItemByNames, getSelectedDropDownItems, addTextListDropDown, getSelectedDropDownItem, addSelectionCommandToInputs, addIntergerInputSpinnerToGroup
+from .UiHelper import addTab, addGroupToTab, addGroup, addStringInputToGroup, addBoolInputToGroup, addCheckBoxDropDown, selectDropDownItemByNames, getSelectedDropDownItems, addTextListDropDown, getSelectedDropDownItem, addSelectionCommandToInputs, addIntergerInputSpinnerToGroup, addFloatInputSpinnerToGroup, hideUiElement, showUiElement, setUiValue
 from .ConfigurationHelper import initializeConfiguration, getDefaultConfiguration, getConfiguration, setConfiguration, writeConfiguration, showSaveConfigWarning, resetConfiguration, logConfiguration, saveConfigurationInDocument
 from .GithubReleaseHelper import checkForUpdates, getGithubReleaseInformation, showReleaseNotes
 from .Statics import *
@@ -24,12 +24,17 @@ def createDefaultConfiguration():
 
     # export options
     defaultConfiguration[CONF_EXPORT_OPTIONS_TYPE_KEY] = CONF_EXPORT_OPTIONS_TYPE_DEFAULT
+    defaultConfiguration[CONF_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_KEY] = CONF_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_DEFAULT
     defaultConfiguration[CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY] = CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_DEFAULT
 
     # stl options
     defaultConfiguration[CONF_STL_STRUCTURE_KEY] = CONF_STL_STRUCTURE_DEFAULT
     defaultConfiguration[CONF_STL_REFINEMENT_KEY] = CONF_STL_REFINEMENT_DEFAULT
-
+    defaultConfiguration[CONF_STL_SURFACE_DEVIATION_KEY] = CONF_STL_SURFACE_DEVIATION_DEFAULT
+    defaultConfiguration[CONF_STL_NORMAL_DEVIATION_KEY] = CONF_STL_NORMAL_DEVIATION_DEFAULT
+    defaultConfiguration[CONF_STL_MAX_EDGE_LENGTH_KEY] = CONF_STL_MAX_EDGE_LENGTH_DEFAULT
+    defaultConfiguration[CONF_STL_ASPECT_RATIO_KEY] = CONF_STL_ASPECT_RATIO_DEFAULT
+    
     # step options
     defaultConfiguration[CONF_STEP_STRUCTURE_KEY] = CONF_STEP_STRUCTURE_DEFAULT
 
@@ -62,6 +67,35 @@ def createDefaultConfiguration():
 
     return defaultConfiguration
 
+def initializeExcludeComponentList():
+    rootComponent = AppObjects().design.rootComponent
+    components = []
+    exportObjects = getExportObjects(rootComponent, [], False)
+
+    for exportObject in exportObjects:
+        if exportObject.get(REC_OCCURRENCE_PATH):
+            if exportObject.get(REC_IS_UNIQUE):
+                componentNameWidthPath = exportObject.get(REC_OCCURRENCE).name
+                componentName = componentNameWidthPath.split(":")[0]
+                components.append(componentName)
+
+    configurationElements = getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_KEY)
+    newConfiguration = []
+    isChanged = False
+    
+    for configElement in configurationElements:
+        if configElement in components:
+            newConfiguration.append(configElement) 
+        else:
+            logger.debug("Occurrences structure has changed, removing %s from the list", configElement)
+            isChanged = True
+    
+    if isChanged:
+        logger.info("Updating project configuration, because structure has changed")
+        setConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_KEY, newConfiguration)
+
+    return components
+
 def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpdates):
     logger.debug("not checkForUpdates %s", not checkForUpdates)
     # export
@@ -76,12 +110,21 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
         addSelectionCommandToInputs(UI_EXPORT_OPTIONS_GROUP_ID, UI_EXPORT_OPTIONS_BODIES_SELECTION_ID, UI_EXPORT_OPTIONS_BODIES_SELECTION_NAME, UI_EXPORT_OPTIONS_BODIES_SELECTION_VALUES)
 
     addCheckBoxDropDown(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_TYPE_KEY, UI_EXPORT_OPTIONS_TYPE_NAME, UI_EXPORT_OPTIONS_TYPE_VALUES, getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY))
+
+    if not configurationOnly:
+        addCheckBoxDropDown(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_KEY, UI_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_NAME, initializeExcludeComponentList(), getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_KEY))
+
     addBoolInputToGroup(UI_EXPORT_OPTIONS_GROUP_ID, CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY, UI_EXPORT_OPTIONS_EXCLUDE_LINKS_NAME, getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY))
 
     # stl export
     addGroupToTab(UI_EXPORT_TAB_ID, UI_STL_OPTIONS_GROUP_ID, UI_STL_OPTIONS_GROUP_NAME, True)
     addCheckBoxDropDown(UI_STL_OPTIONS_GROUP_ID, CONF_STL_STRUCTURE_KEY, UI_STL_STRUCTURE_NAME, UI_STL_STRUCTURE_VALUES, getConfiguration(CONF_STL_STRUCTURE_KEY))
     addCheckBoxDropDown(UI_STL_OPTIONS_GROUP_ID, CONF_STL_REFINEMENT_KEY, UI_STL_REFINEMENT_NAME, UI_STL_REFINEMENT_VALUES, getConfiguration(CONF_STL_REFINEMENT_KEY))
+
+    addFloatInputSpinnerToGroup(UI_STL_OPTIONS_GROUP_ID, CONF_STL_SURFACE_DEVIATION_KEY, UI_STL_SURFACE_DEVIATION_NAME, "", UI_STL_SURFACE_DEVIATION_MIN, UI_STL_SURFACE_DEVIATION_MAX, UI_STL_SURFACE_DEVIATION_STEP, getConfiguration(CONF_STL_SURFACE_DEVIATION_KEY))
+    addFloatInputSpinnerToGroup(UI_STL_OPTIONS_GROUP_ID, CONF_STL_NORMAL_DEVIATION_KEY, UI_STL_NORMAL_DEVIATION_NAME, "", UI_STL_NORMAL_DEVIATION_MIN, UI_STL_NORMAL_DEVIATION_MAX, UI_STL_NORMAL_DEVIATION_STEP,getConfiguration( CONF_STL_NORMAL_DEVIATION_KEY))
+    addFloatInputSpinnerToGroup(UI_STL_OPTIONS_GROUP_ID, CONF_STL_MAX_EDGE_LENGTH_KEY, UI_STL_MAX_EDGE_LENGTH_NAME, "", UI_STL_MAX_EDGE_LENGTH_MIN, UI_STL_MAX_EDGE_LENGTH_MAX, UI_STL_MAX_EDGE_LENGTH_STEP, getConfiguration(CONF_STL_MAX_EDGE_LENGTH_KEY))
+    addFloatInputSpinnerToGroup(UI_STL_OPTIONS_GROUP_ID, CONF_STL_ASPECT_RATIO_KEY, UI_STL_ASPECT_RATIO_NAME, "", UI_STL_ASPECT_RATIO_MIN, UI_STL_ASPECT_RATIO_MAX, UI_STL_ASPECT_RATIO_STEP, getConfiguration(CONF_STL_ASPECT_RATIO_KEY))
 
     # step export
     addGroupToTab(UI_EXPORT_TAB_ID, UI_STEP_OPTIONS_GROUP_ID, UI_STEP_OPTIONS_GROUP_NAME, True)
@@ -140,6 +183,22 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
         addinVersion, githubRemoteVersion, githubTitle, githubDescription, githubDownloadUrl = getGithubReleaseInformation()
         addStringInputToGroup(UI_VERSION_GROUP_ID, UI_VERSION_DOWNLOAD_URL_ID, UI_VERSION_DOWNLOAD_URL_NAME, githubDownloadUrl, True)
 
+    showHideCustomStlSettings(inputs)
+
+def showHideCustomStlSettings(inputs):
+    if UI_STL_REFINEMENT_CUSTOM_VALUE in getConfiguration(CONF_STL_REFINEMENT_KEY):
+        # custom stl refinements are enabled. Show additional configuration fields
+        showUiElement(inputs, CONF_STL_SURFACE_DEVIATION_KEY)
+        showUiElement(inputs, CONF_STL_NORMAL_DEVIATION_KEY)
+        showUiElement(inputs, CONF_STL_MAX_EDGE_LENGTH_KEY)
+        showUiElement(inputs, CONF_STL_ASPECT_RATIO_KEY)
+    else:
+        # custom stl refinements are disabled. Hide additional configuration fields
+        hideUiElement(inputs, CONF_STL_SURFACE_DEVIATION_KEY)
+        hideUiElement(inputs, CONF_STL_NORMAL_DEVIATION_KEY)
+        hideUiElement(inputs, CONF_STL_MAX_EDGE_LENGTH_KEY)
+        hideUiElement(inputs, CONF_STL_ASPECT_RATIO_KEY)
+
 def getExportDirectory():
     # check if export direcotry is set
     logger.info('No export path defined. Asking for input')
@@ -192,6 +251,8 @@ def validateConfiguration(inputs):
         # check if any export structure is selected
         validateCheckBoxDropDown(inputs, CONF_STEP_STRUCTURE_KEY, CONF_STEP_STRUCTURE_DEFAULT)
 
+    showHideCustomStlSettings(inputs)
+
 def validateExportDirectory():
     # check if export directory is defined
     while not getConfiguration(CONF_EXPORT_DIRECTORY_KEY):
@@ -206,7 +267,48 @@ def resetExportDirecotry(input_values):
     exportPath, isValid = getExportDirectory()
     setConfiguration(CONF_EXPORT_DIRECTORY_KEY, exportPath)
 
-def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
+def getReferencedOccurrences(occurrences):
+    referencedOccurrences = []
+
+    # process all occurrences
+    for occurrence in occurrences:
+        if occurrence.isReferencedComponent:
+            # add referenced occurrence to result list
+            referencedOccurrences.append(occurrence.name)
+
+    return referencedOccurrences
+
+def isReferenced(occurrence, referencedOccurrences):
+    isReferenced = False
+    pathElements = occurrence.fullPathName.split("+")
+
+    # process elements of the occurrence path
+    for element in pathElements:
+        if element in referencedOccurrences:
+            # path element is part of the occurrence's path, so mark this sub occurrence as referenced occurrence
+            isReferenced = True
+            logger.debug("isReferenced: %s", element)
+
+    return isReferenced
+
+def isExcludeComponent(occurrence):
+    isExcluded = False
+    pathName = occurrence.fullPathName.split("+")
+    pathElements = pathName
+    
+    # process elements of the occurrence path
+    for element in pathElements:
+        elementWithoutOccurrenceId = element.split(':')[0]
+        excludedComponents = getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_KEY)
+
+        if elementWithoutOccurrenceId in excludedComponents:
+            # element is in the list of excluded occurrences, so exclude all sub occurrences
+            isExcluded = True
+            logger.debug("%s in path %s is excluded", elementWithoutOccurrenceId, pathName)
+    
+    return isExcluded
+
+def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies, processExcludeComponents):
     exportObjects = []
     rootBodies = []
     uniqueComponents = []
@@ -237,12 +339,28 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
     else:
         logger.info("%s has no visible bodies folder", "root")
 
+    # get list of referenced occurrences
+    referencedOccurrences = getReferencedOccurrences(rootComponent.allOccurrences)
+
     # add visible bodies of all occurrences to the list of visible objects
     for occurrence in rootComponent.allOccurrences:
         isUnique = False
         isTopLevel = False
 
         occurrenceFullPathName = occurrence.fullPathName
+
+        # check if occurrence is referencing a external component
+        if isReferenced(occurrence, referencedOccurrences):
+            if getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY):
+                logger.info("occurrence %s is excluded, because it's an external reference or part of an external reference", occurrenceFullPathName)
+                continue
+
+        # for getting list of UI elements it's not usefull to process excluded occurrences. This flag is used to control the behavior of the functioon
+        if processExcludeComponents:
+            # function should process excluded occurrences
+            if isExcludeComponent(occurrence):
+                logger.info("occurrence %s is excluded from the user", occurrenceFullPathName)
+                continue
 
         # check if occurrence is visible. if not jump to next occurrence
         if not occurrence.isLightBulbOn:
@@ -259,16 +377,7 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
             uniqueComponents.append(occurrence.component)
             isUnique = True
             logger.info("%s is unique", occurrenceFullPathName)
-
-        # check if occurrence is referencing a external component
-        if occurrence.isReferencedComponent:
-            if getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY):
-                logger.info("component %s is excluded, because it's a external reference", occurrenceFullPathName)
-                continue
-            else:
-                logger.info("component %s is an external reference", occurrenceFullPathName)
-                isReferencedComponent = occurrence.isReferencedComponent
-
+       
         # check if occurrence is a top level component
         if occurrenceFullPathName.count(":") == 1:
             isTopLevel = True
@@ -303,6 +412,8 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies):
 def updateProgressDialog():
     global progressDialog
     global progressValue
+
+    adsk.doEvents()
 
     # update internal progress counter
     progressValue = progressValue + 1
@@ -733,6 +844,12 @@ def getStlExportOptions(ao, geometry, fullFileName, refinement):
         # TODO Remove hardcoded values
         stlExportOptions.surfaceDeviation = 0.000508
         stlExportOptions.normalDeviation = 5.0000
+    elif refinement == UI_STL_REFINEMENT_CUSTOM_VALUE:
+        stlExportOptions.meshRefinement = adsk.fusion.MeshRefinementSettings.MeshRefinementCustom
+        stlExportOptions.surfaceDeviation = float(getConfiguration(CONF_STL_SURFACE_DEVIATION_KEY))
+        stlExportOptions.normalDeviation = float(getConfiguration(CONF_STL_NORMAL_DEVIATION_KEY))
+        stlExportOptions.maximumEdgeLength = float(getConfiguration(CONF_STL_MAX_EDGE_LENGTH_KEY))
+        stlExportOptions.aspectRatio = float(getConfiguration(CONF_STL_ASPECT_RATIO_KEY))
 
     return stlExportOptions
 
@@ -740,6 +857,7 @@ def exportStlAsOneFile(projectName, designName, rootComponent, ao):
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
         # cancel loop if user canceld the dialog
         if progressDialog.wasCancelled:
+            progressDialog.hide()
             break
 
         refinementName = ""
@@ -768,6 +886,7 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
         # cancel loop if user canceld the dialog
         if progressDialog.wasCancelled:
+            progressDialog.hide()
             break
 
         # set refinement name
@@ -780,6 +899,7 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
         for exportObject in exportObjects:
             # cancel loop if user canceld the dialog
             if progressDialog.wasCancelled:
+                progressDialog.hide()
                 break
 
             # check if component is unique
@@ -795,6 +915,7 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
             for body in exportObject.get(REC_BODIES):
                 # cancel loop if user canceld the dialog
                 if progressDialog.wasCancelled:
+                    progressDialog.hide()
                     break
 
                 # create filename
@@ -819,6 +940,7 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
         # cancel loop if user canceld the dialog
         if progressDialog.wasCancelled:
+            progressDialog.hide()
             break
         # set refinement name
 
@@ -831,6 +953,7 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
         for exportObject in exportObjects:
             # cancel loop if user canceld the dialog
             if progressDialog.wasCancelled:
+                progressDialog.hide()
                 break
 
             # Components with no bodies are REC_IS_TOP_LEVEL == True records with sub-components and no top level bodies. 
@@ -843,6 +966,7 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
             for body in exportObject.get(REC_BODIES):
                 # cancel loop if user canceld the dialog
                 if progressDialog.wasCancelled:
+                    progressDialog.hide()
                     break
 
                 # create filename but remove occurrence id unless they're part of the occurrence name in the temporary document
@@ -867,6 +991,7 @@ def exportStlAsOneFilePerTopOccurrence(exportObjects, projectName, designName, a
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
         # cancel loop if user canceld the dialog
         if progressDialog.wasCancelled:
+            progressDialog.hide()
             break
         # set refinement name
 
@@ -880,6 +1005,7 @@ def exportStlAsOneFilePerTopOccurrence(exportObjects, projectName, designName, a
             try:
                 # cancel loop if user canceld the dialog
                 if progressDialog.wasCancelled:
+                    progressDialog.hide()
                     break
 
                 # check if component is unique
@@ -1003,7 +1129,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
 
                 # get list of occurrences and bodies
                 logger.debug("getting list of export objects")
-                exportObjects = getExportObjects(rootComponent, input_values[UI_EXPORT_OPTIONS_BODIES_SELECTION_ID])
+                exportObjects = getExportObjects(rootComponent, input_values[UI_EXPORT_OPTIONS_BODIES_SELECTION_ID], True)
 
             # Show progress dialog
             logger.debug("Showing progressDialog")
@@ -1011,7 +1137,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             numberOfExportObjects = totalNumberOfObjects(exportObjects)
             
             try:
-                progressDialog.show('ExportIt', 'Exports created: %v of %m' , 0, numberOfExportObjects, 1)
+                progressDialog.show('ExportIt', 'Exports created: %v of %m' , 0, numberOfExportObjects, 0)
             except:
                 pass
 
@@ -1049,7 +1175,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
                     tmpDocument, tmpRootComponent = copyDesignToExportDocument(exportObjects)
 
                     # regenerate list of export objects based
-                    tmpExportObjects = getExportObjects(tmpRootComponent, [])
+                    tmpExportObjects = getExportObjects(tmpRootComponent, [], False)
 
                     # export each body in occurrence as individual stl files
                     if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
@@ -1060,9 +1186,10 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
                         exportStlAsOneFilePerTopOccurrence(tmpExportObjects, projectName, designName, ao)
 
             # hide progress dialog
-            logger.debug("Hiding progressDialog")
-            progressDialog.progressValue = numberOfExportObjects
-            progressDialog.hide()
+            if progressDialog.isShowing:
+                logger.debug("Hiding progressDialog")
+                progressDialog.progressValue = numberOfExportObjects
+                progressDialog.hide()
 
             # write modified configuration
             writeConfiguration(ao.document, CONF_PROJECT_ATTRIBUTE_GROUP, CONF_PROJECT_ATTRIBUTE_KEY)
