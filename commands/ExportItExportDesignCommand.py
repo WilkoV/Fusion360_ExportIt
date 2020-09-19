@@ -369,7 +369,7 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies, proce
 
         # check if bodies folder in occurrence is visible.  if not jump to next occurrence
         if not occurrence.component.isBodiesFolderLightBulbOn:
-            logger.info("body %s in %s is not visible", body.name, occurrenceFullPathName)
+            logger.info("bodies in %s are not visible", occurrenceFullPathName)
             continue
 
         # check if component is unique
