@@ -237,7 +237,7 @@ REC_OCCURRENCE = 'occurrence'                                                   
 REC_IS_UNIQUE = 'isUnique'                                                                  # Marker if this record should be used, if all components (not occurrences) should be exported
 REC_IS_TOP_LEVEL = 'isTopLevel'                                                             # Marker if this record should be used, if only top level components should be exported
 REC_IS_REFERENCED_COMPONENT = 'isReferencedComponent'                                       # True if this occurrence is referencing an external component otherwise false
-
+REC_HAS_MESH_BODIES = 'hasMeshBodies'                                                       # True if the component has mesh bodies, otherwiser False
 # internal structure of summary
 SUMMARY_INFOS = 'info'                                                                      # List of info messages
 SUMMARY_WARNINGS = 'warnings'                                                               # List of warnings messages
