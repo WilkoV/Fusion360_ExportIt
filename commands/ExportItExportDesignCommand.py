@@ -455,7 +455,7 @@ def totalNumberOfObjects(exportObjects):
             components = components + 1
             componentBodies =  componentBodies + len(exportObject.get(REC_BODIES))
 
-        if exportObject.get(REC_IS_TOP_LEVEL):
+        if exportObject.get(REC_IS_TOP_LEVEL) and (len(exportObject.get(REC_BODIES)) > 0 or len(exportObject.get(REC_OCCURRENCE).childOccurrences) > 0):
             topLevelOccurrences = topLevelOccurrences + 1
 
         occurrenceBodies =  occurrenceBodies + len(exportObject.get(REC_BODIES))
