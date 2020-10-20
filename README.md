@@ -7,6 +7,8 @@
   - [Summary](#summary)
   - [Export Design Command](#export-design-command)
     - [Basic workflow](#basic-workflow)
+    - [Summary Report](#summary-report)
+    - [Common Terms and Mechanics](#common-terms-and-mechanics)
     - [Configuration](#configuration)
   - [Default Configuration Command](#default-configuration-command)
     - [Export](#export)
@@ -51,8 +53,31 @@ This command exports the active design (or parts of it) into several formats, st
 - Adjust configuration (if defaults are chosen carefully very minor things have to be adjusted for the every day project).
 - Start the export by hitting the *OK* button.
 - If the configuration has been changed, the following message appears after the export has been completed:
-  ![Save Configuration Reminder](doc/saveConfigurationRiminder.png)
+
+  ![Save Configuration Reminder](doc/saveConfigurationReminder.png)
+
+- Depending on the configuration a [summary report](#summary-report) is shown that might contain information, warnings or errors.
+
+  ![Basic summary](doc/basicSummaryReport.png)
+
 - In the case of _One File Per Body In Occurrence_ or _One File Top Level Occurrence_ STL exports, a temporary document must be closed.
+
+### Summary Report
+
+The summary report is grouped into the the sections _Info_, _Warning_ and _Error_. What categories are shown can be configured in the _Default Editor_ [Show Summary](#show-summary).
+
+Category | Syntax | Description | Example
+---------|----------|----------|---------
+ Info | FileType: + FullFileName | Successfully exported object| f3d: D:/Download.../Blocks.Block.f3d
+ Warning | FileType: + (Type) + FullFileName  | Successfully exported component, but meshes are missing | step: (Mesh) D:/Download.../Blocks.Block.step
+ Warning | FileType: + (Type) + OccurrenceName  | Bodies should be exported but this component contains meshes that are not exported | stl: (Link) MixedBlock:1
+ Error | FileType: + (Type) + FullFileName  | File couldn't be created because of external links | f3d: (Link) D:/Download.../Blocks.f3d
+
+### Common Terms and Mechanics
+
+- The term components is synonymously used with the term component in Fusion 360 but with the restriction that's restricted to the first occurrence.
+- The term occurrences is borrowed from the API and is used to describe all occurrences of a component.
+- This add-in is based on the provided API and therefore Fusion 360 exports cannot contain any linked components. Creation of .f3z files is not possible.
 
 ### Configuration
 
@@ -61,7 +86,7 @@ Not all fields shown in the [Default Configuration Command](#default-configurati
 
 ## Default Configuration Command
 
-This command allows the definition of the default configuration that is used in the *Export Design* dialog. The commands is located in the workspace *EXPORTIT*.
+This command allows the definition of the default configuration that is used in the *Export Design* dialog. The commands is located in the workspace *EXPORTIT*. Some of the fields in this section are only shown in the _Export Design Command_.
 
 The user interface is divided into the following sections:
 
@@ -82,7 +107,6 @@ Export Types | step | Enables or disables the export of STEP files
 Export Types | f3d | Enables or disables the export of F3D files
 Exclude Components | List of components with bodies | Checked components and including sub-components are not exported. This option will not effect exports with the structure _One File_
 Exclude Links | | If checked references to external designs (links) are not exported. This option will not effect exports with the structure _One File_
-
 
 #### STL Options
 
@@ -158,7 +182,7 @@ The granularity of STEP exports is configured in this section.
 
 Option |Description
 ---------|---------
-One File | This structure corresponds to exporting the root component with the built-in function and creates one file containing all visible BRep bodies.
+One File | This structure corresponds to exporting the root component with the built-in function and creates one file containing all visible BRep bodies. This add-in is based on the provided API and therefore Fusion 360 exports cannot contain any linked components. Creation of .f3z files is not possible.
 One File Per Component | This function corresponds to exporting a selected component but will create one file per component or selected component.
 
 One to many structures can be selected.
@@ -319,6 +343,7 @@ Version | Date | Description
 0.6.0 | 15.08.2020 | Some artists use top-level components to group bodies or sub-components by color or material. These groups are then also used for the final STL export. The new STL option _One File Top Level Occurrence_ complies with these exports. Documentation slightly enhanced.
 0.7.0 | 31.08.2020 | _Custom_ STL refinements added in case the predefined refinements _Low_, _Medium_, _High_ and _Ultra_ do not match the use case. _Exclude Components_ filter added to the _Export Options_. In contrast to the selection filter _Export Bodies_, this filter is saved in the project configuration and used for every export of the design. Useful for imported subassemblies that don't maintain the link (broken) anymore. This closes the enhancement #13. Referenced sub-assemblies are now handled correctly, if "Exclude Links" is activated. This fixes issue #12. Framework configuration config.py renamed to avoid conflicts with other add-ins that are using the [apper framework](https://github.com/tapnair/apper). This fixes #14.
 0.7.1 | 03.09.2020 | 0.7.0 did not correctly raise the version flag and therefore did not initialize the new functions
+0.8.0 | xx.09.2020 | fixes #21, documentation and summary report enhancement based on #20 added. Empty components removed from components filter based on #20. API behavior changed with Fusion 360 (2.0.9142) and this change makes it compatible with the new behavior and closes #24
 
 ## Known Issus
 

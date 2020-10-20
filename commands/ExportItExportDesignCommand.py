@@ -73,11 +73,18 @@ def initializeExcludeComponentList():
     exportObjects = getExportObjects(rootComponent, [], False)
 
     for exportObject in exportObjects:
-        if exportObject.get(REC_OCCURRENCE_PATH):
-            if exportObject.get(REC_IS_UNIQUE):
-                componentNameWidthPath = exportObject.get(REC_OCCURRENCE).name
-                componentName = componentNameWidthPath.split(":")[0]
-                components.append(componentName)
+        if not exportObject.get(REC_OCCURRENCE_PATH):
+            continue
+
+        if len(exportObject.get(REC_BODIES)) == 0:
+            continue
+
+        if not exportObject.get(REC_IS_UNIQUE):
+            continue
+
+        componentNameWidthPath = exportObject.get(REC_OCCURRENCE).name
+        componentName = componentNameWidthPath.split(":")[0]
+        components.append(componentName)
 
     configurationElements = getConfiguration(CONF_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_KEY)
     newConfiguration = []
@@ -346,6 +353,7 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies, proce
     for occurrence in rootComponent.allOccurrences:
         isUnique = False
         isTopLevel = False
+        hasMeshBodies = False
 
         occurrenceFullPathName = occurrence.fullPathName
 
@@ -355,7 +363,7 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies, proce
                 logger.info("occurrence %s is excluded, because it's an external reference or part of an external reference", occurrenceFullPathName)
                 continue
 
-        # for getting list of UI elements it's not usefull to process excluded occurrences. This flag is used to control the behavior of the functioon
+        # for getting list of UI elements it's not usefull to process excluded occurrences. This flag is used to control the behavior of the function
         if processExcludeComponents:
             # function should process excluded occurrences
             if isExcludeComponent(occurrence):
@@ -369,7 +377,7 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies, proce
 
         # check if bodies folder in occurrence is visible.  if not jump to next occurrence
         if not occurrence.component.isBodiesFolderLightBulbOn:
-            logger.info("body %s in %s is not visible", body.name, occurrenceFullPathName)
+            logger.info("bodies in %s are not visible", occurrenceFullPathName)
             continue
 
         # check if component is unique
@@ -379,9 +387,14 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies, proce
             logger.info("%s is unique", occurrenceFullPathName)
        
         # check if occurrence is a top level component
-        if occurrenceFullPathName.count(":") == 1:
+        # if occurrenceFullPathName.count(":") == 1:
+        if occurrence in rootComponent.occurrences:
             isTopLevel = True
             logger.info("component %s is a top level component", occurrenceFullPathName)
+
+        if len(occurrence.component.meshBodies) > 0:
+            logger.info("component %s has mesh bodies that might not be exported", occurrenceFullPathName)
+            hasMeshBodies = True
 
         # get visible occurrence bodies
         occurrenceBodies = []
@@ -404,7 +417,7 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies, proce
             continue
 
         # if occurrence has bodies, add occurrence to the list of exportable objects
-        exportObjects.append({REC_OCCURRENCE: occurrence, REC_OCCURRENCE_PATH: occurrenceFullPathName, REC_IS_UNIQUE: isUnique, REC_IS_TOP_LEVEL: isTopLevel, REC_IS_REFERENCED_COMPONENT: isReferencedComponent, REC_BODIES: occurrenceBodies})
+        exportObjects.append({REC_OCCURRENCE: occurrence, REC_OCCURRENCE_PATH: occurrenceFullPathName, REC_IS_UNIQUE: isUnique, REC_IS_TOP_LEVEL: isTopLevel, REC_IS_REFERENCED_COMPONENT: isReferencedComponent, REC_HAS_MESH_BODIES: hasMeshBodies, REC_BODIES: occurrenceBodies})
 
     logger.debug(exportObjects)
     return exportObjects
@@ -442,7 +455,7 @@ def totalNumberOfObjects(exportObjects):
             components = components + 1
             componentBodies =  componentBodies + len(exportObject.get(REC_BODIES))
 
-        if exportObject.get(REC_IS_TOP_LEVEL):
+        if exportObject.get(REC_IS_TOP_LEVEL) and (len(exportObject.get(REC_BODIES)) > 0 or len(exportObject.get(REC_OCCURRENCE).childOccurrences) > 0):
             topLevelOccurrences = topLevelOccurrences + 1
 
         occurrenceBodies =  occurrenceBodies + len(exportObject.get(REC_BODIES))
@@ -639,7 +652,7 @@ def addWarningToSummary(suffix, errorType, objectPath):
     if len(path) > 50:
         path = path[0:10] + "..." + path[-37:]
 
-    summary[SUMMARY_WARNINGS].append("   " + suffix + ": " + path)
+    summary[SUMMARY_WARNINGS].append("   " + suffix + ": (" + errorType + ") " + path)
 
 def addErrorToSummary(suffix, errorType, objectPath):
     global summary
@@ -648,7 +661,7 @@ def addErrorToSummary(suffix, errorType, objectPath):
     if len(path) > 50:
         path = path[0:10] + "..." + path[-37:]
     
-    summary[SUMMARY_WARNINGS].append("   " + suffix + ": " + path)
+    summary[SUMMARY_ERRORS].append("   " + suffix + ": (" + errorType + ") " + path)
 
 def getSummaryMessageFor(category, allEntries, maxEntries):
     numberOfEntries = len(allEntries)
@@ -683,7 +696,7 @@ def showSummary():
             logger.debug("Rendering summary info message(s)")
 
             showMessage = True
-            message = message + getSummaryMessageFor("Info", allEntries, 20)
+            message = message + getSummaryMessageFor("Infos", allEntries, 20)
 
     if getConfiguration(CONF_SHOW_SUMMARY_FOR_KEY) in [UI_SHOW_SUMMARY_FOR_INFO_VALUE, UI_SHOW_SUMMARY_FOR_WARNING_VALUE]:
         allEntries = summary.get(SUMMARY_WARNINGS)
@@ -700,17 +713,26 @@ def showSummary():
         numberOfEntries = len(allEntries)
         
         if numberOfEntries > 0:
-            logger.debug("Rendering summary info message(s)")
+            logger.debug("Rendering summary error message(s)")
 
             showMessage = True
-            message = message + getSummaryMessageFor("Warnings", allEntries, 20)
+            message = message + getSummaryMessageFor("Errors", allEntries, 20)
 
     if showMessage:
         logger.debug("Showing summary")
         ao = AppObjects()
         ao.ui.messageBox(message)
 
-def exportStepAsOneFile(projectName, designName, rootComponent, ao):
+def documentHasMeshBodies(exportObjects):
+    hasMeshBodies = False
+
+    for exportObject in exportObjects:
+        if exportObject.get(REC_HAS_MESH_BODIES):
+            return True
+
+    return False
+
+def exportStepAsOneFile(projectName, designName, rootComponent, exportObjects, ao):
     # create filename
     fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_STEP_VALUE)
 
@@ -719,11 +741,17 @@ def exportStepAsOneFile(projectName, designName, rootComponent, ao):
 
     # export design as single step file
     exportResult = ao.export_manager.execute(stepExportOptions)
+    
     # update summary
-    if exportResult:
+    hasMeshBodies = documentHasMeshBodies(exportObjects)
+
+    if exportResult and not hasMeshBodies:
         addInfoToSummary(UI_EXPORT_TYPES_STEP_VALUE, fullFileName)
     else:
-        addErrorToSummary(UI_EXPORT_TYPES_STEP_VALUE, exportResult, fullFileName)
+        if hasMeshBodies:
+            addWarningToSummary(UI_EXPORT_TYPES_STEP_VALUE, "Mesh", fullFileName)
+        else:
+            addErrorToSummary(UI_EXPORT_TYPES_STEP_VALUE, "UK", fullFileName)
 
     updateProgressDialog()
 
@@ -734,13 +762,19 @@ def exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao):
         if not exportObject.get(REC_IS_UNIQUE):
             continue
 
+        hasMeshBodies = exportObject.get(REC_HAS_MESH_BODIES)
+
+        # create filename
+        fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, "", UI_EXPORT_TYPES_STEP_VALUE)
+
+        if len(exportObject.get(REC_BODIES)) == 0 and hasMeshBodies:
+            addWarningToSummary(UI_EXPORT_TYPES_STEP_VALUE, "Mesh", fullFileName)
+            continue
+
         # Components with no bodies are REC_IS_TOP_LEVEL == True records with sub-components and no top level bodies. 
         # Those records are creating duplicated / unwanted files in this scenario and can be skipped
         if len(exportObject.get(REC_BODIES)) == 0:
             continue
-
-        # create filename
-        fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, "", UI_EXPORT_TYPES_STEP_VALUE)
 
         # get step export options
         stepExportOptions = ao.export_manager.createSTEPExportOptions(fullFileName, exportObject.get(REC_OCCURRENCE).component)
@@ -749,10 +783,14 @@ def exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao):
         exportResult = ao.export_manager.execute(stepExportOptions)
 
         # update summary
-        if exportResult:
+        logger.debug("hasMeshBody: %s", hasMeshBodies)
+        if exportResult and not hasMeshBodies:
             addInfoToSummary(UI_EXPORT_TYPES_STEP_VALUE, fullFileName)
         else:
-            addErrorToSummary(UI_EXPORT_TYPES_STEP_VALUE, exportResult, fullFileName)
+            if hasMeshBodies:
+                addWarningToSummary(UI_EXPORT_TYPES_STEP_VALUE, "Mesh", fullFileName)
+            else:
+                addErrorToSummary(UI_EXPORT_TYPES_STEP_VALUE, "UK", fullFileName)
 
         updateProgressDialog()
 
@@ -779,10 +817,10 @@ def exportF3dAsOneFile(projectName, designName, rootComponent, ao):
         if exportResult:
             addInfoToSummary(UI_EXPORT_TYPES_F3D_VALUE, fullFileName)
         else:
-            addErrorToSummary(UI_EXPORT_TYPES_F3D_VALUE, exportResult, fullFileName)
+            addErrorToSummary(UI_EXPORT_TYPES_F3D_VALUE, "UK", fullFileName)
     else:
         # update external reference warning to summary
-        addWarningToSummary(UI_EXPORT_TYPES_F3D_VALUE, "Link", designName)
+        addErrorToSummary(UI_EXPORT_TYPES_F3D_VALUE, "Link", designName)
 
     updateProgressDialog()
 
@@ -818,10 +856,10 @@ def exportF3dAsOneFilePerComponent(exportObjects, projectName, designName, ao):
             if exportResult:
                 addInfoToSummary(UI_EXPORT_TYPES_F3D_VALUE, fullFileName)
             else:
-                addErrorToSummary(UI_EXPORT_TYPES_F3D_VALUE, exportResult, fullFileName)
+                addErrorToSummary(UI_EXPORT_TYPES_F3D_VALUE, "UK", fullFileName)
         else:
             # update external reference warning to summary
-            addWarningToSummary(UI_EXPORT_TYPES_F3D_VALUE, "Link", exportObject.get(REC_OCCURRENCE_PATH))
+            addErrorToSummary(UI_EXPORT_TYPES_F3D_VALUE, "Link", exportObject.get(REC_OCCURRENCE_PATH))
 
         updateProgressDialog()
 
@@ -853,7 +891,7 @@ def getStlExportOptions(ao, geometry, fullFileName, refinement):
 
     return stlExportOptions
 
-def exportStlAsOneFile(projectName, designName, rootComponent, ao):
+def exportStlAsOneFile(projectName, designName, rootComponent, exportObjects, ao):
     for refinement in getConfiguration(CONF_STL_REFINEMENT_KEY):
         # cancel loop if user canceld the dialog
         if progressDialog.wasCancelled:
@@ -875,10 +913,15 @@ def exportStlAsOneFile(projectName, designName, rootComponent, ao):
         exportResult = ao.export_manager.execute(stlExportOptions)
 
         # update summary
-        if exportResult:
+        hasMeshBodies = documentHasMeshBodies(exportObjects)
+
+        if exportResult and not hasMeshBodies:
             addInfoToSummary(UI_EXPORT_TYPES_STL_VALUE, fullFileName)
         else:
-            addErrorToSummary(UI_EXPORT_TYPES_STL_VALUE, exportResult, fullFileName)
+            if hasMeshBodies:
+                addWarningToSummary(UI_EXPORT_TYPES_STL_VALUE, "Mesh", fullFileName)
+            else:
+                addErrorToSummary(UI_EXPORT_TYPES_STL_VALUE, "UK", fullFileName)
 
         updateProgressDialog()
 
@@ -906,6 +949,17 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
             if not exportObject.get(REC_IS_UNIQUE):
                 continue
 
+            hasMeshBodies = exportObject.get(REC_HAS_MESH_BODIES)
+
+            if len(exportObject.get(REC_BODIES)) == 0 and hasMeshBodies:
+                path = ""
+                if exportObject.get(REC_OCCURRENCE) != "":
+                    path = exportObject.get(REC_OCCURRENCE).name
+                else:
+                    path = "root"
+
+                addWarningToSummary(UI_EXPORT_TYPES_STL_VALUE, "Mesh", path)
+            
             # Components with no bodies are REC_IS_TOP_LEVEL == True records with sub-components and no top level bodies. 
             # Those records are creating duplicated / unwanted files in this scenario and can be skipped
             if len(exportObject.get(REC_BODIES)) == 0:
@@ -931,7 +985,7 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
                 if exportResult:
                     addInfoToSummary(UI_EXPORT_TYPES_STL_VALUE, fullFileName)
                 else:
-                    addErrorToSummary(UI_EXPORT_TYPES_STL_VALUE, exportResult, fullFileName)
+                    addErrorToSummary(UI_EXPORT_TYPES_STL_VALUE, "UK", fullFileName)
 
                 updateProgressDialog()
 
@@ -961,6 +1015,16 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
             if len(exportObject.get(REC_BODIES)) == 0:
                 continue
 
+            hasMeshBodies = exportObject.get(REC_HAS_MESH_BODIES)
+
+            if len(exportObject.get(REC_BODIES)) == 0 and hasMeshBodies:
+                path = ""
+                if exportObject.get(REC_OCCURRENCE) != "":
+                    path = exportObject.get(REC_OCCURRENCE).name
+                else:
+                    path = "root"
+                    
+                addWarningToSummary(UI_EXPORT_TYPES_STL_VALUE, "Mesh", path)
 
             # iterate over list of bodies
             for body in exportObject.get(REC_BODIES):
@@ -982,7 +1046,7 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
                 if exportResult:
                     addInfoToSummary(UI_EXPORT_TYPES_STL_VALUE, fullFileName)
                 else:
-                    addErrorToSummary(UI_EXPORT_TYPES_STL_VALUE, exportResult, fullFileName)
+                    addErrorToSummary(UI_EXPORT_TYPES_STL_VALUE, "UK", fullFileName)
 
                 updateProgressDialog()
 
@@ -1008,7 +1072,7 @@ def exportStlAsOneFilePerTopOccurrence(exportObjects, projectName, designName, a
                     progressDialog.hide()
                     break
 
-                # check if component is unique
+                # check if component is unique+
                 if not exportObject.get(REC_IS_TOP_LEVEL):
                     continue
 
@@ -1025,7 +1089,7 @@ def exportStlAsOneFilePerTopOccurrence(exportObjects, projectName, designName, a
                 if exportResult:
                     addInfoToSummary(UI_EXPORT_TYPES_STL_VALUE, fullFileName)
                 else:
-                    addErrorToSummary(UI_EXPORT_TYPES_STL_VALUE, exportResult, fullFileName)
+                    addErrorToSummary(UI_EXPORT_TYPES_STL_VALUE, "UK", fullFileName)
 
                 updateProgressDialog()
             except:
@@ -1098,7 +1162,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             logger.info("Starting processing of %s - %s", projectName, designName)
             logger.info("--------------------------------------------------------------------------------")
 
-            if input_values[UI_EXPORT_DIRECTORY_RESET_ID] or getConfiguration(CONF_EXPORT_DIRECTORY_CONFIGURE_KEY) == UI_EXPORT_DIRECTORY_CONFIGURE_ALWAYS_VALUE:
+            if input_values.get(UI_EXPORT_DIRECTORY_RESET_ID) or getConfiguration(CONF_EXPORT_DIRECTORY_CONFIGURE_KEY) == UI_EXPORT_DIRECTORY_CONFIGURE_ALWAYS_VALUE:
                 resetExportDirecotry(input_values)
             
             validateExportDirectory()
@@ -1118,18 +1182,9 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             progressDialog.isCancelButtonShown = True
             progressValue = 0
 
-            # get list of bodies for the exports
-            exportObjects = []
-
-            if (UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_F3D_STRUCTURE_KEY) or
-                UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY) or 
-                UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY) or
-                UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY) or
-                UI_STRUCTURE_ONE_FILE_PER_TOP_LEVEL_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY)):
-
-                # get list of occurrences and bodies
-                logger.debug("getting list of export objects")
-                exportObjects = getExportObjects(rootComponent, input_values[UI_EXPORT_OPTIONS_BODIES_SELECTION_ID], True)
+            # get list of occurrences and bodies
+            logger.debug("getting list of export objects")
+            exportObjects = getExportObjects(rootComponent, input_values.get(UI_EXPORT_OPTIONS_BODIES_SELECTION_ID), True)
 
             # Show progress dialog
             logger.debug("Showing progressDialog")
@@ -1153,7 +1208,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             if not progressDialog.wasCancelled and UI_EXPORT_TYPES_STEP_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
                 # export design as one step file
                 if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY):
-                    exportStepAsOneFile(projectName, designName, rootComponent, ao)
+                    exportStepAsOneFile(projectName, designName, rootComponent, exportObjects, ao)
 
                 # export each component as individual step files
                 if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_COMPONENT_VALUE in getConfiguration(CONF_STEP_STRUCTURE_KEY):
@@ -1162,7 +1217,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             if not progressDialog.wasCancelled and UI_EXPORT_TYPES_STL_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
                 # export design as one stl file
                 if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
-                    exportStlAsOneFile(projectName, designName, rootComponent, ao)
+                    exportStlAsOneFile(projectName, designName, rootComponent, exportObjects, ao)
 
                 # export each body in component as individual stl files
                 if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
