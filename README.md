@@ -343,7 +343,7 @@ Version | Date | Description
 0.6.0 | 15.08.2020 | Some artists use top-level components to group bodies or sub-components by color or material. These groups are then also used for the final STL export. The new STL option _One File Top Level Occurrence_ complies with these exports. Documentation slightly enhanced.
 0.7.0 | 31.08.2020 | _Custom_ STL refinements added in case the predefined refinements _Low_, _Medium_, _High_ and _Ultra_ do not match the use case. _Exclude Components_ filter added to the _Export Options_. In contrast to the selection filter _Export Bodies_, this filter is saved in the project configuration and used for every export of the design. Useful for imported subassemblies that don't maintain the link (broken) anymore. This closes the enhancement #13. Referenced sub-assemblies are now handled correctly, if "Exclude Links" is activated. This fixes issue #12. Framework configuration config.py renamed to avoid conflicts with other add-ins that are using the [apper framework](https://github.com/tapnair/apper). This fixes #14.
 0.7.1 | 03.09.2020 | 0.7.0 did not correctly raise the version flag and therefore did not initialize the new functions
-0.8.0 | xx.09.2020 | fixes #21, documentation and summary report enhancement based on #20 added. Empty components removed from components filter based on #20
+0.8.0 | xx.09.2020 | fixes #21, documentation and summary report enhancement based on #20 added. Empty components removed from components filter based on #20. API behavior changed with Fusion 360 (2.0.9142) and this change makes it compatible with the new behavior and closes #24
 
 ## Known Issus
 

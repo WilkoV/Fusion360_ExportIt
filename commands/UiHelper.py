@@ -10,9 +10,6 @@ def addTab(inputs :adsk.core.CommandInputs, tabId, tabName, isActive):
     # tab group
     tabCmdInput = inputs.addTabCommandInput(tabId, tabName)
 
-    # set tab behavior
-    tabCmdInput.isActive = isActive
-
     if isActive:
         # activate tab in the UI
         tabCmdInput.activate()
