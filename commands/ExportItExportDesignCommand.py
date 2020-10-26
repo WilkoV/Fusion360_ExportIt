@@ -629,8 +629,8 @@ def copyDesignToExportDocument(exportObjects):
             copiedBody = temporaryBRepManager.copy(body)
 
             # insert body into new document
-            baseComponent.bRepBodies.add(copiedBody)
-            baseComponent.bRepBodies[-1].name = body.name
+            addedBody = baseComponent.bRepBodies.add(copiedBody)
+            addedBody.name = body.name
 
             logger.debug("body %s added to %s", body.name, exportObject.get(REC_OCCURRENCE_PATH))
 
