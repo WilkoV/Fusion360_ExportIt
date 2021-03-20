@@ -345,7 +345,7 @@ Version | Date | Description
 0.7.1 | 03.09.2020 | 0.7.0 did not correctly raise the version flag and therefore did not initialize the new functions
 0.8.1 | 20.10.2020 | fixes #21, documentation and summary report enhancement based on #20 added. Empty components removed from components filter based on #20. API behavior changed with Fusion 360 (2.0.9142) and this change makes it compatible with the new behavior and closes #24
 0.8.2 | 26.10.2020 | With 2.0.9144 the STL export of occurrences wasn't working anymore. #27 fixes this issue.
-
+0.8.3 | 20.03.2020 | Apper framework updated
 ## Known Issus
 
 - [STL exports with the structure "One File Per Body In Occurrence" does not close the temporary document.](https://github.com/WilkoV/Fusion360_ExportIt/issues/2)
