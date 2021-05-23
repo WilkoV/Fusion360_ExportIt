@@ -2,46 +2,46 @@
 Developer Interface
 ===================
 
-This part of the documentation covers all the interfaces of Requests. For
-parts where Requests depends on external libraries, we document the most
-important right here and provide links to the canonical documentation.
+This part of the documentation covers all the interfaces of Apper.
 
-.. module:: apper
+.. py:module:: apper
 
 Core Apper Modules
-==============
+==================
 
 The core Apper functionality can be accessed by sub-classing these 3 classes.
-Step one is to create an instance of the :class:`FusionApp <FusionApp>` object.
+Step one is to create an instance of the :class:`.FusionApp` object.
 Step two is to add instances of
-:class:`Fusion360CommandBase <Fusion360CommandBase>` and
-:class:`PaletteCommandBase <PaletteCommandBase>` classes.
+:class:`apper.Fusion360CommandBase` and
+:class:`apper.PaletteCommandBase` classes.
 Each instance of these classes will be a new command in your add-in.
 
 
-.. automodule:: FusionApp
+.. py:currentmodule:: apper
+.. autoclass:: apper.FusionApp
    :members:
 
 
-.. automodule:: Fusion360CommandBase
+.. py:currentmodule:: apper
+.. autoclass:: apper.Fusion360CommandBase
    :members:
 
 
-.. automodule:: PaletteCommandBase
+.. py:currentmodule:: apper
+.. autoclass:: apper.PaletteCommandBase
    :members:
 
 
 Other Modules
 ==============
 
-
-.. automodule:: Fusion360AppEvents
+.. automodule:: apper.Fusion360AppEvents
    :members:
 
 
-.. automodule:: Fusion360Utilities
+.. automodule:: apper.Fusion360Utilities
    :members:
 
 
-.. automodule:: Fusion360DebugUtilities
+.. automodule:: apper.Fusion360DebugUtilities
    :members:

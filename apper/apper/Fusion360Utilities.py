@@ -1,9 +1,8 @@
 """
 Fusion360Utilities.py
-=========================================================
+=====================
 Tools to leverage when creating a Fusion 360 Add-in
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :copyright: (c) 2019 by Patrick Rainsberry.
 :license: Apache 2.0, see LICENSE for more details.
 
@@ -11,20 +10,16 @@ Tools to leverage when creating a Fusion 360 Add-in
 import adsk.core
 import adsk.fusion
 import adsk.cam
-import traceback
-
-from typing import Optional, List, Union
-
-from functools import wraps
 
 import os
+import sys
 from os.path import expanduser
 import json
 import uuid
-
 import time
 
-import logging
+from contextlib import ContextDecorator
+from typing import Optional, List, Union
 
 
 # Class to quickly access Fusion Application Objects
@@ -42,10 +37,49 @@ class AppObjects(object):
         # Get User Interface
         self.ui = self.app.userInterface
 
-        self.document = self.app.activeDocument
-        self.product = self.app.activeProduct
-
+        self._document = self.document
+        self._product = self.product
         self._design = self.design
+
+    def print_msg(self, message):
+        print(message)
+        self.ui.palettes.itemById('TextCommands').writeText(message)
+
+    @property
+    def document(self) -> Optional[adsk.core.Document]:
+        """adsk.fusion.Design from the active document
+
+        Returns: adsk.fusion.Design from the active document
+
+        """
+        document = None
+        try:
+            document = self.app.activeDocument
+        except:
+            pass
+
+        if document is not None:
+            return document
+        else:
+            return None
+
+    @property
+    def product(self) -> Optional[adsk.core.Product]:
+        """adsk.fusion.Design from the active document
+
+        Returns: adsk.fusion.Design from the active document
+
+        """
+        product = None
+        try:
+            product = self.app.activeProduct
+        except:
+            pass
+
+        if product is not None:
+            return product
+        else:
+            return None
 
     @property
     def design(self) -> Optional[adsk.fusion.Design]:
@@ -54,7 +88,10 @@ class AppObjects(object):
         Returns: adsk.fusion.Design from the active document
 
         """
-        design_ = self.document.products.itemByProductType('DesignProductType')
+        design_ = None
+        if self.document is not None:
+            design_ = self.document.products.itemByProductType('DesignProductType')
+
         if design_ is not None:
             return design_
         else:
@@ -69,7 +106,9 @@ class AppObjects(object):
         Returns: adsk.cam.CAM from the active document
 
         """
-        cam_ = self.document.products.itemByProductType('CAMProductType')
+        cam_ = None
+        if self.document is not None:
+            cam_ = self.document.products.itemByProductType('CAMProductType')
         if cam_ is not None:
             return cam_
         else:
@@ -79,16 +118,41 @@ class AppObjects(object):
     def units_manager(self) -> Optional[adsk.core.UnitsManager]:
         """adsk.core.UnitsManager from the active document
 
-        Returns: adsk.core.UnitsManager from the active document
+        If not in an active document with design workspace active, will return adsk.core.UnitsManager if possible
 
+        Returns: adsk.fusion.FusionUnitsManager or adsk.core.UnitsManager if in a different workspace than design.
         """
-        if self.product.productType == 'DesignProductType':
-            units_manager_ = self._design.fusionUnitsManager
-        else:
-            units_manager_ = self.product.unitsManager
-
+        units_manager_ = None
+        if self.product is not None:
+            if self.product.productType == 'DesignProductType':
+                units_manager_ = self._design.fusionUnitsManager
+            else:
+                try:
+                    units_manager_ = self.product.unitsManager
+                except:
+                    pass
         if units_manager_ is not None:
             return units_manager_
+        else:
+            return None
+
+    @property
+    def f_units_manager(self) -> Optional[adsk.fusion.FusionUnitsManager]:
+        """adsk.fusion.FusionUnitsManager from the active document.
+
+        Only work in design environment.
+
+        Returns: adsk.fusion.FusionUnitsManager or None if in a different workspace than design.
+        """
+        units_manager = None
+        if self.product is not None:
+            if self.product.productType == 'DesignProductType':
+                units_manager = self._design.fusionUnitsManager
+            else:
+                units_manager = None
+
+        if units_manager is not None:
+            return units_manager
         else:
             return None
 
@@ -114,11 +178,15 @@ class AppObjects(object):
         Returns: The Root Component of the adsk.fusion.Design
 
         """
-        if self.product.productType == 'DesignProductType':
-            root_comp_ = self.design.rootComponent
-            return root_comp_
-        else:
-            return None
+        root_comp_ = None
+        if self.product is not None:
+            if self.product.productType == 'DesignProductType':
+                root_comp_ = self.design.rootComponent
+
+            if root_comp_ is not None:
+                return root_comp_
+            else:
+                return None
 
     @property
     def time_line(self) -> Optional[adsk.fusion.Timeline]:
@@ -127,13 +195,60 @@ class AppObjects(object):
         Returns: adsk.fusion.Timeline from the active adsk.fusion.Design
 
         """
-        if self.product.productType == 'DesignProductType':
-            if self._design.designType == adsk.fusion.DesignTypes.ParametricDesignType:
-                time_line_ = self.product.timeline
+        time_line_ = None
+        if self.product is not None:
+            if self.product.productType == 'DesignProductType':
+                if self._design.designType == adsk.fusion.DesignTypes.ParametricDesignType:
+                    time_line_ = self.product.timeline
 
-                return time_line_
+        if time_line_ is not None:
+            return time_line_
+        else:
+            return None
 
-        return None
+
+class lib_import(ContextDecorator):
+    """The lib_import class is a wrapper class to allow temporary import of a local library directory
+
+            By default it assumes there is a folder named 'lib' in the add-in root directory.
+
+            First install a 3rd party library (such as requests) to this directory.
+
+            .. code-block:: bash
+
+                # Assuming you are in the add-in root directory (sudo may not be required...)
+                sudo python3 -m pip install -t ./lib requests
+
+            Then you can temporarily import the library before making a call to the requests function.
+            To do this use the *@apper.lib_import(...)* decorator on a function that uses the library.
+
+            Here is an example function for using `Requests <https://requests.readthedocs.io/en/master/>`_:
+
+            .. code-block:: python
+
+                @apper.lib_import(config.app_path)
+                def make_request(url, headers):
+                    import requests
+                    r = requests.get(url, headers=headers)
+                    return r
+
+            Args:
+                app_path(str): The root path of the addin.  Should be dynamically calculated.
+                library_folder(:obj:`str`, optional): Library folder name (relative to app root). Defaults to 'lib'
+            """
+
+    def __init__(self, library_folder: str):
+        super().__init__()
+        self.path = library_folder
+
+    def __enter__(self):
+        sys.path.insert(0, self.path)
+        return self
+
+    def __exit__(self, *exc):
+        if self.path in sys.path:
+            sys.path.remove(self.path)
+        return False
 
 
 def start_group() -> int:
@@ -153,7 +268,7 @@ def start_group() -> int:
 def end_group(start_index: int):
     """Ends a adsk.fusion.TimelineGroup
 
-    start_index: adsk.fusion.TimelineG index that is returned from start_group
+    start_index: adsk.fusion.TimelineGroup index that is returned from start_group
     """
 
     # Gets necessary application objects
@@ -161,13 +276,15 @@ def end_group(start_index: int):
 
     end_index = ao.time_line.markerPosition - 1
 
-    ao.time_line.timelineGroups.add(start_index, end_index)
+    if end_index - start_index > 0:
+        ao.time_line.timelineGroups.add(start_index, end_index)
 
 
 def import_dxf(
         dxf_file: str,
         component: adsk.fusion.Component,
-        plane: Union[adsk.fusion.ConstructionPlane, adsk.fusion.BRepFace]
+        plane: Union[adsk.fusion.ConstructionPlane, adsk.fusion.BRepFace],
+        is_single_sketch_result: bool = False
 ) -> adsk.core.ObjectCollection:
     """Import dxf file with one sketch per layer.
 
@@ -175,7 +292,8 @@ def import_dxf(
         dxf_file: The full path to the dxf file
         component: The target component for the new sketch(es)
         plane: The plane on which to import the DXF file.
-
+        plane: The plane on which to import the DXF file.
+        is_single_sketch_result: If true will collapse all dxf layers to a single sketch.
     Returns:
         An ObjectCollection of the created sketches
     """
@@ -183,6 +301,7 @@ def import_dxf(
     ao = AppObjects()
     import_manager = ao.import_manager
     dxf_options = import_manager.createDXF2DImportOptions(dxf_file, plane)
+    dxf_options.isSingleSketchResult = is_single_sketch_result
     import_manager.importToTarget(dxf_options, component)
     sketches = dxf_options.results
     return sketches
@@ -356,7 +475,7 @@ def get_default_dir(app_name: str):
     # Create a subdirectory for this application settings
     default_dir = os.path.join(default_dir, app_name, "")
 
-    # Create the folder if it does not exist
+    # Create the folder if it does not exist    
     if not os.path.exists(default_dir):
         os.makedirs(default_dir)
 

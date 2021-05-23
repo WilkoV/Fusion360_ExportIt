@@ -1,13 +1,13 @@
 """
 FusionApp.py
-=========================================================
+============
 Python module for creating a Fusion 360 Addin
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :copyright: (c) 2019 by Patrick Rainsberry.
 :license: Apache 2.0, see LICENSE for more details.
 
 """
+import logging
 import traceback
 
 import adsk.core
@@ -15,7 +15,6 @@ import json
 
 import os
 from os.path import expanduser
-from pathlib import Path
 
 from typing import Optional, List, Union, Any, Iterable
 
@@ -35,11 +34,15 @@ class FusionApp:
         self.debug = debug
         self.commands = []
         self.events = []
+        self.features = []
         self.tabs = []
         self.default_dir = self._get_default_dir()
         self.preferences = self.get_all_preferences()
-        self.root_path = Path(__file__).parent.parent.parent
+        self.root_path = ''
         self.command_dict = {}
+        self.custom_toolbar_tab = True
+        self.logger: Optional[logging.Logger] = None
+        self.logging_enabled = False
 
     def add_command(
             self,
@@ -65,20 +68,24 @@ class FusionApp:
             options['app_name'] = self.name
             options['fusion_app'] = self
 
-            tab_id = options.get('toolbar_tab_id')
-            tab_name = options.get('toolbar_tab_name')
+            tab_id = options.get('toolbar_tab_id', None)
+            tab_name = options.get('toolbar_tab_name', None)
 
             if tab_name is None:
                 options['toolbar_tab_name'] = self.name
 
             if tab_id is None:
-                options['toolbar_tab_id'] = self.name
+                options['toolbar_tab_id'] = options['toolbar_tab_name']
+            else:
+                if ui.allToolbarTabs.itemById(tab_id) is not None:
+                    self.custom_toolbar_tab = False
 
             _workspace = options.get('workspace', 'FusionSolidEnvironment')
 
             if isinstance(_workspace, str):
-                _this_tab_id = options['toolbar_tab_id'] + '_' + _workspace
-                options['toolbar_tab_id'] = _this_tab_id
+                if self.custom_toolbar_tab:
+                    _this_tab_id = options['toolbar_tab_id'] + '_' + _workspace
+                    options['toolbar_tab_id'] = _this_tab_id
 
                 command = command_class(name, options)
 
@@ -130,15 +137,16 @@ class FusionApp:
         doc_event.fusion_app = self
         self.events.append(doc_event)
 
-    def add_custom_event(self, event_id: str, event_class: Any):
+    def add_custom_event(self, event_id: str, event_class: Any, auto_start: bool = True):
         """Register a custom event to respond to a function running in a new thread
 
         Args:
             event_id: A unique identifier for the event
             event_class: Your subclass of apper.Fusion360CustomThread
+            auto_start: Whether the thread should start when the addin starts
         """
 
-        custom_event = event_class(event_id)
+        custom_event = event_class(event_id, auto_start)
         custom_event.fusion_app = self
         self.events.append(custom_event)
 
@@ -190,6 +198,27 @@ class FusionApp:
         web_request_event.fusion_app = self
         self.events.append(web_request_event)
 
+    def add_custom_feature(
+            self,
+            name: str,
+            feature_class: Any,
+            options: dict
+    ) -> Any:
+        """Register a workspace event that can respond to various workspace actions
+
+        Args:
+            name: The name of the command
+            feature_class: This should be your subclass of apper.Fusion360CustomFeatureBase
+            options: Set of options for the command see the full set of `options <usage/options>`_
+        """
+        options['app_name'] = self.name
+        options['fusion_app'] = self
+
+        custom_feature = feature_class(name, options)
+        custom_feature.fusion_app = self
+        self.features.append(custom_feature)
+        return custom_feature
+
     def check_for_updates(self):
         """Not Implemented"""
         pass
@@ -202,6 +231,9 @@ class FusionApp:
         try:
             for run_command in self.commands:
                 run_command.on_run()
+
+            for run_feature in self.features:
+                run_feature.on_run()
         except:
             if ui:
                 ui.messageBox('Running App failed: {}'.format(traceback.format_exc()))
@@ -248,19 +280,30 @@ class FusionApp:
         Returns:
             All preferences as a dictionary
         """
+        file_name = os.path.join(self.default_dir, "preferences.json")
+        all_preferences = self.read_json_file(file_name)
 
-        file_name = os.path.join(self.default_dir, ".preferences.json")
+        return all_preferences
 
+    @staticmethod
+    def read_json_file(file_name):
+        """Static method to read a json file and return a dictionary object
+
+        Will fail if the input file cannot be interpreted as a JSON object
+
+        Returns:
+            Input file as a dictionary
+        """
         if os.path.exists(file_name):
             with open(file_name) as f:
                 try:
-                    all_preferences = json.load(f)
+                    new_dict = json.load(f)
                 except:
-                    all_preferences = {}
+                    new_dict = {}
         else:
-            all_preferences = {}
+            new_dict = {}
 
-        return all_preferences
+        return new_dict
 
     def get_group_preferences(self, group_name: str) -> dict:
         """Gets preferences for a particular group (typically a given command)
@@ -271,11 +314,8 @@ class FusionApp:
         Returns:
             A dictionary of just the options associated to this particular group
         """
-
         all_preferences = self.get_all_preferences()
-
         group_preferences = all_preferences.get(group_name, {})
-
         return group_preferences
 
     def save_preferences(self, group_name: str, new_group_preferences: dict, merge: bool):
@@ -285,6 +325,10 @@ class FusionApp:
             group_name: name of parent group in which to store preferences
             new_group_preferences: Dictionary of preferences to save
             merge: If True then the new preferences in the group will be merged, if False all old values are deleted
+
+        Returns:
+            A string with possible values: "Updated", "Created", or "Failed"
+
         """
 
         all_preferences = self.get_all_preferences()
@@ -302,10 +346,63 @@ class FusionApp:
         else:
             all_preferences[group_name] = new_group_preferences
 
-        preferences_text = json.dumps(all_preferences)
-
-        file_name = os.path.join(self.default_dir, ".preferences.json")
-        with open(file_name, "w") as f:
-            f.write(preferences_text)
-
+        if not self._write_preferences(all_preferences):
+            result = "Failed"
         return result
+
+    def _write_preferences(self, preferences_dict: dict):
+        file_name = os.path.join(self.default_dir, "preferences.json")
+        try:
+            preferences_text = json.dumps(preferences_dict)
+            with open(file_name, "w") as f:
+                f.write(preferences_text)
+            if self.logging_enabled:
+                self.logger.info(f"Preference file written at: {file_name}")
+            return True
+        except:
+            if self.logging_enabled:
+                self.logger.error(f"Preference file creation failed for: {file_name}")
+            return False
+
+    def initialize_preferences(self, defaults: dict, force=False):
+        """Initializes preferences for the application
+
+        Args:
+            defaults: a default set of preferences
+            force: If True, any existing user preferences will be over-written
+
+        Returns:
+            A string with possible values: "Created", "Exists", or "Failed"
+
+        """
+        file_name = os.path.join(self.default_dir, "preferences.json")
+        if (not os.path.exists(file_name)) or force:
+            if self._write_preferences(defaults):
+                result = "Created"
+                if self.logging_enabled:
+                    self.logger.info(f"Preference file created at: {file_name}")
+            else:
+                result = "Failed"
+                if self.logging_enabled:
+                    self.logger.error(f"Preference file creation failed for: {file_name}")
+        else:
+            result = "Exists"
+        return result
+
+    def enable_logging(self):
+        log_dir = os.path.join(self.default_dir, "Logs", "")
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+        file_name = os.path.join(log_dir, self.name + '.log')
+
+        self.logger = logging.getLogger(self.name)
+        self.logger.handlers = []
+        self.logger.setLevel("INFO")
+        handler = logging.FileHandler(file_name)
+        log_format = "%(asctime)s %(levelname)s -- %(message)s"
+        formatter = logging.Formatter(log_format)
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+        self.logging_enabled = True
+
+

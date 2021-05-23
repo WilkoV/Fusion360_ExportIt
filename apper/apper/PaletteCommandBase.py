@@ -1,9 +1,8 @@
 """
 PaletteCommandBase.py
-=========================================================
+=====================
 Python module for creating an HTML Palette based command
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :copyright: (c) 2019 by Patrick Rainsberry.
 :license: Apache 2.0, see LICENSE for more details.
 
@@ -12,13 +11,14 @@ import traceback
 from urllib.parse import urlparse
 
 import adsk.core
-import apper
 
 import os
-import sys
+from .Fusion360CommandBase import Fusion360CommandBase
+
+handlers = []
 
 
-class PaletteCommandBase(apper.Fusion360CommandBase):
+class PaletteCommandBase(Fusion360CommandBase):
     """Class for creating a Fusion 360 Command that will show a web palette
 
     Args:
@@ -29,46 +29,39 @@ class PaletteCommandBase(apper.Fusion360CommandBase):
     def __init__(self, name: str, options: dict):
         super().__init__(name, options)
 
-        ao = apper.AppObjects()
-
-        self.palette_id = options.get('palette_id', 'Default Command Name')
+        self.palette_id = options.get('palette_id', 'Default Palette ID')
         self.palette_name = options.get('palette_name', 'Palette Name')
 
         debug_path = options.get('palette_html_file_url_debug')
         palette_is_local = options.get('palette_is_local', True)
+        rel_path = options.get('palette_html_file_url')
 
         if palette_is_local:
-            rel_path = options.get('palette_html_file_url')
 
             if self.fusion_app.debug and (debug_path is not None):
                 self.palette_html_file_url = debug_path
 
             elif rel_path is not None:
-
-                local_path_from_root = os.path.dirname(
-                    os.path.relpath(
-                        sys.modules[self.__class__.__module__].__file__,
-                        self.fusion_app.root_path
-                    )
-                )
-
-                self.palette_html_file_url = os.path.join('./', local_path_from_root, rel_path)
+                # self.palette_html_file_url = os.path.join(self.fusion_app.root_path, rel_path) # Issues on Windows
+                self.palette_html_file_url = rel_path
             else:
-                raise AttributeError(
-                    "Resource Path not defined for Palette.  Set palette_html_file_url in command options")
+                raise AttributeError("Resource Path not defined.  Set palette_html_file_url in command options")
         else:
             # TODO add some url validation
             self.palette_html_file_url = options.get('palette_html_file_url')
-
-        if self.fusion_app.debug:
-            ao.ui.messageBox(self.palette_html_file_url)
 
         self.palette_is_visible = options.get('palette_is_visible', True)
         self.palette_show_close_button = options.get('palette_show_close_button', True)
         self.palette_is_resizable = options.get('palette_is_resizable', True)
         self.palette_width = options.get('palette_width', 600)
         self.palette_height = options.get('palette_height', 600)
-        self.palette_force_url_reload = options.get('palette_force_url_reload', True)
+        self.palette_use_new_browser = options.get('palette_use_new_browser', False)
+        self.palette_force_url_reload = options.get('palette_force_url_reload', False)
+        self.palette_force_url_home = options.get('palette_force_url_home', False)
+
+        if options.get('palette_enable_debug', False):
+            app = adsk.core.Application.get()
+            app.executeTextCommand("devoptions.webdeveloperextras /on")
 
         self.palette = None
         self.args = None
@@ -126,24 +119,24 @@ class _PaletteCreatedHandler(adsk.core.CommandCreatedEventHandler):
 
     def __init__(self, cmd_object):
         super().__init__()
-        self.cmd_object_ = cmd_object
+        self.cmd_object = cmd_object
 
     def notify(self, args):
-        """Method executed by Fusion.  DOn't rename
+        """Method executed by Fusion.  Don't rename
 
         Args:
             args: args for command
         """
         try:
 
-            command_ = args.command
-            inputs_ = command_.commandInputs
+            command = args.command
+            inputs = command.commandInputs
 
-            on_execute_handler = _PaletteExecuteHandler(self.cmd_object_)
-            command_.execute.add(on_execute_handler)
-            self.cmd_object_.handlers.append(on_execute_handler)
+            on_execute_handler = _PaletteExecuteHandler(self.cmd_object)
+            command.execute.add(on_execute_handler)
+            handlers.append(on_execute_handler)
 
-            self.cmd_object_.on_create(command_, inputs_)
+            self.cmd_object.on_create(command, inputs)
 
         except:
             app = adsk.core.Application.cast(adsk.core.Application.get())
@@ -160,7 +153,7 @@ class _PaletteExecuteHandler(adsk.core.CommandEventHandler):
 
     def __init__(self, cmd_object):
         super().__init__()
-        self.cmd_object_ = cmd_object
+        self.cmd_object: PaletteCommandBase = cmd_object
 
     def notify(self, args):
         """Method executed by Fusion.  Don't rename
@@ -173,53 +166,58 @@ class _PaletteExecuteHandler(adsk.core.CommandEventHandler):
         try:
 
             # Create and display the palette.
-            palette = ui.palettes.itemById(self.cmd_object_.palette_id)
+            palette = ui.palettes.itemById(self.cmd_object.palette_id)
 
             if not palette:
                 palette = ui.palettes.add(
-                    self.cmd_object_.palette_id,
-                    self.cmd_object_.palette_name,
-                    self.cmd_object_.palette_html_file_url,
-                    self.cmd_object_.palette_is_visible,
-                    self.cmd_object_.palette_show_close_button,
-                    self.cmd_object_.palette_is_resizable,
-                    self.cmd_object_.palette_width,
-                    self.cmd_object_.palette_height,
-                    True
+                    self.cmd_object.palette_id,
+                    self.cmd_object.palette_name,
+                    self.cmd_object.palette_html_file_url,
+                    self.cmd_object.palette_is_visible,
+                    self.cmd_object.palette_show_close_button,
+                    self.cmd_object.palette_is_resizable,
+                    self.cmd_object.palette_width,
+                    self.cmd_object.palette_height,
+                    self.cmd_object.palette_use_new_browser
                 )
 
                 # Add handler to HTMLEvent of the palette.
-                on_html_event_handler = _HTMLEventHandler(self.cmd_object_)
+                on_html_event_handler = _HTMLEventHandler(self.cmd_object)
                 palette.incomingFromHTML.add(on_html_event_handler)
-                self.cmd_object_.handlers.append(on_html_event_handler)
-                self.cmd_object_.html_handlers.append(on_html_event_handler)
+                handlers.append(on_html_event_handler)
+                self.cmd_object.html_handlers.append(on_html_event_handler)
 
                 # Add handler to CloseEvent of the palette.
-                on_closed_handler = _PaletteCloseHandler(self.cmd_object_)
+                on_closed_handler = _PaletteCloseHandler(self.cmd_object)
                 palette.closed.add(on_closed_handler)
-                self.cmd_object_.handlers.append(on_closed_handler)
+                handlers.append(on_closed_handler)
 
             else:
-                main_url = urlparse(self.cmd_object_.palette_html_file_url)
-                current_url = urlparse(palette.htmlFileURL)
-
-                if not (
-                        (not self.cmd_object_.palette_force_url_reload) &
-                        (main_url.netloc == current_url.netloc) &
-                        (main_url.path == current_url.path)
-                ):
-                    # ui.messageBox(current_url.netloc + "  vs.  " + main_url.netloc)
-                    # ui.messageBox(current_url.path + "  vs.  " + main_url.path)
-                    # ui.messageBox(str(self.cmd_object_.palette_force_url_reload))
-                    palette.htmlFileURL = self.cmd_object_.palette_html_file_url
-
+                if not palette.isNative:
+                    current_path = palette.htmlFileURL
+                    main_url = urlparse(self.cmd_object.palette_html_file_url)
+                    current_url = urlparse(palette.htmlFileURL)
+                    if self.cmd_object.palette_force_url_reload:
+                        palette.htmlFileURL = current_path
+                    if not (
+                            (not self.cmd_object.palette_force_url_home) &
+                            (main_url.netloc == current_url.netloc) &
+                            (main_url.path == current_url.path)
+                    ):
+                        # TODO this is broken in current palette
+                        # palette.htmlFileURL = self.cmd_object.palette_html_file_url
+                        pass
+                else:
+                    ui.messageBox(
+                        f"Developer Note: The palette: {palette.id} appears to be native? Try changing the palette id."
+                    )
                 palette.isVisible = True
 
-            self.cmd_object_.on_palette_execute(palette)
+            self.cmd_object.on_palette_execute(palette)
 
         except:
             ui.messageBox('Palette ({}) Execution Failed: {}'.format(
-                self.cmd_object_.palette_html_file_url,
+                self.cmd_object.palette_html_file_url,
                 traceback.format_exc())
             )
 
@@ -233,7 +231,7 @@ class _HTMLEventHandler(adsk.core.HTMLEventHandler):
 
     def __init__(self, cmd_object):
         super().__init__()
-        self.cmd_object_ = cmd_object
+        self.cmd_object = cmd_object
 
     def notify(self, args):
         """Method executed by Fusion.  Don't rename
@@ -243,7 +241,7 @@ class _HTMLEventHandler(adsk.core.HTMLEventHandler):
         """
         try:
             html_args = adsk.core.HTMLEventArgs.cast(args)
-            self.cmd_object_.on_html_event(html_args)
+            self.cmd_object.on_html_event(html_args)
 
         except:
             app = adsk.core.Application.cast(adsk.core.Application.get())
@@ -260,7 +258,7 @@ class _PaletteCloseHandler(adsk.core.UserInterfaceGeneralEventHandler):
 
     def __init__(self, cmd_object):
         super().__init__()
-        self.cmd_object_ = cmd_object
+        self.cmd_object = cmd_object
 
     def notify(self, args):
         """Method executed by Fusion.  Don't rename
@@ -269,7 +267,7 @@ class _PaletteCloseHandler(adsk.core.UserInterfaceGeneralEventHandler):
             args: args for command
         """
         try:
-            self.cmd_object_.on_palette_close()
+            self.cmd_object.on_palette_close()
 
         except:
             app = adsk.core.Application.cast(adsk.core.Application.get())

@@ -1,12 +1,10 @@
 """
 Fusion360CommandBase.py
-=========================================================
+=======================
 Python module for creating a Fusion 360 Command
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :copyright: (c) 2019 by Patrick Rainsberry.
 :license: Apache 2.0, see LICENSE for more details.
-
 """
 import traceback
 
@@ -15,8 +13,10 @@ import adsk.fusion
 
 import os.path
 import sys
+from .FusionApp import FusionApp
 
-import apper
+handlers = []
+create_handlers = []
 
 
 def _destroy_object(obj_to_be_deleted):
@@ -40,9 +40,10 @@ class Fusion360CommandBase:
             name: The name of the command
             options: A dictionary of options for the command placement in the ui.  (TODO - Add docs for this)
         """
+
     def __init__(self, name: str, options: dict):
         self.app_name = options.get('app_name')
-        self.fusion_app: apper.FusionApp = options.get('fusion_app', None)
+        self.fusion_app: FusionApp = options.get('fusion_app', None)
 
         self.cmd_name = name
 
@@ -67,6 +68,8 @@ class Fusion360CommandBase:
         self.command_enabled = options.get('command_enabled', True)
         self.command_promoted = options.get('command_promoted', False)
 
+        self.help_file = options.get('help_file', False)
+
         self.debug = options.get('debug')
 
         self.command = None
@@ -79,22 +82,22 @@ class Fusion360CommandBase:
 
         drop_down_folder = options.get('drop_down_resources', 'demo_icons')
         resources_folder = options.get('cmd_resources', 'demo_icons')
+        #
+        # self.path = os.path.dirname(
+        #     os.path.relpath(
+        #         sys.modules[self.__class__.__module__].__file__,
+        #         self.fusion_app.root_path
+        #     )
+        # )
+        #
+        # resource_path = os.path.join(self.fusion_app.root_path, self.path, 'resources', resources_folder)
+        # drop_resources_path = os.path.join(self.fusion_app.root_path, self.path, 'resources', drop_down_folder)
 
-        self.path = os.path.dirname(
-            os.path.relpath(
-                sys.modules[self.__class__.__module__].__file__,
-                self.fusion_app.root_path
-            )
-        )
-
-        resource_path = os.path.join(self.fusion_app.root_path, self.path, 'resources', resources_folder)
-        drop_resources_path = os.path.join(self.fusion_app.root_path, self.path, 'resources', drop_down_folder)
+        resource_path = os.path.join('commands', 'resources', resources_folder)
+        drop_resources_path = os.path.join('commands', 'resources', drop_down_folder)
 
         self.cmd_resources = resource_path
         self.drop_down_resources = drop_resources_path
-
-        # global set of event handlers to keep them referenced for the duration of the command
-        self.handlers = []
 
         # self.fusion_app.appCommands.append(self)
 
@@ -107,7 +110,34 @@ class Fusion360CommandBase:
 
         Args:
             input_values: Opinionated dictionary of the useful values a user entered.  The key is the command_id.
-            args:
+            args: the original command event args
+            command: reference to the command object
+            inputs: quick reference directly to the commandInputs object
+        """
+        pass
+
+    def on_activate(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, args, input_values):
+        """Executed when when the command is first activated or re-activated after being suspended
+
+        Code in this function will cause the graphics to refresh.
+        Particularly useful for pre-populating a selection input
+
+        Args:
+            input_values: Opinionated dictionary of the useful values a user entered.  The key is the command_id.
+            args: the original command event args
+            command: reference to the command object
+            inputs: quick reference directly to the commandInputs object
+        """
+        pass
+
+    def on_mouse_drag_end(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, args, input_values):
+        """Executed before the command is first activated or re-activated after being suspended
+
+        Typically used for rolling the timeline before executing an edit event for a custom feature.
+
+        Args:
+            input_values: Opinionated dictionary of the useful values a user entered.  The key is the command_id.
+            args: the original command event args
             command: reference to the command object
             inputs: quick reference directly to the commandInputs object
         """
@@ -129,7 +159,7 @@ class Fusion360CommandBase:
         pass
 
     def on_input_changed(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs,
-                         changed_input: adsk.core.CommandInput, input_values: dict ):
+                         changed_input: adsk.core.CommandInput, input_values: dict):
         """Executed when any inputs have changed.  Useful for updating command UI.
 
         When a user changes anything in the command dialog this method is executed.
@@ -147,6 +177,21 @@ class Fusion360CommandBase:
                    args: adsk.core.CommandEventArgs, input_values: dict):
         """Will be executed when user selects OK in command dialog.
 
+
+        Args:
+            command: reference to the command object
+            inputs: quick reference directly to the commandInputs object
+            args: All of the args associated with the CommandEvent
+            input_values: Opinionated dictionary of the useful values a user entered.  The key is the command_id.
+        """
+        pass
+
+    def validate_inputs(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs,
+                        args: adsk.core.ValidateInputsEventArgs, input_values: dict) -> bool:
+        """Function to validate the current state of the inputs.
+
+        This function should return a boolean.  If it returns True (or nothing), the current state of the inputs is
+        assumed to be valid.  This means that previews will be calculated, and the OK button will be enabled.
 
         Args:
             command: reference to the command object
@@ -178,11 +223,13 @@ class Fusion360CommandBase:
 
         """
         value_types = [adsk.core.BoolValueCommandInput.classType(), adsk.core.DistanceValueCommandInput.classType(),
-                       adsk.core.FloatSliderCommandInput.classType(), adsk.core.FloatSpinnerCommandInput.classType(),
-                       adsk.core.IntegerSliderCommandInput.classType(),
+                       adsk.core.FloatSpinnerCommandInput.classType(),
                        adsk.core.IntegerSpinnerCommandInput.classType(),
-                       adsk.core.ValueCommandInput.classType(), adsk.core.SliderCommandInput.classType(),
+                       adsk.core.ValueCommandInput.classType(),
                        adsk.core.StringValueCommandInput.classType()]
+
+        slider_types = [adsk.core.FloatSliderCommandInput.classType(),
+                        adsk.core.IntegerSliderCommandInput.classType()]
 
         list_types = [adsk.core.ButtonRowCommandInput.classType(), adsk.core.DropDownCommandInput.classType(),
                       adsk.core.RadioButtonGroupCommandInput.classType()]
@@ -197,6 +244,10 @@ class Fusion360CommandBase:
             # If the input type is in this list the value of the input is returned
             if command_input.objectType in value_types:
                 input_values[command_input.id] = command_input.value
+                input_values[command_input.id + '_input'] = command_input
+
+            elif command_input.objectType in slider_types:
+                input_values[command_input.id] = command_input.valueOne
                 input_values[command_input.id + '_input'] = command_input
 
             # TODO need to account for radio and button multi select also
@@ -288,28 +339,30 @@ class Fusion360CommandBase:
             # Check if control exists (with apper this should never happen)
             self.control = controls.itemById(self.cmd_id)
 
-            if self.control is None:
+            if self.control:
+                _destroy_object(self.control)
 
-                # Check if control exists (with apper this should never happen)
-                self.command_definition = ui.commandDefinitions.itemById(self.cmd_id)
+            # Check if command definition exists (with apper this should never happen)
+            self.command_definition = ui.commandDefinitions.itemById(self.cmd_id)
 
-                if not self.command_definition:
+            if self.command_definition:
+                _destroy_object(self.command_definition)
 
-                    # Create the command definition
-                    self.command_definition = ui.commandDefinitions.addButtonDefinition(
-                        self.cmd_id,
-                        self.cmd_name,
-                        self.cmd_description,
-                        self.cmd_resources
-                    )
+            # Create the command definition
+            self.command_definition = ui.commandDefinitions.addButtonDefinition(
+                self.cmd_id,
+                self.cmd_name,
+                self.cmd_description,
+                self.cmd_resources
+            )
 
-                    # Add command created event handler
-                    on_command_created_handler = self._get_create_event()
-                    self.command_definition.commandCreated.add(on_command_created_handler)
-                    self.handlers.append(on_command_created_handler)
+            # Add command created event handler
+            on_command_created_handler = self._get_create_event()
+            self.command_definition.commandCreated.add(on_command_created_handler)
+            create_handlers.append(on_command_created_handler)
 
-                # Create the new control
-                self.control = controls.addCommand(self.command_definition)
+            # Create the new control
+            self.control = controls.addCommand(self.command_definition)
 
             # Set options for control
             self.control.isVisible = self.command_visible
@@ -383,6 +436,50 @@ class _PreviewHandler(adsk.core.CommandEventHandler):
                 ui.messageBox('Input changed event failed: {}'.format(traceback.format_exc()))
 
 
+class _ActivateHandler(adsk.core.CommandEventHandler):
+    def __init__(self, cmd_object):
+        super().__init__()
+        self.cmd_object_ = cmd_object
+
+    def notify(self, args):
+        app = adsk.core.Application.cast(adsk.core.Application.get())
+        ui = app.userInterface
+
+        try:
+            command_ = args.firingEvent.sender
+            command_inputs = command_.commandInputs
+            self.cmd_object_.command_inputs = command_inputs
+
+            input_values = self.cmd_object_.get_inputs()
+            self.cmd_object_.on_activate(command_, command_inputs, args, input_values)
+
+        except:
+            if ui:
+                ui.messageBox('Input changed event failed: {}'.format(traceback.format_exc()))
+
+
+class _MouseDragEndHandler(adsk.core.MouseEventHandler):
+    def __init__(self, cmd_object):
+        super().__init__()
+        self.cmd_object_ = cmd_object
+
+    def notify(self, args):
+        app = adsk.core.Application.cast(adsk.core.Application.get())
+        ui = app.userInterface
+
+        try:
+            command_ = args.firingEvent.sender
+            command_inputs = command_.commandInputs
+            self.cmd_object_.command_inputs = command_inputs
+
+            input_values = self.cmd_object_.get_inputs()
+            self.cmd_object_.on_mouse_drag_end(command_, command_inputs, args, input_values)
+
+        except:
+            if ui:
+                ui.messageBox('Input changed event failed: {}'.format(traceback.format_exc()))
+
+
 class _DestroyHandler(adsk.core.CommandEventHandler):
     def __init__(self, cmd_object):
         super().__init__()
@@ -443,34 +540,71 @@ class _CommandExecuteHandler(adsk.core.CommandEventHandler):
             ui.messageBox('command executed failed: {}'.format(traceback.format_exc()))
 
 
-class _CommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
-    def __init__(self, cmd_object):
+class _CommandValidateInputsHandler(adsk.core.ValidateInputsEventHandler):
+    def __init__(self, cmd_object: Fusion360CommandBase):
         super().__init__()
         self.cmd_object_ = cmd_object
 
+    def notify(self, args: adsk.core.ValidateInputsEventArgs):
+        try:
+            command_ = args.firingEvent.sender
+            command_inputs = command_.commandInputs
+
+            input_values = self.cmd_object_.get_inputs()
+            are_inputs_valid = self.cmd_object_.validate_inputs(command_, command_inputs, args, input_values)
+
+            if are_inputs_valid is not None:
+                args.areInputsValid = bool(are_inputs_valid)
+
+        except:
+            app = adsk.core.Application.cast(adsk.core.Application.get())
+            ui = app.userInterface
+            ui.messageBox('command validate inputs failed: {}'.format(traceback.format_exc()))
+
+
+class _CommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
+    def __init__(self, cmd_object):
+        super().__init__()
+        self.cmd_object = cmd_object
+
     def notify(self, args):
         try:
-            command_ = args.command
-            inputs_ = command_.commandInputs
-            self.cmd_object_.command_inputs = inputs_
+            global handlers
+            # handlers.clear()
 
-            on_execute_handler = _CommandExecuteHandler(self.cmd_object_)
-            command_.execute.add(on_execute_handler)
-            self.cmd_object_.handlers.append(on_execute_handler)
+            command: adsk.core.Command = args.command
+            inputs_ = command.commandInputs
+            self.cmd_object.command_inputs = inputs_
 
-            on_input_changed_handler = _InputChangedHandler(self.cmd_object_)
-            command_.inputChanged.add(on_input_changed_handler)
-            self.cmd_object_.handlers.append(on_input_changed_handler)
+            on_execute_handler = _CommandExecuteHandler(self.cmd_object)
+            command.execute.add(on_execute_handler)
+            handlers.append(on_execute_handler)
 
-            on_destroy_handler = _DestroyHandler(self.cmd_object_)
-            command_.destroy.add(on_destroy_handler)
-            self.cmd_object_.handlers.append(on_destroy_handler)
+            on_input_changed_handler = _InputChangedHandler(self.cmd_object)
+            command.inputChanged.add(on_input_changed_handler)
+            handlers.append(on_input_changed_handler)
 
-            on_execute_preview_handler = _PreviewHandler(self.cmd_object_)
-            command_.executePreview.add(on_execute_preview_handler)
-            self.cmd_object_.handlers.append(on_execute_preview_handler)
+            on_destroy_handler = _DestroyHandler(self.cmd_object)
+            command.destroy.add(on_destroy_handler)
+            handlers.append(on_destroy_handler)
 
-            self.cmd_object_.on_create(command_, inputs_)
+            on_execute_preview_handler = _PreviewHandler(self.cmd_object)
+            command.executePreview.add(on_execute_preview_handler)
+            handlers.append(on_execute_preview_handler)
+
+            on_activate_handler = _ActivateHandler(self.cmd_object)
+            command.activate.add(on_activate_handler)
+            handlers.append(on_activate_handler)
+
+            on_mouse_drag_end_handler = _MouseDragEndHandler(self.cmd_object)
+            command.mouseDragEnd.add(on_mouse_drag_end_handler)
+            handlers.append(on_mouse_drag_end_handler)
+
+            validate_inputs_handler = _CommandValidateInputsHandler(self.cmd_object)
+            command.validateInputs.add(validate_inputs_handler)
+            handlers.append(validate_inputs_handler)
+
+            self.cmd_object.on_create(command, inputs_)
 
         except:
             app = adsk.core.Application.cast(adsk.core.Application.get())

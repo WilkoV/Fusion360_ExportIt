@@ -1,9 +1,8 @@
 """
 Fusion360AppEvents.py
-=========================================================
+=====================
 Python module for creating Fusion 360 event handlers
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :copyright: (c) 2019 by Patrick Rainsberry.
 :license: Apache 2.0, see LICENSE for more details.
 
@@ -27,7 +26,7 @@ class Fusion360CustomThread:
     Args:
         event_id: Unique id, can be used by other functions to trigger the event
     """
-    def __init__(self, event_id):
+    def __init__(self, event_id, auto_start=True):
         self.event_id = event_id
         self.thread = None
         self.fusion_app = None
@@ -45,9 +44,13 @@ class Fusion360CustomThread:
             handlers.append(on_thread_event)
 
             # create and start the new thread
-            self.thread = _FusionThread(self.event_id, self.run_in_thread)
+            self.stop_flag = threading.Event()
+
+            self.thread = _FusionThread(self.event_id, self.run_in_thread, self.stop_flag)
             self.thread.daemon = True
-            self.thread.start()
+
+            if auto_start:
+                self.thread.start()
 
         except Exception as e:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
@@ -70,6 +73,25 @@ class Fusion360CustomThread:
         """
         pass
 
+    def fire_event(self, args: dict):
+        app = adsk.core.Application.get()
+        app.fireCustomEvent(self.event_id, json.dumps(args))
+
+    def start_thread(self):
+        if not self.stop_flag:
+            pass
+        self.thread.start()
+
+    def restart_thread(self):
+        self.stop_flag.set()
+
+        self.stop_flag = threading.Event()
+
+        self.thread = _FusionThread(self.event_id, self.run_in_thread, self.stop_flag)
+        self.thread.daemon = True
+
+        self.thread.start()
+
     def on_stop(self):
         """Function is run when the addin stops.
 
@@ -77,6 +99,7 @@ class Fusion360CustomThread:
         """
         app = adsk.core.Application.get()
         app.unregisterCustomEvent(self.event_id)
+        self.stop_flag.set()
 
 
 class _CustomThreadEventHandler(adsk.core.CustomEventHandler):
@@ -107,7 +130,7 @@ class _CustomThreadEventHandler(adsk.core.CustomEventHandler):
 
 
 class _FusionThread(threading.Thread):
-    def __init__(self, event_id, run_in_thread, input_data=None):
+    def __init__(self, event_id, run_in_thread, stop_event, input_data=None):
         """Starts a new thread and runs the given function in it
 
         Args:
@@ -116,13 +139,10 @@ class _FusionThread(threading.Thread):
             input_data: Optional parameter to pass extra data to the thread
         """
         threading.Thread.__init__(self)
-
+        self.stopped = stop_event
         self.event_id = event_id
         self.run_function = run_in_thread
         self.input_data = input_data
-
-        stop_event = threading.Event()
-        self.stopped = stop_event
 
     def run(self):
         """Method overwritten on parent class that will be executed when the thread executes
@@ -145,7 +165,8 @@ class Fusion360NewThread:
 
         try:
             # create and start the new thread
-            self.thread = _FusionThread(self.event_id, self.run_in_thread, self.input_data)
+            self.stop_flag = threading.Event()
+            self.thread = _FusionThread(self.event_id, self.run_in_thread, self.stop_flag, self.input_data)
             self.thread.daemon = True
             self.thread.start()
 
@@ -163,6 +184,13 @@ class Fusion360NewThread:
             input_data: Optional parameter to pass extra data to the thread
         """
         pass
+
+    def stop_thread(self):
+        """Function is run to stop thread.
+
+        Clean up.  If overridden ensure to execute with super().on_stop()
+        """
+        self.stop_flag.set()
 
 
 class Fusion360CustomEvent:
@@ -379,7 +407,7 @@ class Fusion360WebRequestEvent:
                 fusion_id: A unique identifier to help determine whether the component is new or an instance
                 occurrence_or_document: If opened, then it is a new document.  If it was inserted, it is the created occurence
                 file: Path to the file that was just received
-                event_args: WebRequestEventArgs
+                event_args: adsk.core.WebRequestEventArgs
             """
         pass
 
@@ -400,7 +428,7 @@ class _CommandEventHandler(adsk.core.ApplicationCommandEventHandler):
         """Method overwritten on parent class that will be executed when the event fires
 
         Args:
-            args: event arguments
+            args: adsk.core.ApplicationCommandEventArgs
         """
         try:
             event_args = adsk.core.ApplicationCommandEventArgs.cast(args)
@@ -435,7 +463,7 @@ class Fusion360CommandEvent:
         Args:
             command_definition: the command definition of the command that was just executed
             command_id: the id of the command that was just executed
-            event_args: ApplicationCommandEventArgs
+            event_args: adsk.core.ApplicationCommandEventArgs
         """
         pass
 
@@ -444,4 +472,61 @@ class Fusion360CommandEvent:
 
         Clean up.  If overridden ensure to execute with super().on_stop()
         """
+        self.event_type.remove(self.command_handler)
+
+
+class _ActiveSelectionEventHandler(adsk.core.ActiveSelectionEventHandler):
+    def __init__(self, command_function):
+        super().__init__()
+        self.command_function = command_function
+
+    def notify(self, args):
+        """Method overwritten on parent class    that will be executed when the event fires
+
+        Args:
+            args: adsk.core.ApplicationCommandEventArgs
+        """
+        try:
+            event_args = adsk.core.ActiveSelectionEventArgs.cast(args)
+            current_selection: [adsk.core.Selection] = event_args.currentSelection
+            self.command_function(event_args, current_selection)
+
+        except:
+            app = adsk.core.Application.cast(adsk.core.Application.get())
+            ui = app.userInterface
+            ui.messageBox('Failed to handle Selection Event:\n{}'.format(traceback.format_exc()))
+
+
+class Fusion360ActiveSelectionEvent:
+    """Create a new Active Selection Event action
+
+    Args:
+        event_id: A unique id for this event
+    """
+    def __init__(self, event_id, event_type):
+        app = adsk.core.Application.get()
+        ui = app.userInterface
+
+        self.event_id = event_id
+        self.fusion_app = None
+        self.command_handler = _ActiveSelectionEventHandler(self.selection_event_received)
+        self.event_type = event_type
+        self.event_type.add(self.command_handler)
+        handlers.append(self.command_handler)
+
+    def selection_event_received(self, event_args, current_selection):
+        """This function will be executed in response to the command event
+
+        Args:
+            current_selection: An array of type adsk.core.Selection
+            event_args: adsk.core.ApplicationCommandEventArgs
+        """
+        pass
+
+    def on_stop(self):
+        """Function is run when the addin stops.
+
+        Clean up.  If overridden ensure to execute with super().on_stop()
+        """
+
         self.event_type.remove(self.command_handler)
