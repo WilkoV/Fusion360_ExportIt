@@ -14,6 +14,8 @@
     - [Export](#export)
     - [Export Options](#export-options)
       - [STL Options](#stl-options)
+        - [Examples](#examples)
+      - [3MF Options](#3mf-options)
       - [STEP Options](#step-options)
       - [F3D Options](#f3d-options)
     - [Location](#location)
@@ -26,6 +28,7 @@
       - [Version Info](#version-info)
   - [Elements Of The Export Name](#elements-of-the-export-name)
     - [STL Export Name](#stl-export-name)
+    - [3MF Export Name](#3mf-export-name)
     - [STEP Export Name](#step-export-name)
     - [F3D Export Name](#f3d-export-name)
   - [Installation](#installation)
@@ -133,7 +136,7 @@ High | This option corresponds to the built-in one.
 Ultra | This one is based on the built-in *High* settings, but sets surface deviation to 0.000508mm and normal deviation to 15. This results in a much finer mesh and is great for very detailed geometry or large, roundish objects.
 Custom | This option enables the definition of surface deviation, normal deviation, maximum edge length and the aspect ratio
 
-Examples:
+##### Examples
 
 - Low
 
@@ -156,6 +159,34 @@ Examples:
 ![Refinement Ultra](doc/refinementFileSizes.png)
 
 One to many structures or refinements can be selected.
+
+![3MF Options](doc/stlOptions.png)
+
+#### 3MF Options
+
+The behavior of 3MF export is configured in this section. The export of of 3MF files behaves the same as the STL exports. Following options are available:
+
+![3mf Options](doc/3mfOptions.png)
+Structures are used to define the granularity of exports.
+
+Option |Description
+---------|---------
+One File | This structure corresponds to the built-in one and creates one file containing all visible BRep bodies.
+One File Per Body In Component | A component can have many occurrences in one design. This option will export each component only once regardless of the number of occurrences. It creates one file per body (or per selected body) in a component. Due to this filter, it will not keep the original position in the 3d space. This structure is e.g useful if a design reuses components and wants to keep the number of exported files small.
+One File Per Body In Occurrence | This option corresponds to the integrated *One File Per Body*, but does not create double exports of the same body and works with selected bodies, too. It maintains the positions of the bodies at different occurrences. This structure is useful if the 3mf files are reassembled at a later point - e.g. in a slicer for multi color / multi material 3d prints.
+One File Top Level Occurrence | This option creates one file for each top level occurrence. It's useful if the occurrences are used treated as logical groups like colors or materials and the 3mf files are reassembled at a later point. In comparison to _One File Per Body In Occurrence_ this option creates less files but needs a special workflow / structure during the design process.
+
+Refinements can roughly be described as the mesh density of an export. Following refinements are pre-configured.
+
+Option |Description
+---------|---------
+Low | This option corresponds to the built-in one.
+Medium | This option corresponds to the built-in one.
+High | This option corresponds to the built-in one.
+Ultra | This one is based on the built-in *High* settings, but sets surface deviation to 0.000508mm and normal deviation to 15. This results in a much finer mesh and is great for very detailed geometry or large, roundish objects.
+Custom | This option enables the definition of surface deviation, normal deviation, maximum edge length and the aspect ratio
+
+More visual examples could be found here: [Refinement Examples](#Examples)
 
 #### STEP Options
 
@@ -304,6 +335,15 @@ One File Per Body In Component | [projectName] + elementSeparator + [designName]
 One File Per Body In Occurrence | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithOccurrenceIDs + elementSeparator + bodyName + elementSeparator + refinementName + "." + suffix | 01-Default.blocks_1.deep_1.deeper_1.deepest_1.block_5.Body1.low.stl
 One File Per Top Level Occurrence | [projectName] + elementSeparator + [designName] + elementSeparator + topLevelOccurrenceWithOccurrenceIDs + elementSeparator + refinementName + "." + suffix | 08-TopLevelComponentsAsOneFile.green_2.low.stl
 
+### 3MF Export Name
+
+Structure | Elements | Example
+---------|----------|---------
+One File | [projectName] + elementSeparator + designName + refinementName + "." + suffix| 01-Default.low.3mf
+One File Per Body In Component | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithoutOccurrenceIDs + elementSeparator + bodyName + elementSeparator + refinementName + "." + suffix | 01-Default.blocks.mixed.bodyInComponentWithSubComponents.low.3mf
+One File Per Body In Occurrence | [projectName] + elementSeparator + [designName] + elementSeparator + occurrencePathWithOccurrenceIDs + elementSeparator + bodyName + elementSeparator + refinementName + "." + suffix | 01-Default.blocks_1.deep_1.deeper_1.deepest_1.block_5.Body1.low.3mf
+One File Per Top Level Occurrence | [projectName] + elementSeparator + [designName] + elementSeparator + topLevelOccurrenceWithOccurrenceIDs + elementSeparator + refinementName + "." + suffix | 08-TopLevelComponentsAsOneFile.green_2.low.3mf
+
 ### STEP Export Name
 
 Structure | Elements | Example
@@ -347,6 +387,7 @@ Version | Date | Description
 0.8.2 | 26.10.2020 | With 2.0.9144 the STL export of occurrences wasn't working anymore. #27 fixes this issue.
 0.8.3 | 20.03.2020 | Apper framework updated
 0.8.4 | 20.03.2020 | Apper framework updated
+0.9.0 | 21.09.2021 | 3mf exports added
 
 ## Known Issus
 
