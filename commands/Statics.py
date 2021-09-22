@@ -17,10 +17,17 @@ UI_STL_REFINEMENT_HIGH_VALUE = 'High'                                           
 UI_STL_REFINEMENT_MEDIUM_VALUE = 'Medium'                                                   # refinement medium
 UI_STL_REFINEMENT_LOW_VALUE = 'Low'                                                         # refinement low
 UI_STL_REFINEMENT_CUSTOM_VALUE = 'Custom'                                                   # refinement custom
+UI_3MF_REFINEMENT_NAME = '3mfRefinement'                                                    # 3mf refinement (resolution / density) for stl exports
+UI_3MF_REFINEMENT_ULTRA_VALUE = 'Ultra'                                                     # 3mf refinement ultra
+UI_3MF_REFINEMENT_HIGH_VALUE = 'High'                                                       # 3mf refinement high
+UI_3MF_REFINEMENT_MEDIUM_VALUE = 'Medium'                                                   # 3mf refinement medium
+UI_3MF_REFINEMENT_LOW_VALUE = 'Low'                                                         # 3mf refinement low
+UI_3MF_REFINEMENT_CUSTOM_VALUE = 'Custom'                                                   # 3mf refinement custom
 UI_SELECTION_FILTER_BODY_VALUE = 'SolidBodies'                                              # Filter name Solid Body
 UI_EXPORT_TYPES_STL_VALUE = 'stl'                                                           # STL format
 UI_EXPORT_TYPES_STEP_VALUE = 'step'                                                         # STEP format
 UI_EXPORT_TYPES_F3D_VALUE = 'f3d'                                                           # F3D / Fusion Archive format
+UI_EXPORT_TYPES_3MF_VALUE = '3mf'                                                           # 3MF format
 UI_SHOW_SUMMARY_FOR_INFO_VALUE = 'Info'                                                     # Show info, warning and error messages
 UI_SHOW_SUMMARY_FOR_WARNING_VALUE = 'Warning'                                               # Show warning and error messages
 UI_SHOW_SUMMARY_FOR_ERROR_VALUE= 'Error'                                                    # Show error messages
@@ -41,6 +48,7 @@ UI_EXPORT_OPTIONS_BODIES_SELECTION_NAME = 'Export Bodies'                       
 UI_EXPORT_OPTIONS_BODIES_SELECTION_VALUES = [UI_SELECTION_FILTER_BODY_VALUE]                # List of applied filters
 UI_EXPORT_OPTIONS_TYPE_NAME = 'Export Types'                                                # Name of the field that contains the export types
 UI_EXPORT_OPTIONS_TYPE_VALUES = [UI_EXPORT_TYPES_STL_VALUE,
+                                    UI_EXPORT_TYPES_3MF_VALUE,
                                     UI_EXPORT_TYPES_STEP_VALUE,
                                     UI_EXPORT_TYPES_F3D_VALUE]                              # Elements of the dropdown list
 UI_EXPORT_OPTIONS_EXCLUDE_LINKS_NAME = 'Exclude Links'                                      # Name of the field that contains the option to exclude external links from the export
@@ -76,6 +84,37 @@ UI_STL_ASPECT_RATIO_NAME = 'Aspect Ratio'                                       
 UI_STL_ASPECT_RATIO_MIN = 0.06403                                                           # Min value for the custom aspect ratio
 UI_STL_ASPECT_RATIO_MAX = 64.03124                                                          # Max value for the custom aspect ratio
 UI_STL_ASPECT_RATIO_STEP = 0.50                                                             # Step size value for the custom aspect ratio
+
+# user interface - 3mf options
+UI_3MF_OPTIONS_GROUP_ID = '3mfOptions'                                                      # Group id that contains the 3mf options UI elements
+UI_3MF_OPTIONS_GROUP_NAME = '3MF Options'                                                   # Name of the group that contains the 3mf options UI elements
+
+UI_3MF_STRUCTURE_NAME = 'Structure'                                                         # Export bodies as one file, file per body etc.
+UI_3MF_STRUCTURE_VALUES = [UI_STRUCTURE_ONE_FILE_VALUE,
+                            UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE,
+                            UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE,
+                            UI_STRUCTURE_ONE_FILE_PER_TOP_LEVEL_OCCURRENCE_VALUE]           # Elements of the dropdown list
+UI_3MF_REFINEMENT_VALUES = [UI_3MF_REFINEMENT_ULTRA_VALUE,
+                            UI_3MF_REFINEMENT_HIGH_VALUE,
+                            UI_3MF_REFINEMENT_MEDIUM_VALUE,
+                            UI_3MF_REFINEMENT_LOW_VALUE, 
+                            UI_3MF_REFINEMENT_CUSTOM_VALUE]                                 # Elements of the dropdown list
+UI_3MF_SURFACE_DEVIATION_NAME = 'Surface Deviation'                                         # Element that contains the custom surface deviation
+UI_3MF_SURFACE_DEVIATION_MIN =  0.000640                                                    # Min value for the custom surface deviation
+UI_3MF_SURFACE_DEVIATION_MAX =  0.064031                                                    # Max value for the custom surface deviation
+UI_3MF_SURFACE_DEVIATION_STEP = 0.005000                                                    # Step size value for the custom surface deviation
+UI_3MF_NORMAL_DEVIATION_NAME = 'Normal Deviation'                                           # Element that contains the custom normal deviation
+UI_3MF_NORMAL_DEVIATION_MIN = 1.0                                                           # Min value for the custom normal deviation
+UI_3MF_NORMAL_DEVIATION_MAX = 41.0                                                          # Max value for the custom normal deviation
+UI_3MF_NORMAL_DEVIATION_STEP = 1.00                                                         # Step size value for the custom normal deviation
+UI_3MF_MAX_EDGE_LENGTH_NAME = 'Maximum Edge Length'                                         # Element that contains the custom max edge length
+UI_3MF_MAX_EDGE_LENGTH_MIN = 0.06403                                                        # Min value for the custom edge length
+UI_3MF_MAX_EDGE_LENGTH_MAX = 64.03124                                                       # Max value for the custom edge length
+UI_3MF_MAX_EDGE_LENGTH_STEP = 0.50                                                          # Step size value for the custom edge length
+UI_3MF_ASPECT_RATIO_NAME = 'Aspect Ratio'                                                   # Element that contains the custom aspect ratio
+UI_3MF_ASPECT_RATIO_MIN = 0.06403                                                           # Min value for the custom aspect ratio
+UI_3MF_ASPECT_RATIO_MAX = 64.03124                                                          # Max value for the custom aspect ratio
+UI_3MF_ASPECT_RATIO_STEP = 0.50                                                             # Step size value for the custom aspect ratio
 
 # user interface - step options
 UI_STEP_OPTIONS_GROUP_ID = 'StepOptions'                                                    # Group id that contains the step options UI elements
@@ -156,11 +195,12 @@ CONF_DEFAULT_CONFIG_NAME = 'Defaults.json'                                      
 CONF_PROJECT_ATTRIBUTE_GROUP = 'ExportIt'                                                   # Name of the attribute group that stores the project specific data
 CONF_PROJECT_ATTRIBUTE_KEY = 'projectConfiguration'                                         # Key of the key that contains the project specific configuration (delta to default configuration)
 CONF_VERSION_KEY = 'version'                                                                # Key of the element that contains the version of the default configuration
-CONF_VERSION_DEFAULT = '0.8.4'                                                              # Default version of the default configuration
+CONF_VERSION_DEFAULT = '0.9.0'                                                              # Default version of the default configuration
 
 # configuration - export options
 CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # Name of the element that contains the export types
-CONF_EXPORT_OPTIONS_TYPE_DEFAULT = [UI_EXPORT_TYPES_STL_VALUE, UI_EXPORT_TYPES_STEP_VALUE]  # Valid values STEP, STL
+CONF_EXPORT_OPTIONS_TYPE_DEFAULT = [UI_EXPORT_TYPES_STL_VALUE, UI_EXPORT_TYPES_STEP_VALUE,
+                                         UI_EXPORT_TYPES_3MF_VALUE]                         # Valid values STEP, STL
 CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_KEY = 'excludeExternalLinks'                              # Name of the element that contains the export types
 CONF_EXPORT_OPTIONS_EXCLUDE_LINKS_DEFAULT = False                                           # True if external links should be exclude, otherwise False
 CONF_EXPORT_OPTIONS_EXCLUDE_COMPONENTS_KEY = 'excludeComponents'                            # List of occurrences that should be excluded
@@ -179,6 +219,20 @@ CONF_STL_MAX_EDGE_LENGTH_KEY = 'stlMaxEdgeLength'                               
 CONF_STL_MAX_EDGE_LENGTH_DEFAULT = 64.0312                                                  # Default for the custom max edge length
 CONF_STL_ASPECT_RATIO_KEY = 'stlAspectRatio'                                                # Name of the element that contains the stl aspect ratio for custom settings
 CONF_STL_ASPECT_RATIO_DEFAULT = 21.5000                                                     # Default for the custom aspect ratio
+
+# configuration - 3mf options
+CONF_3MF_STRUCTURE_KEY = '3mfStructure'                                                     # Name of the element that contains the 3mf structure
+CONF_3MF_STRUCTURE_DEFAULT = [UI_STRUCTURE_ONE_FILE_VALUE]                                  # Valid values 'One File', 'One File Per Body In Component, 'One File Per Body In Occurrence'
+CONF_3MF_REFINEMENT_KEY = '3mfRefinement'                                                   # Name of the element that contains the 3mf refinement
+CONF_3MF_REFINEMENT_DEFAULT = [UI_3MF_REFINEMENT_LOW_VALUE]                                 # Valid values 'Low', 'Medium', 'Hight', 'Ultra'
+CONF_3MF_SURFACE_DEVIATION_KEY = '3mfSurfaceDeviation'                                      # Name of the element that contains the 3mf surface deviation for custom settings
+CONF_3MF_SURFACE_DEVIATION_DEFAULT = 0.00321                                                # Default for the custom surface deviation
+CONF_3MF_NORMAL_DEVIATION_KEY = '3mfNormalDeviation'                                        # Name of the element that contains the 3mf normal deviation for custom settings
+CONF_3MF_NORMAL_DEVIATION_DEFAULT = 10.00                                                   # Default for the custom normal deviation
+CONF_3MF_MAX_EDGE_LENGTH_KEY = '3mfMaxEdgeLength'                                           # Name of the element that contains the 3mf max edge length for custom settings
+CONF_3MF_MAX_EDGE_LENGTH_DEFAULT = 64.0312                                                  # Default for the custom max edge length
+CONF_3MF_ASPECT_RATIO_KEY = '3mfAspectRatio'                                                # Name of the element that contains the 3mf aspect ratio for custom settings
+CONF_3MF_ASPECT_RATIO_DEFAULT = 21.5000                                                     # Default for the custom aspect ratio
 
 # configuration - step options
 CONF_STEP_STRUCTURE_KEY = 'stepStructure'                                                   # Name of the element that contains the step structure
@@ -238,6 +292,7 @@ REC_IS_UNIQUE = 'isUnique'                                                      
 REC_IS_TOP_LEVEL = 'isTopLevel'                                                             # Marker if this record should be used, if only top level components should be exported
 REC_IS_REFERENCED_COMPONENT = 'isReferencedComponent'                                       # True if this occurrence is referencing an external component otherwise false
 REC_HAS_MESH_BODIES = 'hasMeshBodies'                                                       # True if the component has mesh bodies, otherwiser False
+
 # internal structure of summary
 SUMMARY_INFOS = 'info'                                                                      # List of info messages
 SUMMARY_WARNINGS = 'warnings'                                                               # List of warnings messages

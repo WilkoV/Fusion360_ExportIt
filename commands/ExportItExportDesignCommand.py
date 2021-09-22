@@ -35,6 +35,14 @@ def createDefaultConfiguration():
     defaultConfiguration[CONF_STL_MAX_EDGE_LENGTH_KEY] = CONF_STL_MAX_EDGE_LENGTH_DEFAULT
     defaultConfiguration[CONF_STL_ASPECT_RATIO_KEY] = CONF_STL_ASPECT_RATIO_DEFAULT
     
+    # 3mf options
+    defaultConfiguration[CONF_3MF_STRUCTURE_KEY] = CONF_3MF_STRUCTURE_DEFAULT
+    defaultConfiguration[CONF_3MF_REFINEMENT_KEY] = CONF_3MF_REFINEMENT_DEFAULT
+    defaultConfiguration[CONF_3MF_SURFACE_DEVIATION_KEY] = CONF_3MF_SURFACE_DEVIATION_DEFAULT
+    defaultConfiguration[CONF_3MF_NORMAL_DEVIATION_KEY] = CONF_3MF_NORMAL_DEVIATION_DEFAULT
+    defaultConfiguration[CONF_3MF_MAX_EDGE_LENGTH_KEY] = CONF_3MF_MAX_EDGE_LENGTH_DEFAULT
+    defaultConfiguration[CONF_3MF_ASPECT_RATIO_KEY] = CONF_3MF_ASPECT_RATIO_DEFAULT
+
     # step options
     defaultConfiguration[CONF_STEP_STRUCTURE_KEY] = CONF_STEP_STRUCTURE_DEFAULT
 
@@ -133,6 +141,16 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
     addFloatInputSpinnerToGroup(UI_STL_OPTIONS_GROUP_ID, CONF_STL_MAX_EDGE_LENGTH_KEY, UI_STL_MAX_EDGE_LENGTH_NAME, "", UI_STL_MAX_EDGE_LENGTH_MIN, UI_STL_MAX_EDGE_LENGTH_MAX, UI_STL_MAX_EDGE_LENGTH_STEP, getConfiguration(CONF_STL_MAX_EDGE_LENGTH_KEY))
     addFloatInputSpinnerToGroup(UI_STL_OPTIONS_GROUP_ID, CONF_STL_ASPECT_RATIO_KEY, UI_STL_ASPECT_RATIO_NAME, "", UI_STL_ASPECT_RATIO_MIN, UI_STL_ASPECT_RATIO_MAX, UI_STL_ASPECT_RATIO_STEP, getConfiguration(CONF_STL_ASPECT_RATIO_KEY))
 
+    # 3mf export
+    addGroupToTab(UI_EXPORT_TAB_ID, UI_3MF_OPTIONS_GROUP_ID, UI_3MF_OPTIONS_GROUP_NAME, True)
+    addCheckBoxDropDown(UI_3MF_OPTIONS_GROUP_ID, CONF_3MF_STRUCTURE_KEY, UI_3MF_STRUCTURE_NAME, UI_3MF_STRUCTURE_VALUES, getConfiguration(CONF_3MF_STRUCTURE_KEY))
+    addCheckBoxDropDown(UI_3MF_OPTIONS_GROUP_ID, CONF_3MF_REFINEMENT_KEY, UI_3MF_REFINEMENT_NAME, UI_3MF_REFINEMENT_VALUES, getConfiguration(CONF_3MF_REFINEMENT_KEY))
+
+    addFloatInputSpinnerToGroup(UI_3MF_OPTIONS_GROUP_ID, CONF_3MF_SURFACE_DEVIATION_KEY, UI_3MF_SURFACE_DEVIATION_NAME, "", UI_3MF_SURFACE_DEVIATION_MIN, UI_3MF_SURFACE_DEVIATION_MAX, UI_3MF_SURFACE_DEVIATION_STEP, getConfiguration(CONF_3MF_SURFACE_DEVIATION_KEY))
+    addFloatInputSpinnerToGroup(UI_3MF_OPTIONS_GROUP_ID, CONF_3MF_NORMAL_DEVIATION_KEY, UI_3MF_NORMAL_DEVIATION_NAME, "", UI_3MF_NORMAL_DEVIATION_MIN, UI_3MF_NORMAL_DEVIATION_MAX, UI_3MF_NORMAL_DEVIATION_STEP,getConfiguration( CONF_3MF_NORMAL_DEVIATION_KEY))
+    addFloatInputSpinnerToGroup(UI_3MF_OPTIONS_GROUP_ID, CONF_3MF_MAX_EDGE_LENGTH_KEY, UI_3MF_MAX_EDGE_LENGTH_NAME, "", UI_3MF_MAX_EDGE_LENGTH_MIN, UI_3MF_MAX_EDGE_LENGTH_MAX, UI_3MF_MAX_EDGE_LENGTH_STEP, getConfiguration(CONF_3MF_MAX_EDGE_LENGTH_KEY))
+    addFloatInputSpinnerToGroup(UI_3MF_OPTIONS_GROUP_ID, CONF_3MF_ASPECT_RATIO_KEY, UI_3MF_ASPECT_RATIO_NAME, "", UI_3MF_ASPECT_RATIO_MIN, UI_3MF_ASPECT_RATIO_MAX, UI_3MF_ASPECT_RATIO_STEP, getConfiguration(CONF_3MF_ASPECT_RATIO_KEY))
+
     # step export
     addGroupToTab(UI_EXPORT_TAB_ID, UI_STEP_OPTIONS_GROUP_ID, UI_STEP_OPTIONS_GROUP_NAME, True)
     addCheckBoxDropDown(UI_STEP_OPTIONS_GROUP_ID, CONF_STEP_STRUCTURE_KEY, UI_STEP_STRUCTURE_NAME, UI_STEP_STRUCTURE_VALUES, getConfiguration(CONF_STEP_STRUCTURE_KEY))
@@ -191,6 +209,7 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
         addStringInputToGroup(UI_VERSION_GROUP_ID, UI_VERSION_DOWNLOAD_URL_ID, UI_VERSION_DOWNLOAD_URL_NAME, githubDownloadUrl, True)
 
     showHideCustomStlSettings(inputs)
+    showHideCustom3mfSettings(inputs)
 
 def showHideCustomStlSettings(inputs):
     if UI_STL_REFINEMENT_CUSTOM_VALUE in getConfiguration(CONF_STL_REFINEMENT_KEY):
@@ -205,6 +224,20 @@ def showHideCustomStlSettings(inputs):
         hideUiElement(inputs, CONF_STL_NORMAL_DEVIATION_KEY)
         hideUiElement(inputs, CONF_STL_MAX_EDGE_LENGTH_KEY)
         hideUiElement(inputs, CONF_STL_ASPECT_RATIO_KEY)
+
+def showHideCustom3mfSettings(inputs):
+    if UI_3MF_REFINEMENT_CUSTOM_VALUE in getConfiguration(CONF_3MF_REFINEMENT_KEY):
+        # custom 3mf refinements are enabled. Show additional configuration fields
+        showUiElement(inputs, CONF_3MF_SURFACE_DEVIATION_KEY)
+        showUiElement(inputs, CONF_3MF_NORMAL_DEVIATION_KEY)
+        showUiElement(inputs, CONF_3MF_MAX_EDGE_LENGTH_KEY)
+        showUiElement(inputs, CONF_3MF_ASPECT_RATIO_KEY)
+    else:
+        # custom 3mf refinements are disabled. Hide additional configuration fields
+        hideUiElement(inputs, CONF_3MF_SURFACE_DEVIATION_KEY)
+        hideUiElement(inputs, CONF_3MF_NORMAL_DEVIATION_KEY)
+        hideUiElement(inputs, CONF_3MF_MAX_EDGE_LENGTH_KEY)
+        hideUiElement(inputs, CONF_3MF_ASPECT_RATIO_KEY)
 
 def getExportDirectory():
     # check if export direcotry is set
@@ -253,12 +286,20 @@ def validateConfiguration(inputs):
         # check if any refinement is selected
         validateCheckBoxDropDown(inputs, CONF_STL_REFINEMENT_KEY, CONF_STL_REFINEMENT_DEFAULT)
 
+    # check 3mf settings
+    if UI_EXPORT_TYPES_3MF_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
+        # check if any export structure is selected
+        validateCheckBoxDropDown(inputs, CONF_3MF_STRUCTURE_KEY, CONF_3MF_STRUCTURE_DEFAULT)
+        # check if any refinement is selected
+        validateCheckBoxDropDown(inputs, CONF_3MF_REFINEMENT_KEY, CONF_3MF_REFINEMENT_DEFAULT)
+
     # check step settings
     if UI_EXPORT_TYPES_STEP_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
         # check if any export structure is selected
         validateCheckBoxDropDown(inputs, CONF_STEP_STRUCTURE_KEY, CONF_STEP_STRUCTURE_DEFAULT)
 
     showHideCustomStlSettings(inputs)
+    showHideCustom3mfSettings(inputs)
 
 def validateExportDirectory():
     # check if export directory is defined
@@ -488,6 +529,20 @@ def totalNumberOfObjects(exportObjects):
             if UI_STRUCTURE_ONE_FILE_PER_TOP_LEVEL_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
                 total = total + topLevelOccurrences
 
+    for refinement in getConfiguration(CONF_3MF_REFINEMENT_KEY):
+        if UI_EXPORT_TYPES_3MF_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
+            if UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_3MF_STRUCTURE_KEY):
+                total = total + 1
+
+            if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getConfiguration(CONF_3MF_STRUCTURE_KEY):
+                total = total + componentBodies
+
+            if UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_3MF_STRUCTURE_KEY):
+                total = total + occurrenceBodies
+
+            if UI_STRUCTURE_ONE_FILE_PER_TOP_LEVEL_OCCURRENCE_VALUE in getConfiguration(CONF_3MF_STRUCTURE_KEY):
+                total = total + topLevelOccurrences
+
     logger.debug("components: %s", components)
     logger.debug("componentBodies: %s", componentBodies)
     logger.debug("occurrenceBodies: %s", occurrenceBodies)
@@ -546,6 +601,7 @@ def getExportName(projectName, designName, occurrenceFullPathName, bodyName, for
     if bodyName:
         nameElements.append(bodyName)
 
+#TODO: Needed for 3mf??????????????????????
     # add refinement name
     if refinementName and suffix == UI_EXPORT_TYPES_STL_VALUE:
         nameElements.append(refinementName.lower())
@@ -1095,6 +1151,238 @@ def exportStlAsOneFilePerTopOccurrence(exportObjects, projectName, designName, a
             except:
                 logger.error(traceback.format_exc())
 
+# TODO Implement 3mf
+def get3mfExportOptions(ao, geometry, fullFileName, refinement):
+    # get 3mf export options
+    c3mfExportOptions = ao.export_manager.createC3MFExportOptions(geometry, fullFileName)
+
+    # set export resolution
+    if refinement == UI_3MF_REFINEMENT_LOW_VALUE:
+        c3mfExportOptions.meshRefinement = adsk.fusion.MeshRefinementSettings.MeshRefinementLow
+
+    elif refinement == UI_3MF_REFINEMENT_MEDIUM_VALUE:
+        c3mfExportOptions.meshRefinement = adsk.fusion.MeshRefinementSettings.MeshRefinementMedium
+
+    elif refinement == UI_3MF_REFINEMENT_HIGH_VALUE:
+        c3mfExportOptions.meshRefinement = adsk.fusion.MeshRefinementSettings.MeshRefinementHigh
+
+    elif refinement == UI_3MF_REFINEMENT_ULTRA_VALUE:
+        c3mfExportOptions.meshRefinement = adsk.fusion.MeshRefinementSettings.MeshRefinementCustom
+        c3mfExportOptions.surfaceDeviation = 0.000508
+        c3mfExportOptions.normalDeviation = 5.0000
+    elif refinement == UI_3MF_REFINEMENT_CUSTOM_VALUE:
+        c3mfExportOptions.meshRefinement = adsk.fusion.MeshRefinementSettings.MeshRefinementCustom
+        c3mfExportOptions.surfaceDeviation = float(getConfiguration(CONF_3MF_SURFACE_DEVIATION_KEY))
+        c3mfExportOptions.normalDeviation = float(getConfiguration(CONF_3MF_NORMAL_DEVIATION_KEY))
+        c3mfExportOptions.maximumEdgeLength = float(getConfiguration(CONF_3MF_MAX_EDGE_LENGTH_KEY))
+        c3mfExportOptions.aspectRatio = float(getConfiguration(CONF_3MF_ASPECT_RATIO_KEY))
+
+    return c3mfExportOptions
+
+def export3mfAsOneFile(projectName, designName, rootComponent, exportObjects, ao):
+    for refinement in getConfiguration(CONF_3MF_REFINEMENT_KEY):
+        # cancel loop if user canceld the dialog
+        if progressDialog.wasCancelled:
+            progressDialog.hide()
+            break
+
+        refinementName = ""
+        if len(getConfiguration(CONF_3MF_REFINEMENT_KEY)) > 1:
+            # set refinement name if more than one refinement is defined to keep the exportname unique
+            refinementName = refinement
+
+        # create filename
+        fullFileName = getExportName(projectName, designName, "", "", True, True, refinementName, UI_EXPORT_TYPES_3MF_VALUE)
+
+        # get 3mf export options
+        c3mfExportOptions = get3mfExportOptions(ao, rootComponent, fullFileName, refinement)
+
+        # export design as single 3mf file
+        exportResult = ao.export_manager.execute(c3mfExportOptions)
+
+        # update summary
+        hasMeshBodies = documentHasMeshBodies(exportObjects)
+
+        if exportResult and not hasMeshBodies:
+            addInfoToSummary(UI_EXPORT_TYPES_3MF_VALUE, fullFileName)
+        else:
+            if hasMeshBodies:
+                addWarningToSummary(UI_EXPORT_TYPES_3MF_VALUE, "Mesh", fullFileName)
+            else:
+                addErrorToSummary(UI_EXPORT_TYPES_3MF_VALUE, "UK", fullFileName)
+
+        updateProgressDialog()
+
+def export3mfAsOneFilePerBodyInComponent(exportObjects, projectName, designName, ao):
+    for refinement in getConfiguration(CONF_3MF_REFINEMENT_KEY):
+        # cancel loop if user canceld the dialog
+        if progressDialog.wasCancelled:
+            progressDialog.hide()
+            break
+
+        # set refinement name
+        refinementName = ""
+        if len(getConfiguration(CONF_3MF_REFINEMENT_KEY)) > 1:
+            # set refinement name if more than one refinement is defined to keep the exportname unique
+            refinementName = refinement
+
+        # iterate over list of occurrences
+        for exportObject in exportObjects:
+            # cancel loop if user canceld the dialog
+            if progressDialog.wasCancelled:
+                progressDialog.hide()
+                break
+
+            # check if component is unique
+            if not exportObject.get(REC_IS_UNIQUE):
+                continue
+
+            hasMeshBodies = exportObject.get(REC_HAS_MESH_BODIES)
+
+            if len(exportObject.get(REC_BODIES)) == 0 and hasMeshBodies:
+                path = ""
+                if exportObject.get(REC_OCCURRENCE) != "":
+                    path = exportObject.get(REC_OCCURRENCE).name
+                else:
+                    path = "root"
+
+                addWarningToSummary(UI_EXPORT_TYPES_3MF_VALUE, "Mesh", path)
+            
+            # Components with no bodies are REC_IS_TOP_LEVEL == True records with sub-components and no top level bodies. 
+            # Those records are creating duplicated / unwanted files in this scenario and can be skipped
+            if len(exportObject.get(REC_BODIES)) == 0:
+                continue
+
+            # iterate over list of bodies
+            for body in exportObject.get(REC_BODIES):
+                # cancel loop if user canceld the dialog
+                if progressDialog.wasCancelled:
+                    progressDialog.hide()
+                    break
+
+                # create filename
+                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_3MF_VALUE)
+
+                # get 3mf export options
+                c3mfExportOptions = get3mfExportOptions(ao, body, fullFileName, refinement)
+
+                # export body as single 3mf file
+                exportResult = ao.export_manager.execute(c3mfExportOptions)
+
+                # update summary
+                if exportResult:
+                    addInfoToSummary(UI_EXPORT_TYPES_3MF_VALUE, fullFileName)
+                else:
+                    addErrorToSummary(UI_EXPORT_TYPES_3MF_VALUE, "UK", fullFileName)
+
+                updateProgressDialog()
+
+def export3mfAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName, ao):
+    # generate exports for each selected refinement
+    for refinement in getConfiguration(CONF_3MF_REFINEMENT_KEY):
+        # cancel loop if user canceld the dialog
+        if progressDialog.wasCancelled:
+            progressDialog.hide()
+            break
+        # set refinement name
+
+        refinementName = ""
+        if len(getConfiguration(CONF_3MF_REFINEMENT_KEY)) > 1:
+            # set refinement name if more than one refinement is defined to keep the exportname unique
+            refinementName = refinement
+
+        # iterate over list of occurrences
+        for exportObject in exportObjects:
+            # cancel loop if user canceld the dialog
+            if progressDialog.wasCancelled:
+                progressDialog.hide()
+                break
+
+            # Components with no bodies are REC_IS_TOP_LEVEL == True records with sub-components and no top level bodies. 
+            # Those records are creating duplicated / unwanted files in this scenario and can be skipped
+            if len(exportObject.get(REC_BODIES)) == 0:
+                continue
+
+            hasMeshBodies = exportObject.get(REC_HAS_MESH_BODIES)
+
+            if len(exportObject.get(REC_BODIES)) == 0 and hasMeshBodies:
+                path = ""
+                if exportObject.get(REC_OCCURRENCE) != "":
+                    path = exportObject.get(REC_OCCURRENCE).name
+                else:
+                    path = "root"
+                    
+                addWarningToSummary(UI_EXPORT_TYPES_3MF_VALUE, "Mesh", path)
+
+            # iterate over list of bodies
+            for body in exportObject.get(REC_BODIES):
+                # cancel loop if user canceld the dialog
+                if progressDialog.wasCancelled:
+                    progressDialog.hide()
+                    break
+
+                # create filename but remove occurrence id unless they're part of the occurrence name in the temporary document
+                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_3MF_VALUE)
+
+                # get 3mf export options
+                c3mfExportOptions = get3mfExportOptions(ao, body, fullFileName, refinement)
+
+                # export body as single 3mf file
+                exportResult = ao.export_manager.execute(c3mfExportOptions)
+
+                # update summary
+                if exportResult:
+                    addInfoToSummary(UI_EXPORT_TYPES_3MF_VALUE, fullFileName)
+                else:
+                    addErrorToSummary(UI_EXPORT_TYPES_3MF_VALUE, "UK", fullFileName)
+
+                updateProgressDialog()
+
+def export3mfAsOneFilePerTopOccurrence(exportObjects, projectName, designName, ao):
+    # generate exports for each selected refinement
+    for refinement in getConfiguration(CONF_3MF_REFINEMENT_KEY):
+        # cancel loop if user canceld the dialog
+        if progressDialog.wasCancelled:
+            progressDialog.hide()
+            break
+        # set refinement name
+
+        refinementName = ""
+        if len(getConfiguration(CONF_3MF_REFINEMENT_KEY)) > 1:
+            # set refinement name if more than one refinement is defined to keep the exportname unique
+            refinementName = refinement
+
+        # iterate over list of occurrences
+        for exportObject in exportObjects:
+            try:
+                # cancel loop if user canceld the dialog
+                if progressDialog.wasCancelled:
+                    progressDialog.hide()
+                    break
+
+                # check if component is unique+
+                if not exportObject.get(REC_IS_TOP_LEVEL):
+                    continue
+
+                # create filename but remove occurrence id unless they're part of the occurrence name in the temporary document
+                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, refinementName, UI_EXPORT_TYPES_3MF_VALUE)
+
+                # get 3mf export options
+                c3mfExportOptions = get3mfExportOptions(ao, exportObject.get(REC_OCCURRENCE), fullFileName, refinement)
+
+                # export body as single 3mf file
+                exportResult = ao.export_manager.execute(c3mfExportOptions)
+
+                # update summary
+                if exportResult:
+                    addInfoToSummary(UI_EXPORT_TYPES_3MF_VALUE, fullFileName)
+                else:
+                    addErrorToSummary(UI_EXPORT_TYPES_3MF_VALUE, "UK", fullFileName)
+
+                updateProgressDialog()
+            except:
+                logger.error(traceback.format_exc())
+
 def resetData():
     global progressDialog
     global progressValue
@@ -1134,7 +1422,7 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
 
     def on_input_changed(self, command: adsk.core.Command, inputs: adsk.core.CommandInputs, changed_input, input_values):
         logger.debug("changed_input.objectType: %s", changed_input.objectType)
-
+        
         # process changed element
         if changed_input.objectType == 'adsk::core::CommandInput':
             pass
@@ -1170,6 +1458,10 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             # print configuration to the log file
             logConfiguration()
 
+            # write configuration to document because some settings might loose link to this document
+            ao = AppObjects()
+            writeConfiguration(ao.document, CONF_PROJECT_ATTRIBUTE_GROUP, CONF_PROJECT_ATTRIBUTE_KEY)
+
             # create progress dialog
             global progressDialog
             global progressValue
@@ -1196,6 +1488,8 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
             except:
                 pass
 
+            tmpExportObjects = []
+            
             if not progressDialog.wasCancelled and UI_EXPORT_TYPES_F3D_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
                 # export design as one step file
                 if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_F3D_STRUCTURE_KEY):
@@ -1223,7 +1517,6 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
                 if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
                     exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName, ao)
 
-
                 if not progressDialog.wasCancelled and (UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY)
                     or UI_STRUCTURE_ONE_FILE_PER_TOP_LEVEL_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY)):
                     # copy exportObjects into a temporary document and convert all occurrences into unique components.
@@ -1239,6 +1532,35 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
                     # export each top level occurrence as individual stl files
                     if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_TOP_LEVEL_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
                         exportStlAsOneFilePerTopOccurrence(tmpExportObjects, projectName, designName, ao)
+
+#TODO Implement 3mf
+            if not progressDialog.wasCancelled and UI_EXPORT_TYPES_3MF_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
+                # export design as one 3mf file
+                if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_3MF_STRUCTURE_KEY):
+                    export3mfAsOneFile(projectName, designName, rootComponent, exportObjects, ao)
+
+                # export each body in component as individual 3mf files
+                if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_COMPONENT_VALUE in getConfiguration(CONF_3MF_STRUCTURE_KEY):
+                    export3mfAsOneFilePerBodyInComponent(exportObjects, projectName, designName, ao)
+
+                if not progressDialog.wasCancelled and (UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_3MF_STRUCTURE_KEY)
+                    or UI_STRUCTURE_ONE_FILE_PER_TOP_LEVEL_OCCURRENCE_VALUE in getConfiguration(CONF_3MF_STRUCTURE_KEY)):
+
+                    if not tmpExportObjects:
+                        # copy exportObjects into a temporary document and convert all occurrences into unique components.
+                        tmpDocument, tmpRootComponent = copyDesignToExportDocument(exportObjects)
+
+                        # regenerate list of export objects based
+                        tmpExportObjects = getExportObjects(tmpRootComponent, [], False)
+
+                    # export each body in occurrence as individual 3mf files
+                    if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_BODY_IN_OCCURRENCE_VALUE in getConfiguration(CONF_3MF_STRUCTURE_KEY):
+                        export3mfAsOneFilePerBodyInOccurrence(tmpExportObjects, projectName, designName, ao)
+
+                    # export each top level occurrence as individual 3mf files
+                    if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_TOP_LEVEL_OCCURRENCE_VALUE in getConfiguration(CONF_3MF_STRUCTURE_KEY):
+                        export3mfAsOneFilePerTopOccurrence(tmpExportObjects, projectName, designName, ao)
+
 
             # hide progress dialog
             if progressDialog.isShowing:
