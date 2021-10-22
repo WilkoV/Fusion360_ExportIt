@@ -388,6 +388,7 @@ Version | Date | Description
 0.8.3 | 20.03.2020 | Apper framework updated
 0.8.4 | 20.03.2020 | Apper framework updated
 0.9.0 | 21.09.2021 | 3mf exports added
+1.0.0 | 22.10.2021 | Name issue for some 3mf exports fixed. Apper framework updated
 
 ## Known Issus
 
@@ -406,7 +407,7 @@ Version | Date | Description
 - [x] Configuration validation.
 - [x] Show export summary message after export.
 - [x] Show progress dialog
-- [X] Cleaner user interface
+- [x] Cleaner user interface
 - [x] Add auto save option for changed configuration
 - [x] Filename filter to replace spaces with configurable character.
 - [x] Export filter that excludes linked components.

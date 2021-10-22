@@ -601,9 +601,8 @@ def getExportName(projectName, designName, occurrenceFullPathName, bodyName, for
     if bodyName:
         nameElements.append(bodyName)
 
-#TODO: Needed for 3mf??????????????????????
     # add refinement name
-    if refinementName and suffix == UI_EXPORT_TYPES_STL_VALUE:
+    if refinementName and (suffix == UI_EXPORT_TYPES_STL_VALUE or suffix == UI_EXPORT_TYPES_3MF_VALUE):
         nameElements.append(refinementName.lower())
 
     # assemble suffix name
@@ -1151,7 +1150,6 @@ def exportStlAsOneFilePerTopOccurrence(exportObjects, projectName, designName, a
             except:
                 logger.error(traceback.format_exc())
 
-# TODO Implement 3mf
 def get3mfExportOptions(ao, geometry, fullFileName, refinement):
     # get 3mf export options
     c3mfExportOptions = ao.export_manager.createC3MFExportOptions(geometry, fullFileName)
@@ -1533,7 +1531,6 @@ class ExportItExportDesignCommand(apper.Fusion360CommandBase):
                     if not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_PER_TOP_LEVEL_OCCURRENCE_VALUE in getConfiguration(CONF_STL_STRUCTURE_KEY):
                         exportStlAsOneFilePerTopOccurrence(tmpExportObjects, projectName, designName, ao)
 
-#TODO Implement 3mf
             if not progressDialog.wasCancelled and UI_EXPORT_TYPES_3MF_VALUE in getConfiguration(CONF_EXPORT_OPTIONS_TYPE_KEY):
                 # export design as one 3mf file
                 if  not progressDialog.wasCancelled and UI_STRUCTURE_ONE_FILE_VALUE in getConfiguration(CONF_3MF_STRUCTURE_KEY):
