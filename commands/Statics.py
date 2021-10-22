@@ -195,7 +195,7 @@ CONF_DEFAULT_CONFIG_NAME = 'Defaults.json'                                      
 CONF_PROJECT_ATTRIBUTE_GROUP = 'ExportIt'                                                   # Name of the attribute group that stores the project specific data
 CONF_PROJECT_ATTRIBUTE_KEY = 'projectConfiguration'                                         # Key of the key that contains the project specific configuration (delta to default configuration)
 CONF_VERSION_KEY = 'version'                                                                # Key of the element that contains the version of the default configuration
-CONF_VERSION_DEFAULT = '0.9.0'                                                              # Default version of the default configuration
+CONF_VERSION_DEFAULT = '1.0.0'                                                              # Default version of the default configuration
 
 # configuration - export options
 CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # Name of the element that contains the export types
