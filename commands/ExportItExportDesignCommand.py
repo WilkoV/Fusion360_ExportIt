@@ -54,6 +54,7 @@ def createDefaultConfiguration():
     defaultConfiguration[CONF_EXPORT_DIRECTORY_KEY] = CONF_EXPORT_DIRECTORY_DEFAULT
     defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY] = CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_DEFAULT
     defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY] = CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_DEFAULT
+    defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_DENSITY_NAME_KEY] = CONF_EXPORT_DIRECTORY_ADD_DENSITY_NAME_DEFAULT
     defaultConfiguration[CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY] = CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_DEFAULT
 
     # filename options
@@ -173,6 +174,7 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
     addBoolInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY, UI_EXPORT_DIRECTORY_ADD_PROJECT_NAME_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY))
     addBoolInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY, UI_EXPORT_DIRECTORY_ADD_DESIGN_NAME_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY))
     addBoolInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY, UI_EXPORT_DIRECTORY_EXPORT_TYPE_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY))
+    addBoolInputToGroup(UI_EXPORT_DIRECTORY_OPTIONS_GROUP_ID, CONF_EXPORT_DIRECTORY_ADD_DENSITY_NAME_KEY, UI_EXPORT_DIRECTORY_ADD_DENSITY_NAME_NAME, getConfiguration(CONF_EXPORT_DIRECTORY_ADD_DENSITY_NAME_KEY))
 
     # filename options
     addGroupToTab(UI_LOCATION_TAB_ID, UI_FILENAME_OPTIONS_GROUP_ID, UI_FILENAME_OPTIONS_GROUP_NAME, True)
@@ -570,7 +572,12 @@ def getExportName(projectName, designName, occurrenceFullPathName, bodyName, for
         exportDirectory = exportDirectory + removeVersionTag(designName) + "/"
 
     if getConfiguration(CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY):
-        exportDirectory = exportDirectory + suffix + "/"
+        exportDirectory = exportDirectory + suffix
+
+        if getConfiguration(CONF_EXPORT_DIRECTORY_ADD_DENSITY_NAME_KEY) and refinementName and suffix == UI_EXPORT_TYPES_STL_VALUE:
+            exportDirectory = exportDirectory + " - " + refinementName.lower()
+
+        exportDirectory = exportDirectory + "/"
 
     os.makedirs(exportDirectory, 0o777, True)
 
@@ -592,7 +599,7 @@ def getExportName(projectName, designName, occurrenceFullPathName, bodyName, for
         else:
             pathName = pathName.replace(":", getConfiguration(CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY))
 
-        # replace occurrences seperator
+        # replace occurrences separator
         pathName = pathName.replace("+", elementSeparator)
 
         nameElements.append(removeVersionTag(pathName))

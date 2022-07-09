@@ -150,6 +150,7 @@ UI_EXPORT_DIRECTORY_RESET_NAME = 'Reset Export Directory'                       
 UI_EXPORT_DIRECTORY_RESET_DEFAULT = False                                                   # True to trigger the reset of the export directory otherwise False
 UI_EXPORT_DIRECTORY_ADD_PROJECT_NAME_NAME = 'Add Project Name'                              # True if the name of the project should be added to the export directory otherwise False
 UI_EXPORT_DIRECTORY_ADD_DESIGN_NAME_NAME = 'Add Design Name'                                # True if the name of the design should be added to the export directory otherwise False
+UI_EXPORT_DIRECTORY_ADD_DENSITY_NAME_NAME = 'Add Refinement Name'                           # Add density name to the export directory (stl only)
 UI_EXPORT_DIRECTORY_EXPORT_TYPE_NAME = 'Add Export Type'                                    # True if the name of the export type should be added to the export directory otherwise False
 
 # user interface - filename options
@@ -195,7 +196,7 @@ CONF_DEFAULT_CONFIG_NAME = 'Defaults.json'                                      
 CONF_PROJECT_ATTRIBUTE_GROUP = 'ExportIt'                                                   # Name of the attribute group that stores the project specific data
 CONF_PROJECT_ATTRIBUTE_KEY = 'projectConfiguration'                                         # Key of the key that contains the project specific configuration (delta to default configuration)
 CONF_VERSION_KEY = 'version'                                                                # Key of the element that contains the version of the default configuration
-CONF_VERSION_DEFAULT = '1.0.0'                                                              # Default version of the default configuration
+CONF_VERSION_DEFAULT = '1.1.0'                                                              # Default version of the default configuration
 
 # configuration - export options
 CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # Name of the element that contains the export types
@@ -251,6 +252,8 @@ CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_KEY = 'addProjectNameToDirectory'        
 CONF_EXPORT_DIRECTORY_ADD_PROJECT_NAME_DEFAULT = False                                      # Valid values for the default: True, False
 CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_KEY = 'addDesignNameToDirectory'                      # True if the name of the design should be added to the export directory otherwise False
 CONF_EXPORT_DIRECTORY_ADD_DESIGN_NAME_DEFAULT = True                                        # Valid values for the default: True, False
+CONF_EXPORT_DIRECTORY_ADD_DENSITY_NAME_KEY = 'addDensityTypeToDirectory'                    # Valid values for the default: True, False
+CONF_EXPORT_DIRECTORY_ADD_DENSITY_NAME_DEFAULT = False                                      # True if the name of the density should be added to the export directory otherwise False
 CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_KEY = 'addExportTypeToDirectory'                      # True if the name of the export type should be added to the export directory otherwise False
 CONF_EXPORT_DIRECTORY_ADD_EXPORT_TYPE_DEFAULT = True                                        # Valid values for the default: True, False
 
