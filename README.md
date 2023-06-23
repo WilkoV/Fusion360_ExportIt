@@ -2,40 +2,39 @@
 
 ## Table of content
 
-- [ExportIt](#exportit)
-  - [Table of content](#table-of-content)
-  - [Summary](#summary)
-  - [Export Design Command](#export-design-command)
-    - [Basic workflow](#basic-workflow)
-    - [Summary Report](#summary-report)
-    - [Common Terms and Mechanics](#common-terms-and-mechanics)
-    - [Configuration](#configuration)
-  - [Default Configuration Command](#default-configuration-command)
-    - [Export](#export)
-    - [Export Options](#export-options)
-      - [STL Options](#stl-options)
-        - [Examples](#examples)
-      - [3MF Options](#3mf-options)
-      - [STEP Options](#step-options)
-      - [F3D Options](#f3d-options)
-    - [Location](#location)
-      - [Export Directory Options](#export-directory-options)
-      - [Filename Options](#filename-options)
-    - [Misc](#misc)
-      - [Common](#common)
-        - [Show Summary](#show-summary)
-        - [Auto Save](#auto-save)
-      - [Version Info](#version-info)
-  - [Elements Of The Export Name](#elements-of-the-export-name)
-    - [STL Export Name](#stl-export-name)
-    - [3MF Export Name](#3mf-export-name)
-    - [STEP Export Name](#step-export-name)
-    - [F3D Export Name](#f3d-export-name)
-  - [Installation](#installation)
-  - [Compatibility](#compatibility)
-  - [What's New](#whats-new)
-  - [Known Issus](#known-issus)
-  - [Wishlist](#wishlist)
+- [Table of content](#table-of-content)
+- [Summary](#summary)
+- [Export Design Command](#export-design-command)
+  - [Basic workflow](#basic-workflow)
+  - [Summary Report](#summary-report)
+  - [Common Terms and Mechanics](#common-terms-and-mechanics)
+  - [Configuration](#configuration)
+- [Default Configuration Command](#default-configuration-command)
+  - [Export](#export)
+  - [Export Options](#export-options)
+    - [STL Options](#stl-options)
+      - [Examples](#examples)
+    - [3MF Options](#3mf-options)
+    - [STEP Options](#step-options)
+    - [F3D Options](#f3d-options)
+  - [Location](#location)
+    - [Export Directory Options](#export-directory-options)
+    - [Filename Options](#filename-options)
+  - [Misc](#misc)
+    - [Common](#common)
+      - [Show Summary](#show-summary)
+      - [Auto Save](#auto-save)
+    - [Version Info](#version-info)
+- [Elements Of The Export Name](#elements-of-the-export-name)
+  - [STL Export Name](#stl-export-name)
+  - [3MF Export Name](#3mf-export-name)
+  - [STEP Export Name](#step-export-name)
+  - [F3D Export Name](#f3d-export-name)
+- [Installation](#installation)
+- [Compatibility](#compatibility)
+- [What's New](#whats-new)
+- [Known Issus](#known-issus)
+- [Wishlist](#wishlist)
 
 ## Summary
 
@@ -240,6 +239,7 @@ Export Directory | Checked / Unchecked| Target directory of the export or base d
 Add Project Name | Checked / Unchecked| If checked the project name will be added to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest
 Add Design Name |Checked / Unchecked | If checked the design name will be added to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest/01-Default
 Add Export Type |Checked / Unchecked | If checked the name of the export type (stl, step) to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest/01-Default/step
+Add Refinement Name |Checked / Unchecked | If checked and the export type is STL the refinement name will be added to the export path | D:/Google Drive/3d Printing/Fusion 360/ExportItTest/01-Default/stl - low/
 
 #### Filename Options
 
@@ -389,6 +389,7 @@ Version | Date | Description
 0.8.4 | 20.03.2020 | Apper framework updated
 0.9.0 | 21.09.2021 | 3mf exports added
 1.0.0 | 22.10.2021 | Name issue for some 3mf exports fixed. Apper framework updated
+1.1.0 | 09.07.2021 | Refinement names can now be added to the export path. This also fixes #40.
 
 ## Known Issus
 
