@@ -4,7 +4,7 @@
     "id": "4dcff078-d99d-4918-809e-1dfb912d2c44",
     "author": "Wilko Vehreke",
     "description": "Export a design or parts of a design into several formats",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "runOnStartup": false,
     "supportedOS": "windows|mac",
     "editEnabled": true

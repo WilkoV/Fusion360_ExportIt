@@ -268,7 +268,8 @@ Occurrence ID Separator | \_ | This options uses a "_" (underscore) as the separ
 Replace Spaces | True / False | This option enables the replacement of spaces in the filename. | 08-ReplaceSpaces.just-a-block_1.Body1.low.stl
 Replace Spaces With | . | This options uses a "." (dot) as a replacement. | 08-ReplaceSpaces.just.a.block_1.Body1.low.stl
 Replace Spaces With | - | This options uses a "-" (dash) as a replacement. |  08-ReplaceSpaces.just-a-block_1.Body1.low.stl
-Replace Spaces With | \_ | This options uses a "_" (underscore) as a replacement. |  08-ReplaceSpaces.just\_a\_block_1.Body1.low.stl
+Replace Spaces With | | Uses the part id of a component instead of the component name |  08-ReplaceSpaces.just\_a\_block_1.Body1.low.stl
+Replace Component Name With Part Number | \_ | This options uses a "_" (underscore) as a replacement. |  09-component-partNumber.123
 
 More details about the components of the export name can be found [here](#elements-of-the-export-name).
 
@@ -390,6 +391,7 @@ Version | Date | Description
 0.9.0 | 21.09.2021 | 3mf exports added
 1.0.0 | 22.10.2021 | Name issue for some 3mf exports fixed. Apper framework updated
 1.1.0 | 09.07.2021 | Refinement names can now be added to the export path. This also fixes #40.
+1.2.0 | 25.11.2023 | Components can now be exported by using the name or the part id in filenames.
 
 ## Known Issus
 
@@ -401,15 +403,4 @@ Version | Date | Description
 - [ ] Special refinement for selected bodies that is stored in the project configuration.
 - [ ] Export of projects.
 - [ ] Selection of stl format (text / binary).
-- [x] Defaults editor.
-- [x] Export of selected bodies.
-- [x] STEP Exports.
-- [x] F3D Exports.
-- [x] Configuration validation.
-- [x] Show export summary message after export.
-- [x] Show progress dialog
-- [x] Cleaner user interface
-- [x] Add auto save option for changed configuration
-- [x] Filename filter to replace spaces with configurable character.
-- [x] Export filter that excludes linked components.
-- [x] Custom stl refinement.
+
