@@ -65,6 +65,7 @@ def createDefaultConfiguration():
     defaultConfiguration[CONF_FILENAME_ELEMENT_SEPERATOR_KEY] = CONF_FILENAME_ELEMENT_SEPERATOR_DEFAULT
     defaultConfiguration[CONF_FILENAME_REPLACE_SPACES_KEY] = CONF_FILENAME_REPLACE_SPACES_DEFAULT
     defaultConfiguration[CONF_FILENAME_REPLACE_SPACES_WITH_KEY] = CONF_FILENAME_REPLACE_SPACES_WITH_DEFAULT
+    defaultConfiguration[CONF_FILENAME_USE_PART_NUMBER_KEY] = CONF_FILENAME_USE_PART_NUMBER_DEFAULT
 
     # common
     defaultConfiguration[CONF_SHOW_SUMMARY_FOR_KEY] = CONF_SHOW_SUMMARY_FOR_DEFAULT
@@ -186,6 +187,9 @@ def initializeUi(inputs :adsk.core.CommandInputs, configurationOnly, checkForUpd
     addTextListDropDown(UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY, UI_FILENAME_OCCURRENCE_ID_SEPERATOR_NAME, UI_FILENAME_OCCURRENCE_ID_SEPERATOR_VALUES, getConfiguration(CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY))
     addBoolInputToGroup(UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_REPLACE_SPACES_KEY, UI_FILENAME_REPLACE_SPACES_NAME, getConfiguration(CONF_FILENAME_REPLACE_SPACES_KEY))
     addTextListDropDown(UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_REPLACE_SPACES_WITH_KEY, UI_FILENAME_REPLACE_SPACES_WITH_NAME, UI_FILENAME_REPLACE_SPACES_WITH_VALUES, getConfiguration(CONF_FILENAME_REPLACE_SPACES_WITH_KEY))
+    
+    addBoolInputToGroup(UI_FILENAME_OPTIONS_GROUP_ID, CONF_FILENAME_USE_PART_NUMBER_KEY, UI_FILENAME_USE_PART_NUMBER_NAME, getConfiguration(CONF_FILENAME_USE_PART_NUMBER_KEY))
+
 
     # location
     if configurationOnly or checkForUpdates:
@@ -398,6 +402,7 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies, proce
         isTopLevel = False
         hasMeshBodies = False
 
+        partNumber = ""
         occurrenceFullPathName = occurrence.fullPathName
 
         # check if occurrence is referencing a external component
@@ -459,8 +464,11 @@ def getExportObjects(rootComponent :adsk.fusion.Component, selectedBodies, proce
             logger.info("%s has no bodies", occurrenceFullPathName)
             continue
 
+        if (occurrence.component.partNumber != occurrence.component.name):
+            partNumber = occurrence.component.partNumber
+
         # if occurrence has bodies, add occurrence to the list of exportable objects
-        exportObjects.append({REC_OCCURRENCE: occurrence, REC_OCCURRENCE_PATH: occurrenceFullPathName, REC_IS_UNIQUE: isUnique, REC_IS_TOP_LEVEL: isTopLevel, REC_IS_REFERENCED_COMPONENT: isReferencedComponent, REC_HAS_MESH_BODIES: hasMeshBodies, REC_BODIES: occurrenceBodies})
+        exportObjects.append({REC_OCCURRENCE: occurrence, REC_OCCURRENCE_PATH: occurrenceFullPathName, REC_IS_UNIQUE: isUnique, REC_IS_TOP_LEVEL: isTopLevel, REC_IS_REFERENCED_COMPONENT: isReferencedComponent, REC_HAS_MESH_BODIES: hasMeshBodies, REC_BODIES: occurrenceBodies, REC_PART_NUMBER: partNumber})
 
     logger.debug(exportObjects)
     return exportObjects
@@ -559,7 +567,7 @@ def removeVersionTag(name):
 
     return re.sub(r' v[0-9]*', '', name)
 
-def getExportName(projectName, designName, occurrenceFullPathName, bodyName, forceAddDesignName, removeOccurrenceNumber, refinementName, suffix):
+def getExportName(projectName, designName, occurrenceFullPathName, bodyName, forceAddDesignName, removeOccurrenceNumber, refinementName, suffix, partId):
     nameElements = []
 
     # create export directory path
@@ -594,7 +602,9 @@ def getExportName(projectName, designName, occurrenceFullPathName, bodyName, for
     if occurrenceFullPathName:
         # replace occurrence id
         pathName = occurrenceFullPathName
-        if removeOccurrenceNumber:
+        if getConfiguration(CONF_FILENAME_USE_PART_NUMBER_KEY) and partId:
+            pathName = partId
+        elif removeOccurrenceNumber:
             pathName = re.sub(r':[0-9]*', '', pathName)
         else:
             pathName = pathName.replace(":", getConfiguration(CONF_FILENAME_OCCURRENCE_ID_SEPERATOR_KEY))
@@ -796,7 +806,7 @@ def documentHasMeshBodies(exportObjects):
 
 def exportStepAsOneFile(projectName, designName, rootComponent, exportObjects, ao):
     # create filename
-    fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_STEP_VALUE)
+    fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_STEP_VALUE, "")
 
     # get step export options
     stepExportOptions = ao.export_manager.createSTEPExportOptions(fullFileName, rootComponent)
@@ -827,7 +837,7 @@ def exportStepAsOneFilePerComponent(exportObjects, projectName, designName, ao):
         hasMeshBodies = exportObject.get(REC_HAS_MESH_BODIES)
 
         # create filename
-        fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, "", UI_EXPORT_TYPES_STEP_VALUE)
+        fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, "", UI_EXPORT_TYPES_STEP_VALUE, exportObject.get(REC_PART_NUMBER))
 
         if len(exportObject.get(REC_BODIES)) == 0 and hasMeshBodies:
             addWarningToSummary(UI_EXPORT_TYPES_STEP_VALUE, "Mesh", fullFileName)
@@ -860,7 +870,7 @@ def exportF3dAsOneFile(projectName, designName, rootComponent, ao):
     hasExternalLinks = False
 
     # create filename
-    fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_F3D_VALUE)
+    fullFileName = getExportName(projectName, designName, "", "", True, True, "", UI_EXPORT_TYPES_F3D_VALUE, "")
 
     # check if design contains links to external components
     for occurrence in rootComponent.allOccurrences:
@@ -901,7 +911,7 @@ def exportF3dAsOneFilePerComponent(exportObjects, projectName, designName, ao):
             continue
 
         # create filename
-        fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, "", UI_EXPORT_TYPES_F3D_VALUE)
+        fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, "", UI_EXPORT_TYPES_F3D_VALUE, exportObject.get(REC_PART_NUMBER))
 
         if exportObject.get(REC_IS_REFERENCED_COMPONENT):
             logger.warning("%s is a links to an external designs. Skipping export", exportObject.get(REC_OCCURRENCE_PATH))
@@ -966,7 +976,7 @@ def exportStlAsOneFile(projectName, designName, rootComponent, exportObjects, ao
             refinementName = refinement
 
         # create filename
-        fullFileName = getExportName(projectName, designName, "", "", True, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
+        fullFileName = getExportName(projectName, designName, "", "", True, True, refinementName, UI_EXPORT_TYPES_STL_VALUE, "")
 
         # get stl export options
         stlExportOptions = getStlExportOptions(ao, rootComponent, fullFileName, refinement)
@@ -1035,7 +1045,7 @@ def exportStlAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
                     break
 
                 # create filename
-                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
+                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE, "")
 
                 # get stl export options
                 stlExportOptions = getStlExportOptions(ao, body, fullFileName, refinement)
@@ -1096,7 +1106,7 @@ def exportStlAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
                     break
 
                 # create filename but remove occurrence id unless they're part of the occurrence name in the temporary document
-                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
+                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE, "")
 
                 # get stl export options
                 stlExportOptions = getStlExportOptions(ao, body, fullFileName, refinement)
@@ -1139,7 +1149,7 @@ def exportStlAsOneFilePerTopOccurrence(exportObjects, projectName, designName, a
                     continue
 
                 # create filename but remove occurrence id unless they're part of the occurrence name in the temporary document
-                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE)
+                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, refinementName, UI_EXPORT_TYPES_STL_VALUE, "")
 
                 # get stl export options
                 stlExportOptions = getStlExportOptions(ao, exportObject.get(REC_OCCURRENCE), fullFileName, refinement)
@@ -1197,7 +1207,7 @@ def export3mfAsOneFile(projectName, designName, rootComponent, exportObjects, ao
             refinementName = refinement
 
         # create filename
-        fullFileName = getExportName(projectName, designName, "", "", True, True, refinementName, UI_EXPORT_TYPES_3MF_VALUE)
+        fullFileName = getExportName(projectName, designName, "", "", True, True, refinementName, UI_EXPORT_TYPES_3MF_VALUE, "")
 
         # get 3mf export options
         c3mfExportOptions = get3mfExportOptions(ao, rootComponent, fullFileName, refinement)
@@ -1266,7 +1276,7 @@ def export3mfAsOneFilePerBodyInComponent(exportObjects, projectName, designName,
                     break
 
                 # create filename
-                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_3MF_VALUE)
+                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_3MF_VALUE, "")
 
                 # get 3mf export options
                 c3mfExportOptions = get3mfExportOptions(ao, body, fullFileName, refinement)
@@ -1327,7 +1337,7 @@ def export3mfAsOneFilePerBodyInOccurrence(exportObjects, projectName, designName
                     break
 
                 # create filename but remove occurrence id unless they're part of the occurrence name in the temporary document
-                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_3MF_VALUE)
+                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), body.name, False, True, refinementName, UI_EXPORT_TYPES_3MF_VALUE, "")
 
                 # get 3mf export options
                 c3mfExportOptions = get3mfExportOptions(ao, body, fullFileName, refinement)
@@ -1370,7 +1380,7 @@ def export3mfAsOneFilePerTopOccurrence(exportObjects, projectName, designName, a
                     continue
 
                 # create filename but remove occurrence id unless they're part of the occurrence name in the temporary document
-                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, refinementName, UI_EXPORT_TYPES_3MF_VALUE)
+                fullFileName = getExportName(projectName, designName, exportObject.get(REC_OCCURRENCE_PATH), "", False, True, refinementName, UI_EXPORT_TYPES_3MF_VALUE, "")
 
                 # get 3mf export options
                 c3mfExportOptions = get3mfExportOptions(ao, exportObject.get(REC_OCCURRENCE), fullFileName, refinement)

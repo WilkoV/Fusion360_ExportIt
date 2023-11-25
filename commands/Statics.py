@@ -167,6 +167,7 @@ UI_FILENAME_OCCURRENCE_ID_SEPERATOR_VALUES = ['.', '-', '_']                    
 UI_FILENAME_REPLACE_SPACES_NAME = 'Replace Spaces'                                          # True if spaces should be replaced, otherwise False
 UI_FILENAME_REPLACE_SPACES_WITH_NAME = 'Replace Spaces With'                                # Character that replaces spaces in the filename
 UI_FILENAME_REPLACE_SPACES_WITH_VALUES = ['.', '-', '_']                                    # List of valid characters
+UI_FILENAME_USE_PART_NUMBER_NAME = 'Replace Component Name With Part Number'                # True if the name of the project should be added to the export name otherwise False
 
 # user interface - misc
 UI_MISC_TAB_ID = 'Misc'
@@ -196,7 +197,7 @@ CONF_DEFAULT_CONFIG_NAME = 'Defaults.json'                                      
 CONF_PROJECT_ATTRIBUTE_GROUP = 'ExportIt'                                                   # Name of the attribute group that stores the project specific data
 CONF_PROJECT_ATTRIBUTE_KEY = 'projectConfiguration'                                         # Key of the key that contains the project specific configuration (delta to default configuration)
 CONF_VERSION_KEY = 'version'                                                                # Key of the element that contains the version of the default configuration
-CONF_VERSION_DEFAULT = '1.1.0'                                                              # Default version of the default configuration
+CONF_VERSION_DEFAULT = '1.2.0'                                                              # Default version of the default configuration
 
 # configuration - export options
 CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # Name of the element that contains the export types
@@ -272,6 +273,8 @@ CONF_FILENAME_REPLACE_SPACES_KEY = 'replaceSpaces'                              
 CONF_FILENAME_REPLACE_SPACES_DEFAULT = False                                                # Valid values are True or False
 CONF_FILENAME_REPLACE_SPACES_WITH_KEY = 'replaceSpacesWith'                                 # Character that replaces spaces in the filename
 CONF_FILENAME_REPLACE_SPACES_WITH_DEFAULT = '-'                                             # Valid values for the default: '.', '-', '_'
+CONF_FILENAME_USE_PART_NUMBER_KEY = 'usePartNumber'                                         # Valid values for the default: True, False
+CONF_FILENAME_USE_PART_NUMBER_DEFAULT = False                                               # Valid values for the default: True, False
 
 # configuration - common
 CONF_SHOW_SUMMARY_FOR_KEY = 'showSummaryFor'                                                # Show export summary for infos, warnings or errors
@@ -295,6 +298,7 @@ REC_IS_UNIQUE = 'isUnique'                                                      
 REC_IS_TOP_LEVEL = 'isTopLevel'                                                             # Marker if this record should be used, if only top level components should be exported
 REC_IS_REFERENCED_COMPONENT = 'isReferencedComponent'                                       # True if this occurrence is referencing an external component otherwise false
 REC_HAS_MESH_BODIES = 'hasMeshBodies'                                                       # True if the component has mesh bodies, otherwiser False
+REC_PART_NUMBER = 'partNumber'                                                              # Part number of the component
 
 # internal structure of summary
 SUMMARY_INFOS = 'info'                                                                      # List of info messages
