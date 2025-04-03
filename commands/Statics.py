@@ -161,6 +161,9 @@ UI_FILENAME_ADD_PROJECT_NAME_NAME = 'Add Project Name'                          
 UI_FILENAME_ADD_DESIGN_NAME_NAME = 'Add Design Name'                   	                    # True if the name of the design should be added to the export name otherwise False
 UI_FILENAME_REMOVE_VERSION_TAGS_NAME = 'Remove Version Tags'                                # True if version tags should be removed otherwise False
 UI_FILENAME_ELEMENT_SEPERATOR_NAME = 'Element Separator'                                    # Character that separates e.g. project name, occurrence name and body name in an export name
+UI_FILENAME_ADD_CONFIGURATION_NAME = 'Add Configuration Name'                               # True if the name of the current configuration should be added to the export name otherwise False
+UI_FILENAME_REMOVE_VERSION_TAGS_NAME = 'Remove Version Tags'                                # True if version tags should be removed otherwise False
+UI_FILENAME_ELEMENT_SEPERATOR_NAME = 'Element Separator'                                    # Character that separates e.g. project name, occurrence name and body name in an export name
 UI_FILENAME_ELEMENT_SEPERATOR_VALUES = ['.', '-', '_']                                      # List of valid characters
 UI_FILENAME_OCCURRENCE_ID_SEPERATOR_NAME = 'Occurrence ID Separator'                        # Character that separates the occurrence name and the instance id
 UI_FILENAME_OCCURRENCE_ID_SEPERATOR_VALUES = ['.', '-', '_']                                # List of valid characters
@@ -197,7 +200,7 @@ CONF_DEFAULT_CONFIG_NAME = 'Defaults.json'                                      
 CONF_PROJECT_ATTRIBUTE_GROUP = 'ExportIt'                                                   # Name of the attribute group that stores the project specific data
 CONF_PROJECT_ATTRIBUTE_KEY = 'projectConfiguration'                                         # Key of the key that contains the project specific configuration (delta to default configuration)
 CONF_VERSION_KEY = 'version'                                                                # Key of the element that contains the version of the default configuration
-CONF_VERSION_DEFAULT = '1.2.0'                                                              # Default version of the default configuration
+CONF_VERSION_DEFAULT = '1.3.0'                                                              # Default version of the default configuration
 
 # configuration - export options
 CONF_EXPORT_OPTIONS_TYPE_KEY = 'exportTypes'                                                # Name of the element that contains the export types
@@ -275,6 +278,9 @@ CONF_FILENAME_REPLACE_SPACES_WITH_KEY = 'replaceSpacesWith'                     
 CONF_FILENAME_REPLACE_SPACES_WITH_DEFAULT = '-'                                             # Valid values for the default: '.', '-', '_'
 CONF_FILENAME_USE_PART_NUMBER_KEY = 'usePartNumber'                                         # Valid values for the default: True, False
 CONF_FILENAME_USE_PART_NUMBER_DEFAULT = False                                               # Valid values for the default: True, False
+
+CONF_FILENAME_ADD_CONFIGURATION_NAME_KEY = 'addConfigurationNameToFilename'                 # True if the name of the current configuration should be added to the export name otherwise False
+CONF_FILENAME_ADD_CONFIGURATION_NAME_DEFAULT = False                                        # Valid values for the default: True, False
 
 # configuration - common
 CONF_SHOW_SUMMARY_FOR_KEY = 'showSummaryFor'                                                # Show export summary for infos, warnings or errors
